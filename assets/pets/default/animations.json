@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "frame_width": 64,
+    "frame_height": 64,
+    "columns": 8
+  },
+  "animations": {
+    "idle": {
+      "frames": [0, 1, 2, 3, 4, 3, 2, 1],
+      "fps": 8,
+      "loop": true,
+      "next": null
+    }
+  },
+  "transitions": {}
+}

@@ -1,6 +1,8 @@
 #[cfg(not(test))]
 mod commands;
 
+mod behavior;
+
 #[cfg(not(test))]
 pub fn run() {
     tauri::Builder::default()

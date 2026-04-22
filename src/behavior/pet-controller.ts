@@ -29,8 +29,9 @@ export class PetController {
   private windowY: number = 0;
   private velocityX: number = 0;
   private velocityY: number = 0;
-  private screenWidth: number = window.screen.width;
-  private screenHeight: number = window.screen.height;
+  private screenWidth: number;
+  private screenHeight: number;
+  private totalWidth: number;
   private petWidth: number = 64;
   private petHeight: number = 64;
   private wanderTimer: number | null = null;
@@ -40,6 +41,13 @@ export class PetController {
 
   constructor(onStateChange: (state: PetState) => void) {
     this.onStateChange = onStateChange;
+    // Use screen properties for multi-monitor support
+    this.screenWidth = window.screen.width;
+    this.screenHeight = window.screen.height;
+    // Total available width across monitors (may be wider than primary)
+    this.totalWidth = window.screen.availWidth > this.screenWidth
+      ? window.screen.availWidth
+      : this.screenWidth;
     this.windowX = Math.floor(this.screenWidth / 2);
     this.windowY = this.screenHeight - this.petHeight;
     this.updateWindowPosition();
@@ -110,13 +118,13 @@ export class PetController {
     } else if (this.state === 'walk_left' || this.state === 'walk_right' ||
                this.state === 'run_left' || this.state === 'run_right') {
       this.windowX += this.velocityX * dt;
-      // Clamp to screen bounds
-      if (this.windowX <= 0) {
-        this.windowX = 0;
+      // Allow multi-monitor: clamp to total display bounds, not just primary
+      if (this.windowX <= -this.petWidth) {
+        this.windowX = -this.petWidth;
         this.setState('idle');
       }
-      if (this.windowX >= this.screenWidth - this.petWidth) {
-        this.windowX = this.screenWidth - this.petWidth;
+      if (this.windowX >= this.totalWidth) {
+        this.windowX = this.totalWidth;
         this.setState('idle');
       }
     }

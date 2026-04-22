@@ -5,7 +5,7 @@ async function main() {
   if (!canvas) throw new Error('Canvas element not found');
 
   const engine = new SpriteEngine(canvas);
-  await engine.load('/assets/pets/default/spritesheet.png', '/assets/pets/default/animations.json');
+  await engine.load('/pets/default/spritesheet.png', '/pets/default/animations.json');
   engine.start();
 }
 

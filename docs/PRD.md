@@ -805,7 +805,6 @@ None — all design decisions resolved through research and user discussion.
 | [CrabNebula Tutorial](https://crabnebula.dev/blog/building-a-desktop-pet-with-tauri/) | Tauri | Official desktop pet tutorial; click-through, sprite rendering |
 | [VPet-Simulator](https://github.com/LorisYounger/VPet) | C#/.NET | Feature-rich desktop pet; Steam Workshop, ChatGPT integration |
 | [Open-LLM-VTuber](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber) | Python | AI desktop companion; memory system, screen awareness patterns |
-| [Shimeji-ee](https://github.com/gil/shimeji-ee) | Java | Classic desktop pet; behavior XML format, community sprites |
 
 ## Appendix B: Key Crate Versions
 

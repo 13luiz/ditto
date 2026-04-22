@@ -110,6 +110,8 @@ Announce to the user:
 
 Step 2: TDD — Red Phase (Write Failing Test)
 
+**Skip RED if:** A test for this feature already exists from a previous session. Check by looking at the source files — if there's a test covering this feature's steps that was written in a prior session, proceed directly to the Green Phase. Do not rewrite existing tests.
+
 Based on the feature's `test_type`:
 
 For "unit" features:
@@ -304,10 +306,12 @@ If verdict is PASS:
 
 2. Commit: "harness: phase {current_phase} complete — evaluator approved"
 
-3. Report to user:
+3. Report to user and ASK FOR CONFIRMATION before advancing:
 > "Phase {current_phase} COMPLETE. Evaluation scores: completeness X/10, correctness X/10, quality X/10, PRD alignment X/10.
 >
-> Next: Phase {current_phase + 1}. Run /ditto-implement again to initialize the next phase."
+> Ready to proceed to Phase {current_phase + 1}? Confirm to continue, or review the evaluation report at ditto-harness/phase-{current_phase}/phase-eval-report.md first."
+
+Wait for the user's response. Only advance to the next phase after explicit user approval. If the user wants to review or make changes, address their concerns first.
 
 If verdict is FAIL:
 

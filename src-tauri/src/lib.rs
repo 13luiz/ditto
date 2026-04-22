@@ -1,5 +1,10 @@
+#[cfg(not(test))]
+mod commands;
+
+#[cfg(not(test))]
 pub fn run() {
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![commands::set_ignore_cursor_events])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -54,5 +59,26 @@ mod tests {
         let config = load_tauri_config();
         let win = get_main_window_config(&config);
         assert_eq!(win["skipTaskbar"].as_bool(), Some(true));
+    }
+
+    #[test]
+    fn test_commands_module_exists() {
+        let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("src")
+            .join("commands")
+            .join("mod.rs");
+        assert!(src.exists(), "commands/mod.rs should exist");
+        let content = fs::read_to_string(&src).unwrap();
+        assert!(content.contains("set_ignore_cursor_events"), "set_ignore_cursor_events command should exist");
+        assert!(content.contains("#[tauri::command]"), "function should be a Tauri command");
+    }
+
+    #[test]
+    fn test_command_registered_in_run() {
+        let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("src")
+            .join("lib.rs");
+        let content = fs::read_to_string(&src).unwrap();
+        assert!(content.contains("set_ignore_cursor_events"), "command should be registered in generate_handler");
     }
 }

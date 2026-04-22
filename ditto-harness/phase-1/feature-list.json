@@ -59,8 +59,8 @@
     "category": "style",
     "test_type": "profiling",
     "steps": "1. Launch app. 2. Wait 10 seconds for initialization. 3. Measure process RSS memory. 4. Assert < 30MB.",
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "d7a6eb8"
   },
   {
     "id": "P1-008",
@@ -68,7 +68,7 @@
     "category": "style",
     "test_type": "profiling",
     "steps": "1. Build release binary: cargo tauri build. 2. Measure resulting installer/binary size. 3. Assert < 10MB compressed.",
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "d7a6eb8"
   }
 ]

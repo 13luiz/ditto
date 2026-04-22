@@ -1,5 +1,6 @@
 import { SpriteEngine } from './renderer/sprite-engine';
 import { ClickThroughHandler } from './input/click-through';
+import { DragHandler } from './input/drag-handler';
 import { PetController } from './behavior/pet-controller';
 
 async function main() {
@@ -17,6 +18,9 @@ async function main() {
 
   const clickThrough = new ClickThroughHandler(canvas);
   clickThrough.attach();
+
+  const dragHandler = new DragHandler(canvas, controller);
+  dragHandler.attach();
 
   controller.startWandering();
 }

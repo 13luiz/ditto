@@ -86,7 +86,7 @@ Generated at phase start from PRD verification checklists and current codebase s
 
 **Fields:**
 - `id` — `P{N}-{SEQ:03d}` format (e.g., `P1-001`, `P2-007`)
-- `test_type` — `"unit"` (cargo test), `"visual"` (Playwright), `"manual"` (user verification)
+- `test_type` — one of: `"unit"` (cargo test), `"visual"` (Playwright), `"integration"` (multi-component test with external dependencies), `"manual"` (user verification), `"profiling"` (performance measurement)
 - `passes` — only field that may be changed after creation (false → true)
 - `commit` — hash of the commit that marked this feature as passing
 
@@ -233,7 +233,7 @@ Each feature follows this strict sequence. The skill enforces it by verifying ea
 
 ## 5. Evaluator Agent
 
-Spawned as a `code-reviewer` subagent at phase gates.
+Spawned as a general-purpose subagent (via the Agent tool) at phase gates. The evaluator needs access to Bash (for `cargo test`), Playwright MCP (for visual verification), and Read/Grep (for code review).
 
 ### 5.1 Grading Criteria
 
@@ -416,3 +416,5 @@ User types `/ditto-implement`. The skill:
 | 4 — Soul | ~8 | 3 | 1 | 4 |
 | 5 — Polish | ~12 | 1 | 0 | 11 |
 | **Total** | **~45** | **14** | **9** | **22** |
+
+> **Note:** `integration` and `profiling` test types are subsumed into the columns above. Phase 3 "integration" tests (LLM connections) are unit-like with mocks in CI. Phase 5 "profiling" tests are manual (require runtime observation).

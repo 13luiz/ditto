@@ -1,11 +1,13 @@
 import { invoke } from '@tauri-apps/api/core';
 
 const ALPHA_THRESHOLD = 10;
+const POLL_INTERVAL_MS = 50;
 
 export class ClickThroughHandler {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private lastIgnoreState: boolean | null = null;
+  private intervalId: number | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -14,19 +16,32 @@ export class ClickThroughHandler {
     this.ctx = ctx;
   }
 
-  async handleMouseMove(clientX: number, clientY: number): Promise<void> {
-    const rect = this.canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+  async checkAndToggle(): Promise<void> {
+    try {
+      const [cursorScreenX, cursorScreenY] = await invoke<[number, number]>('get_cursor_position');
+      const rect = this.canvas.getBoundingClientRect();
+      const scale = window.devicePixelRatio || 1;
 
-    if (x < 0 || x >= this.canvas.width || y < 0 || y >= this.canvas.height) {
-      await this.setCursorIgnore(true);
-      return;
+      // Convert screen coords to CSS coords relative to window
+      const winX = window.screenX;
+      const winY = window.screenY;
+      const localX = (cursorScreenX / scale) - winX;
+      const localY = (cursorScreenY / scale) - winY;
+
+      // Convert to canvas-local coords
+      const canvasX = localX - rect.left;
+      const canvasY = localY - rect.top;
+
+      if (canvasX < 0 || canvasX >= this.canvas.width || canvasY < 0 || canvasY >= this.canvas.height) {
+        await this.setCursorIgnore(true);
+        return;
+      }
+
+      const alpha = this.getPixelAlpha(Math.floor(canvasX), Math.floor(canvasY));
+      await this.setCursorIgnore(alpha < ALPHA_THRESHOLD);
+    } catch {
+      // Non-Tauri environment, skip
     }
-
-    const alpha = this.getPixelAlpha(Math.floor(x), Math.floor(y));
-    const isTransparent = alpha < ALPHA_THRESHOLD;
-    await this.setCursorIgnore(isTransparent);
   }
 
   getPixelAlpha(x: number, y: number): number {
@@ -43,13 +58,20 @@ export class ClickThroughHandler {
     try {
       await invoke('set_ignore_cursor_events', { ignore });
     } catch {
-      // Ignore errors in non-Tauri environment (e.g. browser dev)
+      // Non-Tauri environment
     }
   }
 
   attach(): void {
-    document.addEventListener('mousemove', (e) => {
-      this.handleMouseMove(e.clientX, e.clientY);
-    });
+    this.intervalId = window.setInterval(() => {
+      this.checkAndToggle();
+    }, POLL_INTERVAL_MS);
+  }
+
+  detach(): void {
+    if (this.intervalId !== null) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
   }
 }

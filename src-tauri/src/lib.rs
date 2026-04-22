@@ -4,7 +4,7 @@ mod commands;
 #[cfg(not(test))]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![commands::set_ignore_cursor_events])
+        .invoke_handler(tauri::generate_handler![commands::set_ignore_cursor_events, commands::get_cursor_position])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -41,8 +41,8 @@
     "category": "functional",
     "test_type": "unit",
     "steps": "1. Launch app. 2. Simulate mouse click on non-transparent pet sprite pixels. 3. Verify the click event is captured by the pet window.",
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "a9bbe3b"
   },
   {
     "id": "P1-006",
@@ -50,8 +50,8 @@
     "category": "functional",
     "test_type": "unit",
     "steps": "1. Launch app. 2. Run animation loop for 5 seconds. 3. Measure actual FPS. 4. Assert FPS >= target (e.g. 30 FPS for idle).",
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "a9bbe3b"
   },
   {
     "id": "P1-007",

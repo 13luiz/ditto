@@ -1,5 +1,8 @@
 use crate::behavior::state_machine::PetState;
 
+/// Gravity acceleration in pixels/s². Matches ~9.8 m/s² at 100px/m scale.
+pub const GRAVITY: f64 = 980.0;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[allow(dead_code)]
 pub struct Position {
@@ -110,6 +113,30 @@ impl PetPhysics {
         self.position.y += self.velocity.vy * dt;
         self.clamp_to_screen();
     }
+
+    /// Apply gravity to vertical velocity and update position.
+    /// Returns true if the pet just landed (was falling, now on ground).
+    pub fn apply_gravity(&mut self, dt: f64) -> bool {
+        let was_falling = self.velocity.vy > 0.0 || self.position.y < self.screen.height - self.pet_height;
+        self.velocity.vy += GRAVITY * dt;
+        self.position.y += self.velocity.vy * dt;
+
+        if self.position.y >= self.screen.height - self.pet_height {
+            self.position.y = self.screen.height - self.pet_height;
+            if was_falling && self.velocity.vy > 0.0 {
+                self.velocity.vy = 0.0;
+                return true;
+            }
+            self.velocity.vy = 0.0;
+        }
+        false
+    }
+
+    /// Simulate a free fall from a given height. Returns the time to reach ground.
+    pub fn fall_time_from_height(height: f64) -> f64 {
+        // h = 0.5 * g * t^2  =>  t = sqrt(2h/g)
+        (2.0 * height / GRAVITY).sqrt()
+    }
 }
 
 #[cfg(test)]
@@ -215,5 +242,73 @@ mod tests {
         assert!(p.is_on_ground());
         p.position.y = 500.0;
         assert!(!p.is_on_ground());
+    }
+
+    // --- Gravity tests ---
+
+    #[test]
+    fn test_gravity_constant_value() {
+        assert_eq!(GRAVITY, 980.0);
+    }
+
+    #[test]
+    fn test_fall_time_from_200px() {
+        let t = PetPhysics::fall_time_from_height(200.0);
+        let expected: f64 = (2.0_f64 * 200.0 / 980.0).sqrt();
+        assert!((t - expected).abs() < 0.001, "fall time should be ~{:.3}s, got {:.3}", expected, t);
+        assert!(t > 0.6 && t < 0.65, "200px drop should take ~0.639s");
+    }
+
+    #[test]
+    fn test_gravity_increases_velocity_linearly() {
+        let mut p = test_physics();
+        // Start at top of screen, no velocity
+        p.position.y = 0.0;
+        p.velocity.vy = 0.0;
+
+        let dt = 1.0 / 60.0; // 60fps timestep
+        let mut velocities: Vec<f64> = vec![];
+
+        for _ in 0..3 {
+            let _ = p.apply_gravity(dt);
+            velocities.push(p.velocity.vy);
+        }
+
+        // Each step adds GRAVITY * dt to velocity
+        let delta_v = GRAVITY * dt;
+        assert!((velocities[1] - velocities[0] - delta_v).abs() < 0.01);
+        assert!((velocities[2] - velocities[1] - delta_v).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_gravity_lands_on_ground() {
+        let mut p = test_physics();
+        // Start 200px above ground
+        let ground = SCREEN_H - PET_H;
+        p.position.y = ground - 200.0;
+        p.velocity.vy = 0.0;
+
+        let dt = 1.0 / 60.0;
+        let mut landed = false;
+        for _ in 0..120 {
+            // max 2 seconds
+            if p.apply_gravity(dt) {
+                landed = true;
+                break;
+            }
+        }
+        assert!(landed, "pet should land within 2 seconds");
+        assert!(p.is_on_ground());
+        assert_eq!(p.velocity.vy, 0.0);
+    }
+
+    #[test]
+    fn test_gravity_no_effect_on_ground() {
+        let mut p = test_physics();
+        assert!(p.is_on_ground());
+        let landed = p.apply_gravity(1.0 / 60.0);
+        assert!(!landed, "no landing event when already on ground");
+        assert_eq!(p.velocity.vy, 0.0);
+        assert!(p.is_on_ground());
     }
 }

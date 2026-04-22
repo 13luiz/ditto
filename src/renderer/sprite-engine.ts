@@ -1,4 +1,5 @@
 import { AnimationConfig, AnimationPlayer } from './animation';
+import { PetController } from '../behavior/pet-controller';
 
 export class SpriteEngine {
   private canvas: HTMLCanvasElement;
@@ -8,6 +9,7 @@ export class SpriteEngine {
   private player: AnimationPlayer | null = null;
   private lastTime: number = 0;
   private running: boolean = false;
+  private controller: PetController | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -30,8 +32,9 @@ export class SpriteEngine {
     this.canvas.height = frame_height;
   }
 
-  start(): void {
+  start(controller?: PetController): void {
     if (this.running) return;
+    this.controller = controller ?? null;
     this.running = true;
     this.lastTime = performance.now();
     requestAnimationFrame((t) => this.loop(t));
@@ -45,11 +48,19 @@ export class SpriteEngine {
     return this.running;
   }
 
+  playAnimation(name: string): void {
+    this.player?.play(name);
+  }
+
   private loop(timestamp: number): void {
     if (!this.running) return;
 
     const dt = timestamp - this.lastTime;
     this.lastTime = timestamp;
+
+    if (this.controller) {
+      this.controller.update(timestamp);
+    }
 
     this.render(dt);
     requestAnimationFrame((t) => this.loop(t));

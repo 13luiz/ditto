@@ -10,6 +10,30 @@
       "fps": 8,
       "loop": true,
       "next": null
+    },
+    "walk_right": {
+      "frames": [5, 6, 7, 6],
+      "fps": 12,
+      "loop": true,
+      "next": null
+    },
+    "walk_left": {
+      "frames": [5, 6, 7, 6],
+      "fps": 12,
+      "loop": true,
+      "next": null
+    },
+    "fall": {
+      "frames": [7],
+      "fps": 12,
+      "loop": true,
+      "next": null
+    },
+    "drag": {
+      "frames": [7],
+      "fps": 12,
+      "loop": true,
+      "next": null
     }
   },
   "transitions": {}

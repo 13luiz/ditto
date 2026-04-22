@@ -1,0 +1,126 @@
+[
+  {
+    "id": "P2-001",
+    "description": "State transitions — All defined FSM transitions work correctly",
+    "category": "functional",
+    "test_type": "unit",
+    "steps": [
+      "Define PetState enum with all animation states (idle, walk_left, walk_right, run_left, run_right, climb, fall, sleep, eat, play, drag, talk, happy, sad, curious, sit)",
+      "Define valid transitions per PRD Section 5.3",
+      "Verify transition: idle -> walk_left, idle -> walk_right",
+      "Verify transition: idle -> sit, sit -> idle",
+      "Verify transition: idle -> sleep (after 10 min idle or energy < 20%)",
+      "Verify transition: idle -> curious (cursor within 100px)",
+      "Verify transition: idle -> drag (user grabs)",
+      "Verify transition: walk_* -> run_* (cursor chase trigger)",
+      "Verify transition: walk_* -> climb (reached screen edge)",
+      "Verify transition: climb -> fall (reached top, random chance)",
+      "Verify transition: fall -> idle (landed on surface)",
+      "Verify transition: drag -> fall (user releases)",
+      "Verify invalid transitions are rejected (e.g., sleep -> drag)",
+      "Verify any -> idle catch-all default"
+    ],
+    "passes": false,
+    "commit": null
+  },
+  {
+    "id": "P2-002",
+    "description": "Screen boundary collision — Pet doesn't walk off-screen",
+    "category": "functional",
+    "test_type": "unit",
+    "steps": [
+      "Define screen boundary as window dimensions minus pet width/height",
+      "When pet position would exceed left boundary, clamp to 0",
+      "When pet position would exceed right boundary, clamp to screen_width - pet_width",
+      "When pet position would exceed top boundary, clamp to 0",
+      "When pet position would exceed bottom boundary (ground), clamp to screen_height - pet_height",
+      "Verify pet cannot move to negative coordinates",
+      "Verify boundary clamping works with movement velocity applied"
+    ],
+    "passes": false,
+    "commit": null
+  },
+  {
+    "id": "P2-003",
+    "description": "Gravity simulation — Pet falls at consistent rate when released",
+    "category": "functional",
+    "test_type": "unit",
+    "steps": [
+      "Define gravity constant (e.g., 980 pixels/s² equivalent)",
+      "When pet enters 'fall' state, apply gravity acceleration to vertical velocity",
+      "Each frame: vertical_velocity += gravity * delta_time",
+      "Each frame: y_position += vertical_velocity * delta_time",
+      "When pet reaches ground level, set vertical_velocity to 0, transition to idle",
+      "Verify fall takes expected time from known height (e.g., 200px drop takes ~0.64s)",
+      "Verify fall speed increases linearly (constant acceleration)"
+    ],
+    "passes": false,
+    "commit": null
+  },
+  {
+    "id": "P2-004",
+    "description": "Cursor proximity reaction — Pet enters curious state when cursor within 100px",
+    "category": "functional",
+    "test_type": "unit",
+    "steps": [
+      "Given pet is in idle state at position (400, 500)",
+      "When cursor moves to position within 100px (e.g., 450, 500) — distance is 50px",
+      "Then pet transitions to 'curious' state",
+      "When cursor moves to position exactly 100px away — pet transitions to 'curious'",
+      "When cursor moves to position 101px away — pet remains idle",
+      "When pet is not in idle state, cursor proximity does not trigger curious",
+      "Distance calculated as Euclidean distance between pet center and cursor position"
+    ],
+    "passes": false,
+    "commit": null
+  },
+  {
+    "id": "P2-005",
+    "description": "Walk animation sync — Sprite frames match movement speed",
+    "category": "functional",
+    "test_type": "visual",
+    "steps": [
+      "Start the app with cargo tauri dev",
+      "Pet enters walk_right state",
+      "Verify sprite frames advance at walk FPS (12 FPS per PRD)",
+      "Verify pet position changes each frame (movement speed ~60-80 px/s)",
+      "Verify sprite faces direction of movement",
+      "Verify animation frame rate is independent of render frame rate",
+      "Take screenshot showing mid-walk frame"
+    ],
+    "passes": false,
+    "commit": null
+  },
+  {
+    "id": "P2-006",
+    "description": "Grab and drag — Pet follows cursor while dragged",
+    "category": "functional",
+    "test_type": "manual",
+    "steps": [
+      "Start the app with cargo tauri dev",
+      "Click and hold on the pet (non-transparent pixel)",
+      "Verify pet transitions to 'drag' state",
+      "Move cursor — pet position follows cursor center",
+      "Verify sprite changes to drag animation if available",
+      "Release mouse button — pet transitions to 'fall' state",
+      "Pet falls with gravity until landing on ground"
+    ],
+    "passes": false,
+    "commit": null
+  },
+  {
+    "id": "P2-007",
+    "description": "Multi-monitor crossing — Pet can walk from one monitor to another",
+    "category": "functional",
+    "test_type": "manual",
+    "steps": [
+      "Start the app with cargo tauri dev on a multi-monitor setup",
+      "Pet walks to the right edge of primary monitor",
+      "When pet reaches monitor boundary, position wraps or transitions to adjacent monitor",
+      "Verify pet appears on the adjacent monitor at the corresponding edge",
+      "Verify pet can walk back to the original monitor"
+    ],
+    "passes": false,
+    "commit": null
+  }
+]

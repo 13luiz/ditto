@@ -22,7 +22,7 @@ export class ClickThroughHandler {
       const rect = this.canvas.getBoundingClientRect();
       const scale = window.devicePixelRatio || 1;
 
-      // Convert screen coords to CSS coords relative to window
+      // cursor_position() returns physical pixels; screenX/Y return CSS pixels — divide by DPI to match
       const winX = window.screenX;
       const winY = window.screenY;
       const localX = (cursorScreenX / scale) - winX;

@@ -53,5 +53,10 @@ export class DragHandler {
     if (!this.dragging) return;
     this.dragging = false;
     this.controller.endDrag();
+    try {
+      await invoke('set_ignore_cursor_events', { ignore: true });
+    } catch {
+      // Non-Tauri
+    }
   }
 }

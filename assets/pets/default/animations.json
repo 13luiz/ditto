@@ -23,6 +23,24 @@
       "loop": true,
       "next": null
     },
+    "run_right": {
+      "frames": [5, 6, 7, 6],
+      "fps": 16,
+      "loop": true,
+      "next": null
+    },
+    "run_left": {
+      "frames": [5, 6, 7, 6],
+      "fps": 16,
+      "loop": true,
+      "next": null
+    },
+    "climb": {
+      "frames": [5, 6, 7, 6],
+      "fps": 8,
+      "loop": true,
+      "next": null
+    },
     "fall": {
       "frames": [7],
       "fps": 12,
@@ -32,6 +50,54 @@
     "drag": {
       "frames": [7],
       "fps": 12,
+      "loop": true,
+      "next": null
+    },
+    "sleep": {
+      "frames": [0, 0, 1, 1],
+      "fps": 4,
+      "loop": true,
+      "next": null
+    },
+    "eat": {
+      "frames": [3, 4, 3, 4],
+      "fps": 8,
+      "loop": false,
+      "next": "idle"
+    },
+    "play": {
+      "frames": [5, 6, 7, 6],
+      "fps": 10,
+      "loop": false,
+      "next": "idle"
+    },
+    "talk": {
+      "frames": [3, 4, 3, 4],
+      "fps": 6,
+      "loop": true,
+      "next": null
+    },
+    "happy": {
+      "frames": [4, 3, 4, 3],
+      "fps": 8,
+      "loop": true,
+      "next": null
+    },
+    "sad": {
+      "frames": [0, 0, 1, 1],
+      "fps": 6,
+      "loop": true,
+      "next": null
+    },
+    "curious": {
+      "frames": [3, 4, 3],
+      "fps": 8,
+      "loop": true,
+      "next": null
+    },
+    "sit": {
+      "frames": [0, 1],
+      "fps": 4,
       "loop": true,
       "next": null
     }

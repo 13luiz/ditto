@@ -1,6 +1,8 @@
 #[cfg(not(test))]
 mod commands;
 
+// Behavior module is tested but not wired to frontend yet — Phase 3 will integrate via IPC
+#[allow(dead_code)]
 mod behavior;
 
 #[cfg(not(test))]

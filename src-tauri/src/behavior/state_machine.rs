@@ -2,7 +2,6 @@ use std::fmt;
 use std::time::Duration;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[allow(dead_code)]
 pub enum PetState {
     Idle,
     WalkLeft,
@@ -46,7 +45,6 @@ impl fmt::Display for PetState {
 }
 
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub struct TransitionContext {
     pub cursor_distance: f64,
     pub energy: f64,
@@ -66,7 +64,6 @@ impl Default for TransitionContext {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[allow(dead_code)]
 pub struct TransitionError {
     pub from: PetState,
     pub to: PetState,
@@ -80,12 +77,10 @@ impl fmt::Display for TransitionError {
 
 impl std::error::Error for TransitionError {}
 
-#[allow(dead_code)]
 pub struct StateMachine {
     state: PetState,
 }
 
-#[allow(dead_code)]
 impl StateMachine {
     pub fn new() -> Self {
         Self {

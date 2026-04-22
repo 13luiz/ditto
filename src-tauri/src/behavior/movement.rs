@@ -4,13 +4,11 @@ use crate::behavior::state_machine::PetState;
 pub const GRAVITY: f64 = 980.0;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-#[allow(dead_code)]
 pub struct Position {
     pub x: f64,
     pub y: f64,
 }
 
-#[allow(dead_code)]
 impl Position {
     pub fn new(x: f64, y: f64) -> Self {
         Self { x, y }
@@ -22,13 +20,11 @@ impl Position {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-#[allow(dead_code)]
 pub struct Velocity {
     pub vx: f64,
     pub vy: f64,
 }
 
-#[allow(dead_code)]
 impl Velocity {
     pub fn new(vx: f64, vy: f64) -> Self {
         Self { vx, vy }
@@ -39,20 +35,17 @@ impl Velocity {
     }
 }
 
-#[allow(dead_code)]
 pub struct ScreenBounds {
     pub width: f64,
     pub height: f64,
 }
 
-#[allow(dead_code)]
 impl ScreenBounds {
     pub fn new(width: f64, height: f64) -> Self {
         Self { width, height }
     }
 }
 
-#[allow(dead_code)]
 pub struct PetPhysics {
     pub position: Position,
     pub velocity: Velocity,
@@ -62,7 +55,6 @@ pub struct PetPhysics {
     pub screen: ScreenBounds,
 }
 
-#[allow(dead_code)]
 impl PetPhysics {
     pub fn new(screen_width: f64, screen_height: f64, pet_width: f64, pet_height: f64) -> Self {
         Self {

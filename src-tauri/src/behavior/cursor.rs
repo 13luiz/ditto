@@ -3,7 +3,14 @@ use crate::behavior::movement::Position;
 /// Check if the cursor is within a given radius of the pet's center.
 /// Uses Euclidean distance between pet center (position + half pet size) and cursor.
 #[allow(dead_code)]
-pub fn is_cursor_near(pet_pos: &Position, pet_width: f64, pet_height: f64, cursor_x: f64, cursor_y: f64, radius: f64) -> bool {
+pub fn is_cursor_near(
+    pet_pos: &Position,
+    pet_width: f64,
+    pet_height: f64,
+    cursor_x: f64,
+    cursor_y: f64,
+    radius: f64,
+) -> bool {
     let pet_center_x = pet_pos.x + pet_width / 2.0;
     let pet_center_y = pet_pos.y + pet_height / 2.0;
     let dx = cursor_x - pet_center_x;
@@ -14,7 +21,13 @@ pub fn is_cursor_near(pet_pos: &Position, pet_width: f64, pet_height: f64, curso
 
 /// Calculate Euclidean distance between pet center and cursor position.
 #[allow(dead_code)]
-pub fn cursor_distance(pet_pos: &Position, pet_width: f64, pet_height: f64, cursor_x: f64, cursor_y: f64) -> f64 {
+pub fn cursor_distance(
+    pet_pos: &Position,
+    pet_width: f64,
+    pet_height: f64,
+    cursor_x: f64,
+    cursor_y: f64,
+) -> f64 {
     let pet_center_x = pet_pos.x + pet_width / 2.0;
     let pet_center_y = pet_pos.y + pet_height / 2.0;
     let dx = cursor_x - pet_center_x;

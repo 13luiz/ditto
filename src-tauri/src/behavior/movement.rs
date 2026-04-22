@@ -117,7 +117,8 @@ impl PetPhysics {
     /// Apply gravity to vertical velocity and update position.
     /// Returns true if the pet just landed (was falling, now on ground).
     pub fn apply_gravity(&mut self, dt: f64) -> bool {
-        let was_falling = self.velocity.vy > 0.0 || self.position.y < self.screen.height - self.pet_height;
+        let was_falling =
+            self.velocity.vy > 0.0 || self.position.y < self.screen.height - self.pet_height;
         self.velocity.vy += GRAVITY * dt;
         self.position.y += self.velocity.vy * dt;
 
@@ -255,7 +256,12 @@ mod tests {
     fn test_fall_time_from_200px() {
         let t = PetPhysics::fall_time_from_height(200.0);
         let expected: f64 = (2.0_f64 * 200.0 / 980.0).sqrt();
-        assert!((t - expected).abs() < 0.001, "fall time should be ~{:.3}s, got {:.3}", expected, t);
+        assert!(
+            (t - expected).abs() < 0.001,
+            "fall time should be ~{:.3}s, got {:.3}",
+            expected,
+            t
+        );
         assert!(t > 0.6 && t < 0.65, "200px drop should take ~0.639s");
     }
 

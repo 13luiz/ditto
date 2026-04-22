@@ -5,8 +5,8 @@
     "category": "functional",
     "test_type": "visual",
     "steps": "1. Launch app. 2. Verify no visible window background — only pet sprites are rendered. 3. Screenshot confirms transparent background with pet visible.",
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "77160aa"
   },
   {
     "id": "P1-002",
@@ -23,8 +23,8 @@
     "category": "functional",
     "test_type": "visual",
     "steps": "1. Launch app. 2. Open another application window. 3. Verify pet window remains on top. 4. Screenshot confirms pet visible above other windows.",
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "77160aa"
   },
   {
     "id": "P1-004",

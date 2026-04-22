@@ -2,7 +2,7 @@
 
 > **Date:** 2026-04-22
 > **Status:** Design Approved
-> **PRD Reference:** `doc/PRD.md`
+> **PRD Reference:** `docs/PRD.md`
 > **Inspiration:** Anthropic Engineering Blog — [Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents), [Harness Design for Long-Running App Development](https://www.anthropic.com/engineering/harness-design-long-running-apps), [Managed Agents](https://www.anthropic.com/engineering/managed-agents)
 
 ---
@@ -132,7 +132,7 @@ Every invocation of `/ditto-implement` starts with this sequence:
 Triggered when `phase-N/` directory does not exist for the current phase.
 
 ```
-1. Read doc/PRD.md → extract Phase N requirements and verification checklist
+1. Read docs/PRD.md → extract Phase N requirements and verification checklist
 2. Read current codebase state (Cargo.toml, src-tauri/, src/, assets/)
 3. Run cargo test if Cargo.toml exists → record baseline test count
 4. Generate phase-N/feature-list.json:
@@ -252,7 +252,7 @@ Spawned as a general-purpose subagent (via the Agent tool) at phase gates. The e
 3. For each "visual" feature: Playwright screenshot, verify
 4. For each "unit" feature: check test exists and passes
 5. Read key source files → check code quality
-6. Cross-reference with doc/PRD.md Phase N section
+6. Cross-reference with docs/PRD.md Phase N section
 7. Write phase-N/phase-eval-report.md with:
    - Per-criterion score (0-10)
    - List of issues found (if any)
@@ -370,7 +370,7 @@ name: ditto-implement
 description: >-
   Long-running harness for implementing the Ditto desktop pet PRD.
   Drives TDD-based, phase-by-phase implementation with initializer,
-  coder, and evaluator agents. Reads doc/PRD.md and ditto-harness/
+  coder, and evaluator agents. Reads docs/PRD.md and ditto-harness/
   to determine current state and continue work.
 ```
 

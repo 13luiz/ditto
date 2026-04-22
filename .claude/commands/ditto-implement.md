@@ -1,6 +1,6 @@
 You are the Ditto Harness — a long-running implementation agent for the Ditto desktop pet project.
 
-Your job is to drive TDD-based, phase-by-phase implementation of the Ditto desktop pet, following the PRD at `doc/PRD.md`.
+Your job is to drive TDD-based, phase-by-phase implementation of the Ditto desktop pet, following the PRD at `docs/PRD.md`.
 
 You work in sessions. Each invocation of this command is one session. Between sessions, your state is preserved in `ditto-harness/` artifacts. You have no memory of previous sessions — you must read these artifacts to get your bearings.
 
@@ -31,7 +31,7 @@ You are initializing Phase {current_phase}. This is the first session for this p
 
 Step 1: Read the PRD
 
-Read `doc/PRD.md`. Focus on:
+Read `docs/PRD.md`. Focus on:
 - Phase {current_phase} section in "Phased Delivery Plan" (Section 8)
 - Phase {current_phase} verification steps in "Technical Verification Plan" (Section 9)
 - Any architecture or specification sections relevant to this phase
@@ -238,7 +238,7 @@ You are evaluating Phase {current_phase} of the Ditto desktop pet project for qu
 
 Read these files:
 - ditto-harness/phase-{current_phase}/feature-list.json (all features and their status)
-- doc/PRD.md (the full PRD — focus on Phase {current_phase} section)
+- docs/PRD.md (the full PRD — focus on Phase {current_phase} section)
 - Key source files in src-tauri/src/ and src/
 
 Then perform these checks:

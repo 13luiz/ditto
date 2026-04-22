@@ -81,4 +81,49 @@ mod tests {
         let content = fs::read_to_string(&src).unwrap();
         assert!(content.contains("set_ignore_cursor_events"), "command should be registered in generate_handler");
     }
+
+    fn load_animations_config() -> Value {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("assets")
+            .join("pets")
+            .join("default")
+            .join("animations.json");
+        let content = fs::read_to_string(&path)
+            .expect("Failed to read animations.json");
+        serde_json::from_str(&content).expect("Failed to parse animations.json")
+    }
+
+    #[test]
+    fn test_animation_config_has_idle() {
+        let config = load_animations_config();
+        assert!(config["animations"]["idle"].is_object(), "idle animation must exist");
+    }
+
+    #[test]
+    fn test_animation_idle_has_valid_frames() {
+        let config = load_animations_config();
+        let idle = &config["animations"]["idle"];
+        let frames = idle["frames"].as_array().expect("frames must be an array");
+        assert!(!frames.is_empty(), "idle animation must have frames");
+        assert!(idle["fps"].as_u64().unwrap_or(0) >= 4, "idle FPS must be >= 4");
+        assert!(idle["loop"].as_bool().unwrap_or(false), "idle animation must loop");
+    }
+
+    #[test]
+    fn test_animation_meta_valid() {
+        let config = load_animations_config();
+        let meta = &config["meta"];
+        assert!(meta["frame_width"].as_u64().unwrap_or(0) > 0, "frame_width must be > 0");
+        assert!(meta["frame_height"].as_u64().unwrap_or(0) > 0, "frame_height must be > 0");
+        assert!(meta["columns"].as_u64().unwrap_or(0) > 0, "columns must be > 0");
+    }
+
+    #[test]
+    fn test_animation_fps_target_achievable() {
+        let config = load_animations_config();
+        let fps = config["animations"]["idle"]["fps"].as_u64().unwrap();
+        assert!(fps <= 60, "target FPS must be <= 60 for requestAnimationFrame");
+        assert!(fps >= 4, "target FPS must be >= 4 for visible animation");
+    }
 }

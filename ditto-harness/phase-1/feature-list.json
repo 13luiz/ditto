@@ -32,8 +32,8 @@
     "category": "functional",
     "test_type": "unit",
     "steps": "1. Launch app. 2. Simulate mouse click on transparent area of pet window. 3. Verify the click passes through to the window below (set_ignore_cursor_events).",
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "44f8a66"
   },
   {
     "id": "P1-005",

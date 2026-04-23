@@ -82,6 +82,64 @@ pub struct ProviderChain {
     pub fallback: Option<Box<ProviderConfig>>,
 }
 
+pub struct RateLimiter {
+    last_proactive_call: Option<std::time::Instant>,
+    min_interval: std::time::Duration,
+}
+
+impl RateLimiter {
+    pub fn new(min_interval_secs: u64) -> Self {
+        Self {
+            last_proactive_call: None,
+            min_interval: std::time::Duration::from_secs(min_interval_secs),
+        }
+    }
+
+    pub fn can_call_proactive(&self) -> bool {
+        match self.last_proactive_call {
+            Some(last) => last.elapsed() >= self.min_interval,
+            None => true,
+        }
+    }
+
+    pub fn record_proactive_call(&mut self) {
+        self.last_proactive_call = Some(std::time::Instant::now());
+    }
+}
+
+pub struct FallbackChain {
+    pub providers: Vec<ProviderConfig>,
+}
+
+impl FallbackChain {
+    pub fn new(chain: &ProviderChain) -> Self {
+        let mut providers = vec![chain.primary.clone()];
+        if let Some(fallback) = &chain.fallback {
+            providers.push((**fallback).clone());
+        }
+        Self { providers }
+    }
+
+    pub fn providers(&self) -> &[ProviderConfig] {
+        &self.providers
+    }
+}
+
+pub fn rule_based_response(input: &str) -> String {
+    let lower = input.to_lowercase();
+    if lower.contains("hello") || lower.contains("hi") || lower.contains("hey") {
+        "Hey there! Nice to see you!".to_string()
+    } else if lower.contains("how are you") {
+        "I'm doing great! Thanks for asking!".to_string()
+    } else if lower.contains("goodnight") || lower.contains("bye") {
+        "Goodnight! See you later!".to_string()
+    } else if lower.contains("hungry") {
+        "I could use a snack... hint hint!".to_string()
+    } else {
+        "I'm here! What's on your mind?".to_string()
+    }
+}
+
 pub enum DittoAgent {
     OpenAI(rig::agent::Agent<providers::openai::completion::CompletionModel>),
     Anthropic(rig::agent::Agent<providers::anthropic::completion::CompletionModel>),
@@ -293,5 +351,73 @@ mod tests {
         let result = DittoAgent::new(&config, "You are a test assistant.");
         assert!(result.is_ok());
         assert!(matches!(result.unwrap(), DittoAgent::Ollama(_)));
+    }
+
+    #[test]
+    fn test_fallback_chain_from_provider_chain() {
+        let chain = ProviderChain {
+            primary: ProviderConfig::OpenAI {
+                api_key: "sk-test".to_string(),
+                model: "gpt-4o".to_string(),
+                base_url: None,
+            },
+            fallback: Some(Box::new(ProviderConfig::Ollama {
+                model: "llama3.2".to_string(),
+                base_url: "http://localhost:11434".to_string(),
+            })),
+        };
+        let fb = FallbackChain::new(&chain);
+        assert_eq!(fb.providers().len(), 2);
+        assert_eq!(fb.providers()[0].provider_name(), "openai");
+        assert_eq!(fb.providers()[1].provider_name(), "ollama");
+    }
+
+    #[test]
+    fn test_fallback_chain_no_fallback() {
+        let chain = ProviderChain {
+            primary: ProviderConfig::OpenAI {
+                api_key: "sk-test".to_string(),
+                model: "gpt-4o".to_string(),
+                base_url: None,
+            },
+            fallback: None,
+        };
+        let fb = FallbackChain::new(&chain);
+        assert_eq!(fb.providers().len(), 1);
+    }
+
+    #[test]
+    fn test_rule_based_responses() {
+        let resp = rule_based_response("Hello there!");
+        assert!(resp.contains("Hey there"));
+
+        let resp = rule_based_response("How are you doing?");
+        assert!(resp.contains("great"));
+
+        let resp = rule_based_response("Goodnight!");
+        assert!(resp.contains("Goodnight"));
+
+        let resp = rule_based_response("Tell me something random");
+        assert!(resp.contains("here"));
+    }
+
+    #[test]
+    fn test_rate_limiter_allows_first_call() {
+        let limiter = RateLimiter::new(30);
+        assert!(limiter.can_call_proactive());
+    }
+
+    #[test]
+    fn test_rate_limiter_blocks_rapid_calls() {
+        let mut limiter = RateLimiter::new(30);
+        limiter.record_proactive_call();
+        assert!(!limiter.can_call_proactive());
+    }
+
+    #[test]
+    fn test_rate_limiter_allows_after_interval() {
+        let mut limiter = RateLimiter::new(0);
+        limiter.record_proactive_call();
+        assert!(limiter.can_call_proactive());
     }
 }

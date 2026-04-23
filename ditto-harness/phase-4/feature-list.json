@@ -126,8 +126,8 @@
       "Verify feed/play/sleep/chat buttons are present",
       "Verify mood indicator shows current mood level and label"
     ],
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "501d31b"
   },
   {
     "id": "P4-010",
@@ -141,8 +141,8 @@
       "Verify sad sound plays when mood is low",
       "Verify hunger sound plays when hunger is critically low"
     ],
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "6f9678e"
   },
   {
     "id": "P4-011",

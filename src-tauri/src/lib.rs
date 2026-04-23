@@ -42,7 +42,12 @@ fn load_env_provider_config(db: &db::Database) {
 pub fn run() {
     let _ = dotenv::dotenv();
 
-    let db = db::Database::open("ditto.db").expect("failed to open database");
+    let db_path = dirs::data_local_dir()
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join("ditto")
+        .join("ditto.db");
+    std::fs::create_dir_all(db_path.parent().unwrap()).ok();
+    let db = db::Database::open(&db_path.to_string_lossy()).expect("failed to open database");
     load_env_provider_config(&db);
     let state = AppState {
         db: std::sync::Mutex::new(db),

@@ -1,18 +1,15 @@
+import { invoke } from '@tauri-apps/api/core';
 import { SpriteEngine } from './renderer/sprite-engine';
 import { ClickThroughHandler } from './input/click-through';
 import { DragHandler } from './input/drag-handler';
 import { PetController } from './behavior/pet-controller';
-import { ChatBubble, createChatStyles } from './ui/chat-bubble';
-import { sendChatMessage, onStreamToken, onStreamDone } from './ipc/commands';
+import { toggleChatWindow } from './ui/chat-bubble';
 
 async function main() {
   const canvas = document.getElementById('pet-canvas') as HTMLCanvasElement;
   if (!canvas) throw new Error('Canvas element not found');
 
-  const app = document.getElementById('app') as HTMLDivElement;
-  if (!app) throw new Error('App element not found');
-
-  document.head.appendChild(createChatStyles());
+  try { await invoke('set_ignore_cursor_events', { ignore: false }); } catch { /* */ }
 
   const engine = new SpriteEngine(canvas);
   await engine.load('/pets/default/spritesheet.png', '/pets/default/animations.json');
@@ -21,22 +18,14 @@ async function main() {
     engine.playAnimation(state);
   });
 
-  const chatBubble = new ChatBubble((message) => {
-    sendChatMessage(message).catch(console.error);
-  });
-
-  onStreamToken((token) => {
-    chatBubble.streamToken(token);
-  });
-
-  onStreamDone(() => {
-    chatBubble.hideTypingIndicator();
-  });
-
-  chatBubble.mount(app);
-
-  canvas.addEventListener('dblclick', () => {
-    chatBubble.toggle();
+  canvas.addEventListener('dblclick', async () => {
+    console.log('[ditto] dblclick fired');
+    try {
+      const result = await toggleChatWindow();
+      console.log('[ditto] toggle_chat_window result:', result);
+    } catch (e) {
+      console.error('[ditto] toggle_chat_window error:', e);
+    }
   });
 
   engine.start(controller);
@@ -44,7 +33,7 @@ async function main() {
   const clickThrough = new ClickThroughHandler(canvas);
   clickThrough.attach();
 
-  const dragHandler = new DragHandler(canvas, controller);
+  const dragHandler = new DragHandler(canvas, controller, clickThrough);
   dragHandler.attach();
 
   controller.startWandering();

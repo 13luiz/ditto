@@ -27,3 +27,9 @@ Thumbs.db
 
 # Reference repos (not part of the project)
 .repos/
+
+# Database (stored in %LOCALAPPDATA%/ditto/)
+*.db
+
+# Temporary screenshots
+pet-state.png

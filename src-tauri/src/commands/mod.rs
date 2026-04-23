@@ -27,8 +27,8 @@ pub fn get_cursor_position(window: tauri::WebviewWindow) -> Result<(f64, f64), S
 #[tauri::command]
 pub fn set_window_position(window: tauri::WebviewWindow, x: i32, y: i32) -> Result<(), String> {
     window
-        .set_position(tauri::Position::Logical(tauri::LogicalPosition::new(
-            x as f64, y as f64,
+        .set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(
+            x, y,
         )))
         .map_err(|e| e.to_string())
 }
@@ -39,36 +39,42 @@ pub async fn send_chat_message(
     state: tauri::State<'_, AppState>,
     message: String,
 ) -> Result<(), String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+    // Phase 1: DB operations (synchronous, drop lock before await)
+    let (conv_id, preamble, agent_config) = {
+        let db = state.db.lock().map_err(|e| e.to_string())?;
 
-    // Get or create conversation
-    let conv_id = match db.get_latest_conversation_id().map_err(|e| e.to_string())? {
-        Some(id) => id,
-        None => db.create_conversation().map_err(|e| e.to_string())?,
-    };
+        let conv_id = match db.get_latest_conversation_id().map_err(|e| e.to_string())? {
+            Some(id) => id,
+            None => db.create_conversation().map_err(|e| e.to_string())?,
+        };
 
-    // Save user message
-    db.save_message(conv_id, &MessageRole::User, &message)
-        .map_err(|e| e.to_string())?;
+        db.save_message(conv_id, &MessageRole::User, &message)
+            .map_err(|e| e.to_string())?;
 
-    // Build system prompt
-    let traits = PersonalityTraits::default();
-    let mem = MemorySystem::new();
-    let memories = mem.get_all_long_term(&db).unwrap_or_default();
+        let traits = PersonalityTraits::default();
+        let mem = MemorySystem::new();
+        let memories = mem.get_all_long_term(&db).unwrap_or_default();
 
-    let context = PetContext {
-        recent_memories: memories,
-        ..Default::default()
-    };
-    let preamble = SystemPromptBuilder::new(traits, context).build();
+        let context = PetContext {
+            recent_memories: memories,
+            ..Default::default()
+        };
+        let preamble = SystemPromptBuilder::new(traits, context).build();
 
-    // Try to get response from LLM or fallback
-    let response = match try_agent_response(&db, &preamble, &message) {
+        let config_json = db
+            .load_setting("provider_config")
+            .map_err(|e| e.to_string())?;
+
+        (conv_id, preamble, config_json)
+    }; // db lock dropped here
+
+    // Phase 2: LLM call (async, no DB lock held)
+    let response = match try_agent_response(&agent_config, &preamble, &message).await {
         Ok(resp) => resp,
         Err(_) => rule_based_response(&message),
     };
 
-    // Stream tokens to frontend
+    // Phase 3: Stream tokens + save response
     let tokens: Vec<&str> = response.split_whitespace().collect();
     for (i, token) in tokens.iter().enumerate() {
         let text = if i == 0 {
@@ -76,41 +82,36 @@ pub async fn send_chat_message(
         } else {
             format!(" {}", token)
         };
-        app.emit("chat-stream-token", serde_json::json!({ "token": text }))
-            .map_err(|e: tauri::Error| e.to_string())?;
+        let _ = app.emit("chat-stream-token", serde_json::json!({ "token": text }));
     }
 
-    app.emit(
+    let _ = app.emit(
         "chat-stream-done",
         serde_json::json!({ "full_response": response }),
-    )
-    .map_err(|e: tauri::Error| e.to_string())?;
+    );
 
-    // Save assistant response
-    db.save_message(conv_id, &MessageRole::Assistant, &response)
-        .map_err(|e| e.to_string())?;
+    {
+        let db = state.db.lock().map_err(|e| e.to_string())?;
+        db.save_message(conv_id, &MessageRole::Assistant, &response)
+            .map_err(|e| e.to_string())?;
+    }
 
     Ok(())
 }
 
-fn try_agent_response(db: &Database, preamble: &str, message: &str) -> Result<String, String> {
-    let config_json = db
-        .load_setting("provider_config")
-        .map_err(|e| e.to_string())?;
-
+async fn try_agent_response(
+    config_json: &Option<String>,
+    preamble: &str,
+    message: &str,
+) -> Result<String, String> {
     let config_json = match config_json {
         Some(json) => json,
         None => return Err("no provider configured".to_string()),
     };
 
-    let config: ProviderConfig = serde_json::from_str(&config_json).map_err(|e| e.to_string())?;
-
+    let config: ProviderConfig = serde_json::from_str(config_json).map_err(|e| e.to_string())?;
     let agent = DittoAgent::new(&config, preamble).map_err(|e| e.to_string())?;
-
-    // Use tokio runtime for async agent call
-    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
-    rt.block_on(agent.prompt(message))
-        .map_err(|e| e.to_string())
+    agent.prompt(message).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]

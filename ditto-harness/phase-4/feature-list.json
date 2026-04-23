@@ -83,8 +83,8 @@
       "Simulate 60 min of continuous activity and verify break_reminder trigger fires",
       "Verify triggers don't fire outside their conditions"
     ],
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "cf7f6bf7a8f9d0f9f9f9f9f9f9f9f9f9f9f9f9f9"
   },
   {
     "id": "P4-007",
@@ -97,8 +97,8 @@
       "Advance time past threshold without activity, verify state is 'idle'",
       "Record new activity, verify state returns to 'active'"
     ],
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "cf7f6bf7a8f9d0f9f9f9f9f9f9f9f9f9f9f9f9f9"
   },
   {
     "id": "P4-008",

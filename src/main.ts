@@ -5,6 +5,7 @@ import { ClickThroughHandler } from './input/click-through';
 import { DragHandler } from './input/drag-handler';
 import { PetController } from './behavior/pet-controller';
 import { toggleChatWindow } from './ui/chat-bubble';
+import { openCarePanel } from './ui/care-panel';
 
 async function main() {
   const canvas = document.getElementById('pet-canvas') as HTMLCanvasElement;
@@ -24,6 +25,15 @@ async function main() {
       await toggleChatWindow();
     } catch (e) {
       console.error('[ditto] toggle_chat_window error:', e);
+    }
+  });
+
+  canvas.addEventListener('contextmenu', async (e) => {
+    e.preventDefault();
+    try {
+      await openCarePanel();
+    } catch (e) {
+      console.error('[ditto] open_care_panel error:', e);
     }
   });
 

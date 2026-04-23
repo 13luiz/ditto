@@ -71,7 +71,9 @@ pub fn run() {
             commands::get_cursor_position,
             commands::set_window_position,
             commands::send_chat_message,
-            commands::load_chat_history
+            commands::load_chat_history,
+            commands::get_care_state,
+            commands::apply_care_action
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -157,6 +159,8 @@ mod tests {
             "set_window_position",
             "send_chat_message",
             "load_chat_history",
+            "get_care_state",
+            "apply_care_action",
         ] {
             assert!(
                 content.contains(cmd),

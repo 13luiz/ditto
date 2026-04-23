@@ -2,6 +2,7 @@ use crate::agent::core::{rule_based_response, DittoAgent, ProviderConfig};
 use crate::agent::memory::MemorySystem;
 use crate::agent::personality::PersonalityTraits;
 use crate::agent::prompt::{PetContext, SystemPromptBuilder};
+use crate::care::{CareAction, CareSystem};
 use crate::db::models::MessageRole;
 use crate::db::Database;
 use rig::completion::Message;
@@ -166,4 +167,48 @@ pub fn load_chat_history(
             })
         })
         .collect())
+}
+
+#[tauri::command]
+pub fn get_care_state(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let care = CareSystem::load(&db)?;
+    let mood = care.mood();
+    Ok(serde_json::json!({
+        "hunger": care.needs.hunger.get(),
+        "happiness": care.needs.happiness.get(),
+        "energy": care.needs.energy.get(),
+        "social": care.needs.social.get(),
+        "mood_score": mood.score,
+        "mood_label": format!("{:?}", mood.label).to_lowercase(),
+    }))
+}
+
+#[tauri::command]
+pub fn apply_care_action(
+    state: tauri::State<'_, AppState>,
+    action: String,
+) -> Result<serde_json::Value, String> {
+    let care_action = match action.as_str() {
+        "feed" => CareAction::Feed,
+        "pet" => CareAction::Pet,
+        "chat" => CareAction::Chat,
+        "sleep" => CareAction::Sleep,
+        _ => return Err(format!("unknown action: {}", action)),
+    };
+
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let mut care = CareSystem::load(&db)?;
+    care.apply_action(care_action);
+    care.save(&db)?;
+
+    let mood = care.mood();
+    Ok(serde_json::json!({
+        "hunger": care.needs.hunger.get(),
+        "happiness": care.needs.happiness.get(),
+        "energy": care.needs.energy.get(),
+        "social": care.needs.social.get(),
+        "mood_score": mood.score,
+        "mood_label": format!("{:?}", mood.label).to_lowercase(),
+    }))
 }

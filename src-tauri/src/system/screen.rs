@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use std::io::Write;
 
 /// Captures the primary monitor and returns PNG-encoded bytes.

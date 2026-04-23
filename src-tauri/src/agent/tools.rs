@@ -112,9 +112,22 @@ pub fn dispatch_tool(call: &ToolCall) -> ToolResult {
         }
         ToolCall::ChangeState { state } => {
             let valid = [
-                "idle", "walk_left", "walk_right", "run_left", "run_right",
-                "fall", "drag", "sleep", "sit", "talk", "happy", "sad",
-                "curious", "eat", "play", "climb",
+                "idle",
+                "walk_left",
+                "walk_right",
+                "run_left",
+                "run_right",
+                "fall",
+                "drag",
+                "sleep",
+                "sit",
+                "talk",
+                "happy",
+                "sad",
+                "curious",
+                "eat",
+                "play",
+                "climb",
             ];
             if valid.contains(&state.as_str()) {
                 ToolResult::Success(format!("State changed to {}", state))
@@ -183,7 +196,10 @@ impl Tool for MoveToTool {
     }
 
     async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
-        let result = dispatch_tool(&ToolCall::MoveTo { x: args.x, y: args.y });
+        let result = dispatch_tool(&ToolCall::MoveTo {
+            x: args.x,
+            y: args.y,
+        });
         match result {
             ToolResult::Success(msg) => Ok(msg),
             ToolResult::Error(_) => Err(ToolExecError),

@@ -74,17 +74,20 @@ impl Database {
     }
 
     pub fn get_latest_conversation_id(&self) -> Result<Option<i64>> {
-        self.conn.query_row(
-            "SELECT id FROM conversations ORDER BY id DESC LIMIT 1",
-            [],
-            |row| row.get(0),
-        ).map(Some).or_else(|e| {
-            if matches!(e, rusqlite::Error::QueryReturnedNoRows) {
-                Ok(None)
-            } else {
-                Err(e)
-            }
-        })
+        self.conn
+            .query_row(
+                "SELECT id FROM conversations ORDER BY id DESC LIMIT 1",
+                [],
+                |row| row.get(0),
+            )
+            .map(Some)
+            .or_else(|e| {
+                if matches!(e, rusqlite::Error::QueryReturnedNoRows) {
+                    Ok(None)
+                } else {
+                    Err(e)
+                }
+            })
     }
 
     pub fn save_memory(&self, key: &str, value: &str, category: &str) -> Result<()> {
@@ -97,11 +100,9 @@ impl Database {
 
     pub fn load_memory(&self, key: &str) -> Result<Option<String>> {
         self.conn
-            .query_row(
-                "SELECT value FROM memory WHERE key = ?1",
-                [key],
-                |row| row.get(0),
-            )
+            .query_row("SELECT value FROM memory WHERE key = ?1", [key], |row| {
+                row.get(0)
+            })
             .map(Some)
             .or_else(|e| {
                 if matches!(e, rusqlite::Error::QueryReturnedNoRows) {
@@ -130,11 +131,9 @@ impl Database {
 
     pub fn load_setting(&self, key: &str) -> Result<Option<String>> {
         self.conn
-            .query_row(
-                "SELECT value FROM settings WHERE key = ?1",
-                [key],
-                |row| row.get(0),
-            )
+            .query_row("SELECT value FROM settings WHERE key = ?1", [key], |row| {
+                row.get(0)
+            })
             .map(Some)
             .or_else(|e| {
                 if matches!(e, rusqlite::Error::QueryReturnedNoRows) {
@@ -155,11 +154,16 @@ mod tests {
         let db = Database::open_in_memory().unwrap();
         let conv_id = db.create_conversation().unwrap();
 
-        db.save_message(conv_id, &MessageRole::User, "Hello!").unwrap();
-        db.save_message(conv_id, &MessageRole::Assistant, "Hi there!").unwrap();
-        db.save_message(conv_id, &MessageRole::User, "How are you?").unwrap();
-        db.save_message(conv_id, &MessageRole::Assistant, "I'm great!").unwrap();
-        db.save_message(conv_id, &MessageRole::User, "What's your name?").unwrap();
+        db.save_message(conv_id, &MessageRole::User, "Hello!")
+            .unwrap();
+        db.save_message(conv_id, &MessageRole::Assistant, "Hi there!")
+            .unwrap();
+        db.save_message(conv_id, &MessageRole::User, "How are you?")
+            .unwrap();
+        db.save_message(conv_id, &MessageRole::Assistant, "I'm great!")
+            .unwrap();
+        db.save_message(conv_id, &MessageRole::User, "What's your name?")
+            .unwrap();
 
         let messages = db.load_messages(conv_id, 20).unwrap();
         assert_eq!(messages.len(), 5);
@@ -173,9 +177,12 @@ mod tests {
         let db = Database::open_in_memory().unwrap();
         let conv_id = db.create_conversation().unwrap();
 
-        db.save_message(conv_id, &MessageRole::User, "msg1").unwrap();
-        db.save_message(conv_id, &MessageRole::Assistant, "msg2").unwrap();
-        db.save_message(conv_id, &MessageRole::User, "msg3").unwrap();
+        db.save_message(conv_id, &MessageRole::User, "msg1")
+            .unwrap();
+        db.save_message(conv_id, &MessageRole::Assistant, "msg2")
+            .unwrap();
+        db.save_message(conv_id, &MessageRole::User, "msg3")
+            .unwrap();
 
         let latest = db.get_latest_conversation_id().unwrap();
         assert_eq!(latest, Some(conv_id));
@@ -190,7 +197,8 @@ mod tests {
         let conv_id = db.create_conversation().unwrap();
 
         for i in 0..25 {
-            db.save_message(conv_id, &MessageRole::User, &format!("msg {}", i)).unwrap();
+            db.save_message(conv_id, &MessageRole::User, &format!("msg {}", i))
+                .unwrap();
         }
 
         let messages = db.load_messages(conv_id, 20).unwrap();

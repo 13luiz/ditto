@@ -1,6 +1,8 @@
 #[cfg(not(test))]
 mod commands;
 
+#[cfg(not(test))]
+use commands::AppState;
 #[allow(dead_code)]
 mod behavior;
 
@@ -12,7 +14,13 @@ mod agent;
 
 #[cfg(not(test))]
 pub fn run() {
+    let db = db::Database::open("ditto.db").expect("failed to open database");
+    let state = AppState {
+        db: std::sync::Mutex::new(db),
+    };
+
     tauri::Builder::default()
+        .manage(state)
         .invoke_handler(tauri::generate_handler![
             commands::set_ignore_cursor_events,
             commands::get_cursor_position,
@@ -195,7 +203,9 @@ mod tests {
                 "INSERT INTO conversations (created_at, updated_at) VALUES ('2026-01-01T00:00:00', '2026-01-01T00:00:00')",
                 [],
             ).unwrap();
-            let id: i64 = conn.query_row("SELECT last_insert_rowid()", [], |row| row.get(0)).unwrap();
+            let id: i64 = conn
+                .query_row("SELECT last_insert_rowid()", [], |row| row.get(0))
+                .unwrap();
             assert!(id > 0);
         }
 
@@ -206,7 +216,9 @@ mod tests {
                 "INSERT INTO conversations (created_at, updated_at) VALUES ('2026-01-01T00:00:00', '2026-01-01T00:00:00')",
                 [],
             ).unwrap();
-            let conv_id: i64 = conn.query_row("SELECT last_insert_rowid()", [], |row| row.get(0)).unwrap();
+            let conv_id: i64 = conn
+                .query_row("SELECT last_insert_rowid()", [], |row| row.get(0))
+                .unwrap();
 
             conn.execute(
                 "INSERT INTO messages (conversation_id, role, content) VALUES (?1, 'user', 'Hello Ditto!')",
@@ -269,7 +281,8 @@ mod tests {
             conn.execute(
                 "INSERT INTO memory (key, value) VALUES ('test_key', 'value1')",
                 [],
-            ).unwrap();
+            )
+            .unwrap();
             let result = conn.execute(
                 "INSERT INTO memory (key, value) VALUES ('test_key', 'value2')",
                 [],
@@ -283,7 +296,8 @@ mod tests {
             conn.execute(
                 "INSERT INTO settings (key, value) VALUES ('llm_provider', 'openai')",
                 [],
-            ).unwrap();
+            )
+            .unwrap();
 
             let value: String = conn
                 .query_row(
@@ -297,7 +311,8 @@ mod tests {
             conn.execute(
                 "UPDATE settings SET value = 'ollama' WHERE key = 'llm_provider'",
                 [],
-            ).unwrap();
+            )
+            .unwrap();
 
             let updated: String = conn
                 .query_row(

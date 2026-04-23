@@ -1,23 +1,4 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct PersonalityTraits {
-    pub cheerfulness: u8,
-    pub curiosity: u8,
-    pub mischievousness: u8,
-    pub clinginess: u8,
-}
-
-impl Default for PersonalityTraits {
-    fn default() -> Self {
-        Self {
-            cheerfulness: 70,
-            curiosity: 60,
-            mischievousness: 40,
-            clinginess: 50,
-        }
-    }
-}
+use super::personality::PersonalityTraits;
 
 #[derive(Debug, Clone, Default)]
 pub struct PetContext {
@@ -65,32 +46,20 @@ impl SystemPromptBuilder {
             "- Cheerfulness: {}/100\n",
             self.traits.cheerfulness
         ));
-        prompt.push_str(&format!(
-            "- Curiosity: {}/100\n",
-            self.traits.curiosity
-        ));
+        prompt.push_str(&format!("- Curiosity: {}/100\n", self.traits.curiosity));
         prompt.push_str(&format!(
             "- Mischievousness: {}/100\n",
             self.traits.mischievousness
         ));
-        prompt.push_str(&format!(
-            "- Clinginess: {}/100\n",
-            self.traits.clinginess
-        ));
+        prompt.push_str(&format!("- Clinginess: {}/100\n", self.traits.clinginess));
 
         prompt.push_str("\nCurrent state:\n");
         prompt.push_str(&format!(
             "- Mood: {:.0}% ({})\n",
             self.context.mood, self.context.mood_label
         ));
-        prompt.push_str(&format!(
-            "- Hunger: {:.0}%\n",
-            self.context.hunger
-        ));
-        prompt.push_str(&format!(
-            "- Happiness: {:.0}%\n",
-            self.context.happiness
-        ));
+        prompt.push_str(&format!("- Hunger: {:.0}%\n", self.context.hunger));
+        prompt.push_str(&format!("- Happiness: {:.0}%\n", self.context.happiness));
         prompt.push_str(&format!("- Energy: {:.0}%\n", self.context.energy));
         prompt.push_str(&format!("- Social: {:.0}%\n", self.context.social));
 

@@ -12,6 +12,8 @@ pub struct PetContext {
     pub social: f64,
     pub current_state: String,
     pub recent_memories: Vec<String>,
+    pub time_of_day: String,
+    pub user_activity: String,
 }
 
 pub struct SystemPromptBuilder {
@@ -62,6 +64,16 @@ impl SystemPromptBuilder {
         prompt.push_str(&format!("- Happiness: {:.0}%\n", self.context.happiness));
         prompt.push_str(&format!("- Energy: {:.0}%\n", self.context.energy));
         prompt.push_str(&format!("- Social: {:.0}%\n", self.context.social));
+
+        if !self.context.time_of_day.is_empty() {
+            prompt.push_str(&format!("- Time: {}\n", self.context.time_of_day));
+        }
+        if !self.context.user_activity.is_empty() {
+            prompt.push_str(&format!(
+                "- User activity: {}\n",
+                self.context.user_activity
+            ));
+        }
 
         if !self.context.recent_memories.is_empty() {
             prompt.push_str("\nRecent memories:\n");
@@ -181,5 +193,27 @@ mod tests {
         let prompt = SystemPromptBuilder::new(traits, context).build();
         assert!(prompt.contains("Ditto"));
         assert!(prompt.contains("the user"));
+    }
+
+    #[test]
+    fn test_prompt_includes_time_and_activity() {
+        let traits = PersonalityTraits::default();
+        let context = PetContext {
+            time_of_day: "2:30 PM".to_string(),
+            user_activity: "active (45 min)".to_string(),
+            ..Default::default()
+        };
+        let prompt = SystemPromptBuilder::new(traits, context).build();
+        assert!(prompt.contains("Time: 2:30 PM"));
+        assert!(prompt.contains("User activity: active (45 min)"));
+    }
+
+    #[test]
+    fn test_prompt_omits_time_when_empty() {
+        let traits = PersonalityTraits::default();
+        let context = PetContext::default();
+        let prompt = SystemPromptBuilder::new(traits, context).build();
+        assert!(!prompt.contains("Time:"));
+        assert!(!prompt.contains("User activity:"));
     }
 }

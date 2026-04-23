@@ -69,8 +69,8 @@
       "Create new CareSystem and load from SQLite",
       "Verify all need values match saved state"
     ],
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "709d45bb24a8eca9db0a0b702490d70fc3c4c61c"
   },
   {
     "id": "P4-006",
@@ -171,7 +171,7 @@
       "Verify prompt contains user activity state (active/idle/duration)",
       "Verify prompt contains time of day"
     ],
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "709d45bb24a8eca9db0a0b702490d70fc3c4c61c"
   }
 ]

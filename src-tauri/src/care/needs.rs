@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct NeedValue(f64);
 
 impl NeedValue {
@@ -12,7 +12,7 @@ impl NeedValue {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum NeedType { Hunger, Happiness, Energy, Social }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct Needs {
     pub hunger: NeedValue,
     pub happiness: NeedValue,
@@ -111,6 +111,21 @@ impl CareSystem {
         let current = self.needs.get(need);
         self.needs.set(need, current + amount);
         self.needs.get(need)
+    }
+
+    pub fn save(&self, db: &crate::db::Database) -> Result<(), String> {
+        let json = serde_json::to_string(&self.needs).map_err(|e| e.to_string())?;
+        db.save_setting("care_state", &json).map_err(|e| e.to_string())
+    }
+
+    pub fn load(db: &crate::db::Database) -> Result<Self, String> {
+        match db.load_setting("care_state").map_err(|e| e.to_string())? {
+            Some(json) => {
+                let needs: Needs = serde_json::from_str(&json).map_err(|e| e.to_string())?;
+                Ok(Self { needs })
+            }
+            None => Ok(Self::new()),
+        }
     }
 }
 
@@ -233,5 +248,38 @@ mod tests {
     fn test_mood_happy() {
         let m = Mood::from_needs(&needs(90.0, 90.0, 90.0, 90.0));
         assert!(matches!(m.label, MoodLabel::Happy | MoodLabel::Ecstatic));
+    }
+
+    #[test]
+    fn test_care_save_and_load() {
+        let db = crate::db::Database::open_in_memory().unwrap();
+        let mut care = CareSystem::with_needs(needs(30.0, 50.0, 70.0, 20.0));
+        care.save(&db).unwrap();
+
+        let loaded = CareSystem::load(&db).unwrap();
+        assert!((loaded.needs.hunger.get() - 30.0).abs() < 0.01);
+        assert!((loaded.needs.happiness.get() - 50.0).abs() < 0.01);
+        assert!((loaded.needs.energy.get() - 70.0).abs() < 0.01);
+        assert!((loaded.needs.social.get() - 20.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_care_load_default_when_empty() {
+        let db = crate::db::Database::open_in_memory().unwrap();
+        let care = CareSystem::load(&db).unwrap();
+        assert_eq!(care.needs.hunger.get(), 100.0);
+    }
+
+    #[test]
+    fn test_care_save_overwrites() {
+        let db = crate::db::Database::open_in_memory().unwrap();
+        let mut care = CareSystem::with_needs(needs(10.0, 20.0, 30.0, 40.0));
+        care.save(&db).unwrap();
+
+        let mut care2 = CareSystem::with_needs(needs(80.0, 90.0, 70.0, 60.0));
+        care2.save(&db).unwrap();
+
+        let loaded = CareSystem::load(&db).unwrap();
+        assert!((loaded.needs.hunger.get() - 80.0).abs() < 0.01);
     }
 }

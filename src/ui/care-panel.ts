@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { playSound } from './sound';
 
 let panel: HTMLDivElement | null = null;
 
@@ -43,8 +44,12 @@ function createButton(label: string, action: string): HTMLButtonElement {
   btn.addEventListener('mouseleave', () => { btn.style.background = '#2a2a2a'; });
   btn.addEventListener('click', async () => {
     try {
+      playSound(action as 'feed' | 'pet' | 'chat' | 'sleep');
       const state = await invoke<CareState>('apply_care_action', { action });
       updatePanel(state);
+      if (state.mood_label === 'ecstatic' || state.mood_label === 'happy') {
+        playSound('happy');
+      }
     } catch (e) {
       console.error('[ditto] care action error:', e);
     }
@@ -138,6 +143,13 @@ export async function openCarePanel(): Promise<void> {
 
   panel.append(title, moodDiv, barsDiv, btnRow, closeBtn);
   document.body.appendChild(panel);
+
+  // Play mood-based sound on panel open
+  if (state.mood_score >= 70) {
+    playSound('happy');
+  } else if (state.mood_score < 30) {
+    playSound('sad');
+  }
 
   try {
     const pos = await petWin.outerPosition();

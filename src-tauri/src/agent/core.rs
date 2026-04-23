@@ -1,3 +1,7 @@
+use rig::client::completion::CompletionClient;
+use rig::completion::Prompt;
+use rig::providers;
+use rig::providers::openai::client::CompletionsClient as OpenAIClient;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -76,6 +80,79 @@ pub struct ProviderChain {
     pub primary: ProviderConfig,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fallback: Option<Box<ProviderConfig>>,
+}
+
+pub enum DittoAgent {
+    OpenAI(rig::agent::Agent<providers::openai::completion::CompletionModel>),
+    Anthropic(rig::agent::Agent<providers::anthropic::completion::CompletionModel>),
+    Ollama(rig::agent::Agent<providers::ollama::CompletionModel>),
+}
+
+impl DittoAgent {
+    pub fn new(config: &ProviderConfig, preamble: &str) -> Result<Self, AgentError> {
+        match config {
+            ProviderConfig::OpenAI {
+                api_key,
+                model,
+                base_url,
+            } => {
+                let mut builder = OpenAIClient::builder().api_key(api_key);
+                if let Some(url) = base_url {
+                    builder = builder.base_url(url);
+                }
+                let client = builder
+                    .build()
+                    .map_err(|e| AgentError::ConfigError(e.to_string()))?;
+                let agent = client.agent(model).preamble(preamble).build();
+                Ok(DittoAgent::OpenAI(agent))
+            }
+            ProviderConfig::Anthropic {
+                api_key,
+                model,
+                base_url,
+            } => {
+                let mut builder = providers::anthropic::Client::builder().api_key(api_key);
+                if let Some(url) = base_url {
+                    builder = builder.base_url(url);
+                }
+                let client = builder
+                    .build()
+                    .map_err(|e| AgentError::ConfigError(e.to_string()))?;
+                let agent = client
+                    .agent(model)
+                    .preamble(preamble)
+                    .max_tokens(1024)
+                    .build();
+                Ok(DittoAgent::Anthropic(agent))
+            }
+            ProviderConfig::Ollama { model, base_url } => {
+                let client = providers::ollama::Client::builder()
+                    .api_key(rig::client::Nothing)
+                    .base_url(base_url)
+                    .build()
+                    .map_err(|e| AgentError::ConfigError(e.to_string()))?;
+                let agent = client.agent(model).preamble(preamble).build();
+                Ok(DittoAgent::Ollama(agent))
+            }
+        }
+    }
+
+    pub async fn prompt(&self, message: &str) -> Result<String, AgentError> {
+        match self {
+            DittoAgent::OpenAI(agent) => agent
+                .prompt(message)
+                .await
+                .map_err(|e| AgentError::ApiError(e.to_string())),
+            DittoAgent::Anthropic(agent) => agent
+                .prompt(message)
+                .await
+                .map_err(|e| AgentError::ApiError(e.to_string())),
+            DittoAgent::Ollama(agent) => agent
+                .prompt(message)
+                .await
+                .map_err(|e| AgentError::ApiError(e.to_string())),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -181,5 +258,40 @@ mod tests {
         }"#;
         let result: Result<ProviderConfig, _> = serde_json::from_str(json);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_openai_agent_creation() {
+        let config = ProviderConfig::OpenAI {
+            api_key: "sk-test-key".to_string(),
+            model: "gpt-4o".to_string(),
+            base_url: None,
+        };
+        let result = DittoAgent::new(&config, "You are a test assistant.");
+        assert!(result.is_ok());
+        assert!(matches!(result.unwrap(), DittoAgent::OpenAI(_)));
+    }
+
+    #[test]
+    fn test_anthropic_agent_creation() {
+        let config = ProviderConfig::Anthropic {
+            api_key: "sk-ant-test-key".to_string(),
+            model: "claude-sonnet-4-20250514".to_string(),
+            base_url: None,
+        };
+        let result = DittoAgent::new(&config, "You are a test assistant.");
+        assert!(result.is_ok());
+        assert!(matches!(result.unwrap(), DittoAgent::Anthropic(_)));
+    }
+
+    #[test]
+    fn test_ollama_agent_creation() {
+        let config = ProviderConfig::Ollama {
+            model: "llama3.2".to_string(),
+            base_url: "http://localhost:11434".to_string(),
+        };
+        let result = DittoAgent::new(&config, "You are a test assistant.");
+        assert!(result.is_ok());
+        assert!(matches!(result.unwrap(), DittoAgent::Ollama(_)));
     }
 }

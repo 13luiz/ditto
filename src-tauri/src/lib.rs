@@ -1,9 +1,11 @@
 #[cfg(not(test))]
 mod commands;
 
-// Behavior module is tested but not wired to frontend yet — Phase 3 will integrate via IPC
 #[allow(dead_code)]
 mod behavior;
+
+#[allow(dead_code)]
+mod db;
 
 #[cfg(not(test))]
 pub fn run() {
@@ -160,5 +162,159 @@ mod tests {
             "target FPS must be <= 60 for requestAnimationFrame"
         );
         assert!(fps >= 4, "target FPS must be >= 4 for visible animation");
+    }
+
+    mod db_tests {
+        use crate::db::models::MessageRole;
+        use rusqlite::Connection;
+
+        fn setup_db() -> Connection {
+            let conn = Connection::open_in_memory().unwrap();
+            crate::db::migrations::run(&conn).unwrap();
+            conn
+        }
+
+        #[test]
+        fn test_insert_and_retrieve_conversation() {
+            let conn = setup_db();
+            conn.execute(
+                "INSERT INTO conversations (created_at, updated_at) VALUES ('2026-01-01T00:00:00', '2026-01-01T00:00:00')",
+                [],
+            ).unwrap();
+            let id: i64 = conn.query_row("SELECT last_insert_rowid()", [], |row| row.get(0)).unwrap();
+            assert!(id > 0);
+        }
+
+        #[test]
+        fn test_insert_and_retrieve_messages() {
+            let conn = setup_db();
+            conn.execute(
+                "INSERT INTO conversations (created_at, updated_at) VALUES ('2026-01-01T00:00:00', '2026-01-01T00:00:00')",
+                [],
+            ).unwrap();
+            let conv_id: i64 = conn.query_row("SELECT last_insert_rowid()", [], |row| row.get(0)).unwrap();
+
+            conn.execute(
+                "INSERT INTO messages (conversation_id, role, content) VALUES (?1, 'user', 'Hello Ditto!')",
+                [conv_id],
+            ).unwrap();
+            conn.execute(
+                "INSERT INTO messages (conversation_id, role, content) VALUES (?1, 'assistant', 'Hi there!')",
+                [conv_id],
+            ).unwrap();
+
+            let count: i64 = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM messages WHERE conversation_id = ?1",
+                    [conv_id],
+                    |row| row.get(0),
+                )
+                .unwrap();
+            assert_eq!(count, 2);
+
+            let user_msg: String = conn
+                .query_row(
+                    "SELECT content FROM messages WHERE role = 'user' AND conversation_id = ?1",
+                    [conv_id],
+                    |row| row.get(0),
+                )
+                .unwrap();
+            assert_eq!(user_msg, "Hello Ditto!");
+        }
+
+        #[test]
+        fn test_insert_and_query_memory() {
+            let conn = setup_db();
+            conn.execute(
+                "INSERT INTO memory (key, value, category) VALUES ('user_name', 'Alice', 'preference')",
+                [],
+            ).unwrap();
+
+            let value: String = conn
+                .query_row(
+                    "SELECT value FROM memory WHERE key = 'user_name'",
+                    [],
+                    |row| row.get(0),
+                )
+                .unwrap();
+            assert_eq!(value, "Alice");
+
+            let category: String = conn
+                .query_row(
+                    "SELECT category FROM memory WHERE key = 'user_name'",
+                    [],
+                    |row| row.get(0),
+                )
+                .unwrap();
+            assert_eq!(category, "preference");
+        }
+
+        #[test]
+        fn test_memory_key_uniqueness() {
+            let conn = setup_db();
+            conn.execute(
+                "INSERT INTO memory (key, value) VALUES ('test_key', 'value1')",
+                [],
+            ).unwrap();
+            let result = conn.execute(
+                "INSERT INTO memory (key, value) VALUES ('test_key', 'value2')",
+                [],
+            );
+            assert!(result.is_err(), "duplicate key should fail");
+        }
+
+        #[test]
+        fn test_settings_crud() {
+            let conn = setup_db();
+            conn.execute(
+                "INSERT INTO settings (key, value) VALUES ('llm_provider', 'openai')",
+                [],
+            ).unwrap();
+
+            let value: String = conn
+                .query_row(
+                    "SELECT value FROM settings WHERE key = 'llm_provider'",
+                    [],
+                    |row| row.get(0),
+                )
+                .unwrap();
+            assert_eq!(value, "openai");
+
+            conn.execute(
+                "UPDATE settings SET value = 'ollama' WHERE key = 'llm_provider'",
+                [],
+            ).unwrap();
+
+            let updated: String = conn
+                .query_row(
+                    "SELECT value FROM settings WHERE key = 'llm_provider'",
+                    [],
+                    |row| row.get(0),
+                )
+                .unwrap();
+            assert_eq!(updated, "ollama");
+        }
+
+        #[test]
+        fn test_message_role_validation() {
+            assert_eq!(MessageRole::User.as_str(), "user");
+            assert_eq!(MessageRole::Assistant.as_str(), "assistant");
+            assert_eq!(MessageRole::from_str("user"), Some(MessageRole::User));
+            assert_eq!(MessageRole::from_str("invalid"), None);
+        }
+
+        #[test]
+        fn test_database_open_in_memory() {
+            let db = crate::db::Database::open_in_memory().unwrap();
+            let count: i64 = db
+                .conn
+                .query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+                    [],
+                    |row| row.get(0),
+                )
+                .unwrap();
+            assert_eq!(count, 4);
+        }
     }
 }

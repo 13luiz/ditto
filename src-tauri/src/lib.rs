@@ -13,8 +13,34 @@ mod db;
 mod agent;
 
 #[cfg(not(test))]
+fn load_env_provider_config(db: &db::Database) {
+    let api_key = match std::env::var("DITTO_LLM_API_KEY") {
+        Ok(k) => k,
+        Err(_) => return,
+    };
+    let llm_type = std::env::var("DITTO_LLM_TYPE").unwrap_or_else(|_| "openai".to_string());
+    let model = std::env::var("DITTO_LLM_MODEL").unwrap_or_else(|_| "gpt-4o".to_string());
+    let base_url = std::env::var("DITTO_LLM_BASE_URL").ok();
+
+    let mut config = serde_json::json!({
+        "type": llm_type,
+        "api_key": api_key,
+        "model": model
+    });
+    if let Some(url) = base_url {
+        config["base_url"] = serde_json::Value::String(url);
+    }
+
+    let config_str = serde_json::to_string(&config).unwrap();
+    let _ = db.save_setting("provider_config", &config_str);
+}
+
+#[cfg(not(test))]
 pub fn run() {
+    let _ = dotenv::dotenv();
+
     let db = db::Database::open("ditto.db").expect("failed to open database");
+    load_env_provider_config(&db);
     let state = AppState {
         db: std::sync::Mutex::new(db),
     };

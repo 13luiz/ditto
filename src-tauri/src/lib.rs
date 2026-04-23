@@ -7,6 +7,9 @@ use commands::AppState;
 mod behavior;
 
 #[allow(dead_code)]
+mod care;
+
+#[allow(dead_code)]
 mod db;
 
 #[allow(dead_code)]

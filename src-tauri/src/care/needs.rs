@@ -1,0 +1,237 @@
+use std::time::Duration;
+
+#[derive(Debug, Clone, Copy)]
+pub struct NeedValue(f64);
+
+impl NeedValue {
+    pub fn new(value: f64) -> Self { Self(value.clamp(0.0, 100.0)) }
+    pub fn get(&self) -> f64 { self.0 }
+    pub fn set(&mut self, value: f64) { self.0 = value.clamp(0.0, 100.0); }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum NeedType { Hunger, Happiness, Energy, Social }
+
+#[derive(Debug, Clone, Copy)]
+pub struct Needs {
+    pub hunger: NeedValue,
+    pub happiness: NeedValue,
+    pub energy: NeedValue,
+    pub social: NeedValue,
+}
+
+impl Needs {
+    pub fn full() -> Self {
+        Self {
+            hunger: NeedValue::new(100.0), happiness: NeedValue::new(100.0),
+            energy: NeedValue::new(100.0), social: NeedValue::new(100.0),
+        }
+    }
+
+    fn decay_rate(need: NeedType) -> f64 {
+        match need {
+            NeedType::Hunger => 0.5 / 3600.0,
+            NeedType::Happiness => 0.3 / 3600.0,
+            NeedType::Energy => 0.8 / 3600.0,
+            NeedType::Social => 0.4 / 3600.0,
+        }
+    }
+
+    pub fn decay(&mut self, elapsed: Duration) {
+        let secs = elapsed.as_secs_f64();
+        self.hunger.set(self.hunger.get() - Self::decay_rate(NeedType::Hunger) * secs);
+        self.happiness.set(self.happiness.get() - Self::decay_rate(NeedType::Happiness) * secs);
+        self.energy.set(self.energy.get() - Self::decay_rate(NeedType::Energy) * secs);
+        self.social.set(self.social.get() - Self::decay_rate(NeedType::Social) * secs);
+    }
+
+    pub fn get(&self, need: NeedType) -> f64 {
+        match need {
+            NeedType::Hunger => self.hunger.get(),
+            NeedType::Happiness => self.happiness.get(),
+            NeedType::Energy => self.energy.get(),
+            NeedType::Social => self.social.get(),
+        }
+    }
+
+    pub fn set(&mut self, need: NeedType, value: f64) {
+        match need {
+            NeedType::Hunger => self.hunger.set(value),
+            NeedType::Happiness => self.happiness.set(value),
+            NeedType::Energy => self.energy.set(value),
+            NeedType::Social => self.social.set(value),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum MoodLabel { Ecstatic, Happy, Content, Neutral, Sad, Miserable }
+
+impl MoodLabel {
+    pub fn from_score(score: f64) -> Self {
+        if score >= 90.0 { MoodLabel::Ecstatic }
+        else if score >= 70.0 { MoodLabel::Happy }
+        else if score >= 50.0 { MoodLabel::Content }
+        else if score >= 30.0 { MoodLabel::Neutral }
+        else if score >= 15.0 { MoodLabel::Sad }
+        else { MoodLabel::Miserable }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Mood { pub score: f64, pub label: MoodLabel }
+
+impl Mood {
+    pub fn from_needs(needs: &Needs) -> Self {
+        let score = needs.hunger.get() * 0.3 + needs.happiness.get() * 0.3
+            + needs.energy.get() * 0.25 + needs.social.get() * 0.15;
+        Self { score, label: MoodLabel::from_score(score) }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum CareAction { Feed, Pet, Chat, Sleep }
+
+#[derive(Debug, Clone)]
+pub struct CareSystem { pub needs: Needs }
+
+impl CareSystem {
+    pub fn new() -> Self { Self { needs: Needs::full() } }
+    pub fn with_needs(needs: Needs) -> Self { Self { needs } }
+    pub fn decay(&mut self, elapsed: Duration) { self.needs.decay(elapsed); }
+    pub fn mood(&self) -> Mood { Mood::from_needs(&self.needs) }
+
+    pub fn apply_action(&mut self, action: CareAction) -> f64 {
+        let (need, amount): (NeedType, f64) = match action {
+            CareAction::Feed => (NeedType::Hunger, 30.0),
+            CareAction::Pet => (NeedType::Happiness, 20.0),
+            CareAction::Chat => (NeedType::Social, 25.0),
+            CareAction::Sleep => (NeedType::Energy, 40.0),
+        };
+        let current = self.needs.get(need);
+        self.needs.set(need, current + amount);
+        self.needs.get(need)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn needs(a: f64, b: f64, c: f64, d: f64) -> Needs {
+        Needs {
+            hunger: NeedValue::new(a), happiness: NeedValue::new(b),
+            energy: NeedValue::new(c), social: NeedValue::new(d),
+        }
+    }
+
+    #[test]
+    fn test_needs_start_full() {
+        let n = Needs::full();
+        assert_eq!(n.hunger.get(), 100.0);
+    }
+
+    #[test]
+    fn test_need_value_clamped() {
+        assert_eq!(NeedValue::new(150.0).get(), 100.0);
+        assert_eq!(NeedValue::new(-10.0).get(), 0.0);
+    }
+
+    #[test]
+    fn test_decay_reduces_needs() {
+        let mut n = Needs::full();
+        n.decay(Duration::from_secs(3600));
+        assert!(n.hunger.get() < 100.0);
+    }
+
+    #[test]
+    fn test_decay_rates_correct() {
+        let mut n = Needs::full();
+        n.decay(Duration::from_secs(3600));
+        assert!((n.hunger.get() - 99.5).abs() < 0.01);
+        assert!((n.happiness.get() - 99.7).abs() < 0.01);
+        assert!((n.energy.get() - 99.2).abs() < 0.01);
+        assert!((n.social.get() - 99.6).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_decay_clamps_to_zero() {
+        let mut n = Needs::full();
+        n.hunger.set(0.1);
+        n.decay(Duration::from_secs(3600));
+        assert_eq!(n.hunger.get(), 0.0);
+    }
+
+    #[test]
+    fn test_mood_all_full() {
+        let m = CareSystem::new().mood();
+        assert!((m.score - 100.0).abs() < 0.01);
+        assert_eq!(m.label, MoodLabel::Ecstatic);
+    }
+
+    #[test]
+    fn test_mood_all_zero() {
+        let m = CareSystem::with_needs(needs(0.0, 0.0, 0.0, 0.0)).mood();
+        assert!(m.score.abs() < 0.01);
+        assert_eq!(m.label, MoodLabel::Miserable);
+    }
+
+    #[test]
+    fn test_mood_weighted() {
+        let m = CareSystem::with_needs(needs(80.0, 60.0, 40.0, 20.0)).mood();
+        assert!((m.score - 55.0).abs() < 0.01);
+        assert_eq!(m.label, MoodLabel::Content);
+    }
+
+    #[test]
+    fn test_mood_labels() {
+        assert_eq!(MoodLabel::from_score(95.0), MoodLabel::Ecstatic);
+        assert_eq!(MoodLabel::from_score(75.0), MoodLabel::Happy);
+        assert_eq!(MoodLabel::from_score(55.0), MoodLabel::Content);
+        assert_eq!(MoodLabel::from_score(35.0), MoodLabel::Neutral);
+        assert_eq!(MoodLabel::from_score(20.0), MoodLabel::Sad);
+        assert_eq!(MoodLabel::from_score(5.0), MoodLabel::Miserable);
+    }
+
+    #[test]
+    fn test_feed() {
+        let mut c = CareSystem::with_needs(needs(30.0, 50.0, 50.0, 50.0));
+        assert!((c.apply_action(CareAction::Feed) - 60.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_pet() {
+        let mut c = CareSystem::with_needs(needs(50.0, 30.0, 50.0, 50.0));
+        assert!((c.apply_action(CareAction::Pet) - 50.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_chat() {
+        let mut c = CareSystem::with_needs(needs(50.0, 50.0, 50.0, 30.0));
+        assert!((c.apply_action(CareAction::Chat) - 55.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_sleep() {
+        let mut c = CareSystem::with_needs(needs(50.0, 50.0, 20.0, 50.0));
+        assert!((c.apply_action(CareAction::Sleep) - 60.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_action_clamps() {
+        let mut c = CareSystem::with_needs(needs(90.0, 50.0, 50.0, 50.0));
+        assert_eq!(c.apply_action(CareAction::Feed), 100.0);
+    }
+
+    #[test]
+    fn test_mood_sad() {
+        let m = Mood::from_needs(&needs(10.0, 10.0, 10.0, 10.0));
+        assert!(matches!(m.label, MoodLabel::Sad | MoodLabel::Miserable));
+    }
+
+    #[test]
+    fn test_mood_happy() {
+        let m = Mood::from_needs(&needs(90.0, 90.0, 90.0, 90.0));
+        assert!(matches!(m.label, MoodLabel::Happy | MoodLabel::Ecstatic));
+    }
+}

@@ -10,8 +10,8 @@
       "Assert each need decreased by its decay rate * elapsed_time",
       "Assert needs are clamped to [0.0, 100.0]"
     ],
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "a376cd26a2c8c16f27e26a8899d3999913c52c07"
   },
   {
     "id": "P4-002",
@@ -24,8 +24,8 @@
       "Test boundary: all needs at 100 → mood 100, all at 0 → mood 0",
       "Test with mixed values: verify weighted calculation matches expected result"
     ],
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "a376cd26a2c8c16f27e26a8899d3999913c52c07"
   },
   {
     "id": "P4-003",
@@ -39,8 +39,8 @@
       "Verify mood_label returns 'happy'",
       "Verify mood thresholds map to correct FSM state transitions"
     ],
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "a376cd26a2c8c16f27e26a8899d3999913c52c07"
   },
   {
     "id": "P4-004",
@@ -55,8 +55,8 @@
       "Call sleep() and verify energy increased",
       "Verify values clamped to 100.0 max"
     ],
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "a376cd26a2c8c16f27e26a8899d3999913c52c07"
   },
   {
     "id": "P4-005",

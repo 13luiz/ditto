@@ -30,10 +30,10 @@ impl Needs {
 
     fn decay_rate(need: NeedType) -> f64 {
         match need {
-            NeedType::Hunger => 0.5 / 3600.0,
-            NeedType::Happiness => 0.3 / 3600.0,
-            NeedType::Energy => 0.8 / 3600.0,
-            NeedType::Social => 0.4 / 3600.0,
+            NeedType::Hunger => 1.0 / 3600.0,
+            NeedType::Happiness => 0.5 / 3600.0,
+            NeedType::Energy => 0.3 / 3600.0,
+            NeedType::Social => 0.2 / 3600.0,
         }
     }
 
@@ -65,15 +65,14 @@ impl Needs {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum MoodLabel { Ecstatic, Happy, Content, Neutral, Sad, Miserable }
+pub enum MoodLabel { Ecstatic, Happy, Neutral, Sad, Miserable }
 
 impl MoodLabel {
     pub fn from_score(score: f64) -> Self {
-        if score >= 90.0 { MoodLabel::Ecstatic }
-        else if score >= 70.0 { MoodLabel::Happy }
-        else if score >= 50.0 { MoodLabel::Content }
-        else if score >= 30.0 { MoodLabel::Neutral }
-        else if score >= 15.0 { MoodLabel::Sad }
+        if score >= 80.0 { MoodLabel::Ecstatic }
+        else if score >= 60.0 { MoodLabel::Happy }
+        else if score >= 40.0 { MoodLabel::Neutral }
+        else if score >= 20.0 { MoodLabel::Sad }
         else { MoodLabel::Miserable }
     }
 }
@@ -84,7 +83,7 @@ pub struct Mood { pub score: f64, pub label: MoodLabel }
 impl Mood {
     pub fn from_needs(needs: &Needs) -> Self {
         let score = needs.hunger.get() * 0.3 + needs.happiness.get() * 0.3
-            + needs.energy.get() * 0.25 + needs.social.get() * 0.15;
+            + needs.energy.get() * 0.2 + needs.social.get() * 0.2;
         Self { score, label: MoodLabel::from_score(score) }
     }
 }
@@ -163,10 +162,10 @@ mod tests {
     fn test_decay_rates_correct() {
         let mut n = Needs::full();
         n.decay(Duration::from_secs(3600));
-        assert!((n.hunger.get() - 99.5).abs() < 0.01);
-        assert!((n.happiness.get() - 99.7).abs() < 0.01);
-        assert!((n.energy.get() - 99.2).abs() < 0.01);
-        assert!((n.social.get() - 99.6).abs() < 0.01);
+        assert!((n.hunger.get() - 99.0).abs() < 0.01);
+        assert!((n.happiness.get() - 99.5).abs() < 0.01);
+        assert!((n.energy.get() - 99.7).abs() < 0.01);
+        assert!((n.social.get() - 99.8).abs() < 0.01);
     }
 
     #[test]
@@ -194,18 +193,17 @@ mod tests {
     #[test]
     fn test_mood_weighted() {
         let m = CareSystem::with_needs(needs(80.0, 60.0, 40.0, 20.0)).mood();
-        assert!((m.score - 55.0).abs() < 0.01);
-        assert_eq!(m.label, MoodLabel::Content);
+        assert!((m.score - 54.0).abs() < 0.01);
+        assert_eq!(m.label, MoodLabel::Neutral);
     }
 
     #[test]
     fn test_mood_labels() {
-        assert_eq!(MoodLabel::from_score(95.0), MoodLabel::Ecstatic);
-        assert_eq!(MoodLabel::from_score(75.0), MoodLabel::Happy);
-        assert_eq!(MoodLabel::from_score(55.0), MoodLabel::Content);
-        assert_eq!(MoodLabel::from_score(35.0), MoodLabel::Neutral);
-        assert_eq!(MoodLabel::from_score(20.0), MoodLabel::Sad);
-        assert_eq!(MoodLabel::from_score(5.0), MoodLabel::Miserable);
+        assert_eq!(MoodLabel::from_score(90.0), MoodLabel::Ecstatic);
+        assert_eq!(MoodLabel::from_score(70.0), MoodLabel::Happy);
+        assert_eq!(MoodLabel::from_score(50.0), MoodLabel::Neutral);
+        assert_eq!(MoodLabel::from_score(30.0), MoodLabel::Sad);
+        assert_eq!(MoodLabel::from_score(10.0), MoodLabel::Miserable);
     }
 
     #[test]
@@ -253,7 +251,7 @@ mod tests {
     #[test]
     fn test_care_save_and_load() {
         let db = crate::db::Database::open_in_memory().unwrap();
-        let mut care = CareSystem::with_needs(needs(30.0, 50.0, 70.0, 20.0));
+        let care = CareSystem::with_needs(needs(30.0, 50.0, 70.0, 20.0));
         care.save(&db).unwrap();
 
         let loaded = CareSystem::load(&db).unwrap();
@@ -273,7 +271,7 @@ mod tests {
     #[test]
     fn test_care_save_overwrites() {
         let db = crate::db::Database::open_in_memory().unwrap();
-        let mut care = CareSystem::with_needs(needs(10.0, 20.0, 30.0, 40.0));
+        let care = CareSystem::with_needs(needs(10.0, 20.0, 30.0, 40.0));
         care.save(&db).unwrap();
 
         let care2 = CareSystem::with_needs(needs(80.0, 90.0, 70.0, 60.0));

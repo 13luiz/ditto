@@ -109,7 +109,6 @@ impl BehaviorScheduler {
 
     pub fn check_break_reminder(&self) -> bool {
         !self.activity.is_idle()
-            && self.activity.idle_duration() == Duration::ZERO
             && self.break_reminder.should_fire()
     }
 

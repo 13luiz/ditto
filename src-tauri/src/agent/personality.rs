@@ -153,7 +153,7 @@ mod tests {
     #[test]
     fn test_traits_persistence() {
         let db = crate::db::Database::open_in_memory().unwrap();
-        let mut traits = PersonalityTraits {
+        let traits = PersonalityTraits {
             cheerfulness: 85,
             curiosity: 95,
             mischievousness: 20,

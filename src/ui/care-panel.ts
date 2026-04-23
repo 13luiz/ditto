@@ -78,7 +78,6 @@ function moodEmoji(label: string): string {
   switch (label) {
     case 'ecstatic': return '\u{1F929}';
     case 'happy': return '\u{1F60A}';
-    case 'content': return '\u{1F60C}';
     case 'neutral': return '\u{1F610}';
     case 'sad': return '\u{1F622}';
     case 'miserable': return '\u{1F629}';

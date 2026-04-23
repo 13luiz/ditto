@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.4] - 2026-04-23
+
+### Added
+
+- **Phase 3 — Mind**: Pet can think, converse, and remember
+- SQLite database with migrations for conversations, messages, memory, and settings
+- LLM provider abstraction supporting OpenAI, Anthropic, and Ollama via rig-core
+- System prompt builder with personality traits, mood, needs, and time context
+- Agent tool definitions (move_to, change_state, speak, remember, recall, show_emotion)
+- Chat UI in a second Tauri window (chat.html + chat-window.ts) with streaming token display
+- Conversation persistence — messages saved to SQLite, reloadable after restart
+- Memory system with short-term (sliding window) and long-term (key-value) recall
+- Personality trait engine with shift mechanics over time
+- Rate limiting for proactive LLM calls (30-second minimum interval)
+- Rule-based fallback when no LLM provider is configured
+- LLM provider config via `.env` file (`DITTO_LLM_API_KEY`, `DITTO_LLM_TYPE`, `DITTO_LLM_MODEL`, `DITTO_LLM_BASE_URL`)
+- `send_chat_message` and `load_chat_history` IPC commands wired to agent + DB
+- 71 new Rust tests (138 total): agent core, tools, memory, personality, prompt, DB persistence
+
+### Fixed
+
+- Multi-monitor DPI coordinate system — all position calculations use PhysicalPosition + scaleFactor
+- Click-through alpha detection uses correct physical-to-canvas coordinate conversion
+- Drag handler uses `get_cursor_position` IPC for cross-monitor coordinate consistency
+- Ground level detection uses monitor workArea (physical pixels) instead of CSS pixels
+- DB moved to `%LOCALAPPDATA%/ditto/` to prevent dev watcher restart loops
+- Async chat command properly drops DB Mutex lock before `.await` (no more `block_on` panics)
+- Chat window positioned above pet using physical-to-logical coordinate conversion
+- Chat window uses JS `WebviewWindow` API to avoid WebView2 builder crash on Windows
+
 ## [0.0.3] - 2026-04-23
 
 ### Changed
@@ -55,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI workflow (Rust checks: fmt, clippy, test)
 - `.gitignore` for `.repos/` and `.claude/`
 
+[0.0.4]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.4
 [0.0.3]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.3
 [0.0.2]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.2
 [0.0.1]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.1

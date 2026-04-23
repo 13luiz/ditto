@@ -33,7 +33,12 @@ fn load_env_provider_config(db: &db::Database) {
 
     let config_str = serde_json::to_string(&config).unwrap();
     // Only write if not already set (avoids triggering dev watcher loop)
-    if db.load_setting("provider_config").unwrap_or(None).as_deref() != Some(&config_str) {
+    if db
+        .load_setting("provider_config")
+        .unwrap_or(None)
+        .as_deref()
+        != Some(&config_str)
+    {
         let _ = db.save_setting("provider_config", &config_str);
     }
 }

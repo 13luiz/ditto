@@ -7,6 +7,9 @@ mod behavior;
 #[allow(dead_code)]
 mod db;
 
+#[allow(dead_code)]
+mod agent;
+
 #[cfg(not(test))]
 pub fn run() {
     tauri::Builder::default()

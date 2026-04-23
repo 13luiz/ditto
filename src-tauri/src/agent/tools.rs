@@ -1,4 +1,7 @@
+use rig::completion::ToolDefinition;
+use rig::tool::Tool;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::fmt;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -109,22 +112,9 @@ pub fn dispatch_tool(call: &ToolCall) -> ToolResult {
         }
         ToolCall::ChangeState { state } => {
             let valid = [
-                "idle",
-                "walk_left",
-                "walk_right",
-                "run_left",
-                "run_right",
-                "fall",
-                "drag",
-                "sleep",
-                "sit",
-                "talk",
-                "happy",
-                "sad",
-                "curious",
-                "eat",
-                "play",
-                "climb",
+                "idle", "walk_left", "walk_right", "run_left", "run_right",
+                "fall", "drag", "sleep", "sit", "talk", "happy", "sad",
+                "curious", "eat", "play", "climb",
             ];
             if valid.contains(&state.as_str()) {
                 ToolResult::Success(format!("State changed to {}", state))
@@ -152,6 +142,204 @@ pub fn dispatch_tool(call: &ToolCall) -> ToolResult {
                 return ToolResult::Error("recall key cannot be empty".to_string());
             }
             ToolResult::Success(format!("Recalled: {}", key))
+        }
+    }
+}
+
+// rig-core Tool implementations
+
+#[derive(Debug, thiserror::Error)]
+#[error("tool execution error")]
+pub struct ToolExecError;
+
+#[derive(Deserialize)]
+pub struct MoveToArgs {
+    pub x: f64,
+    pub y: f64,
+}
+
+#[derive(Serialize)]
+pub struct MoveToTool;
+
+impl Tool for MoveToTool {
+    const NAME: &'static str = "move_to";
+    type Error = ToolExecError;
+    type Args = MoveToArgs;
+    type Output = String;
+
+    async fn definition(&self, _prompt: String) -> ToolDefinition {
+        ToolDefinition {
+            name: "move_to".to_string(),
+            description: "Move the pet to a specific screen position".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "x": { "type": "number", "description": "Target X coordinate" },
+                    "y": { "type": "number", "description": "Target Y coordinate" }
+                },
+                "required": ["x", "y"]
+            }),
+        }
+    }
+
+    async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
+        let result = dispatch_tool(&ToolCall::MoveTo { x: args.x, y: args.y });
+        match result {
+            ToolResult::Success(msg) => Ok(msg),
+            ToolResult::Error(_) => Err(ToolExecError),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct ChangeStateArgs {
+    pub state: String,
+}
+
+#[derive(Serialize)]
+pub struct ChangeStateTool;
+
+impl Tool for ChangeStateTool {
+    const NAME: &'static str = "change_state";
+    type Error = ToolExecError;
+    type Args = ChangeStateArgs;
+    type Output = String;
+
+    async fn definition(&self, _prompt: String) -> ToolDefinition {
+        ToolDefinition {
+            name: "change_state".to_string(),
+            description: "Change the pet's animation state. Valid states: idle, walk_left, walk_right, sleep, sit, talk, happy, sad, curious".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "state": { "type": "string", "description": "The target animation state" }
+                },
+                "required": ["state"]
+            }),
+        }
+    }
+
+    async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
+        let result = dispatch_tool(&ToolCall::ChangeState { state: args.state });
+        match result {
+            ToolResult::Success(msg) => Ok(msg),
+            ToolResult::Error(_) => Err(ToolExecError),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct SpeakArgs {
+    pub text: String,
+}
+
+#[derive(Serialize)]
+pub struct SpeakTool;
+
+impl Tool for SpeakTool {
+    const NAME: &'static str = "speak";
+    type Error = ToolExecError;
+    type Args = SpeakArgs;
+    type Output = String;
+
+    async fn definition(&self, _prompt: String) -> ToolDefinition {
+        ToolDefinition {
+            name: "speak".to_string(),
+            description: "Show text in the chat bubble".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "text": { "type": "string", "description": "The text to display" }
+                },
+                "required": ["text"]
+            }),
+        }
+    }
+
+    async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
+        let result = dispatch_tool(&ToolCall::Speak { text: args.text });
+        match result {
+            ToolResult::Success(msg) => Ok(msg),
+            ToolResult::Error(_) => Err(ToolExecError),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct RememberArgs {
+    pub key: String,
+    pub value: String,
+}
+
+#[derive(Serialize)]
+pub struct RememberTool;
+
+impl Tool for RememberTool {
+    const NAME: &'static str = "remember";
+    type Error = ToolExecError;
+    type Args = RememberArgs;
+    type Output = String;
+
+    async fn definition(&self, _prompt: String) -> ToolDefinition {
+        ToolDefinition {
+            name: "remember".to_string(),
+            description: "Store a long-term memory about the user or context".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "key": { "type": "string", "description": "Memory key identifier" },
+                    "value": { "type": "string", "description": "The value to remember" }
+                },
+                "required": ["key", "value"]
+            }),
+        }
+    }
+
+    async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
+        let result = dispatch_tool(&ToolCall::Remember {
+            key: args.key,
+            value: args.value,
+        });
+        match result {
+            ToolResult::Success(msg) => Ok(msg),
+            ToolResult::Error(_) => Err(ToolExecError),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct RecallArgs {
+    pub key: String,
+}
+
+#[derive(Serialize)]
+pub struct RecallTool;
+
+impl Tool for RecallTool {
+    const NAME: &'static str = "recall";
+    type Error = ToolExecError;
+    type Args = RecallArgs;
+    type Output = String;
+
+    async fn definition(&self, _prompt: String) -> ToolDefinition {
+        ToolDefinition {
+            name: "recall".to_string(),
+            description: "Retrieve a long-term memory by key".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "key": { "type": "string", "description": "Memory key to look up" }
+                },
+                "required": ["key"]
+            }),
+        }
+    }
+
+    async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
+        let result = dispatch_tool(&ToolCall::Recall { key: args.key });
+        match result {
+            ToolResult::Success(msg) => Ok(msg),
+            ToolResult::Error(_) => Err(ToolExecError),
         }
     }
 }
@@ -279,5 +467,67 @@ mod tests {
             .tool_name(),
             ToolName::Remember
         );
+    }
+
+    #[tokio::test]
+    async fn test_move_to_tool_definition() {
+        let tool = MoveToTool;
+        let def = tool.definition("test".to_string()).await;
+        assert_eq!(def.name, "move_to");
+        assert!(def.parameters["properties"]["x"].is_object());
+        assert!(def.parameters["properties"]["y"].is_object());
+    }
+
+    #[tokio::test]
+    async fn test_move_to_tool_execution() {
+        let tool = MoveToTool;
+        let result = tool.call(MoveToArgs { x: 100.0, y: 200.0 }).await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("100"));
+    }
+
+    #[tokio::test]
+    async fn test_change_state_tool_execution() {
+        let tool = ChangeStateTool;
+        let result = tool
+            .call(ChangeStateArgs {
+                state: "idle".to_string(),
+            })
+            .await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_speak_tool_execution() {
+        let tool = SpeakTool;
+        let result = tool
+            .call(SpeakArgs {
+                text: "Hello!".to_string(),
+            })
+            .await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_remember_tool_execution() {
+        let tool = RememberTool;
+        let result = tool
+            .call(RememberArgs {
+                key: "user_name".to_string(),
+                value: "Alice".to_string(),
+            })
+            .await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_recall_tool_execution() {
+        let tool = RecallTool;
+        let result = tool
+            .call(RecallArgs {
+                key: "user_name".to_string(),
+            })
+            .await;
+        assert!(result.is_ok());
     }
 }

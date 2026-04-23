@@ -3,6 +3,7 @@ import { ClickThroughHandler } from './input/click-through';
 import { DragHandler } from './input/drag-handler';
 import { PetController } from './behavior/pet-controller';
 import { ChatBubble, createChatStyles } from './ui/chat-bubble';
+import { sendChatMessage, onStreamToken, onStreamDone } from './ipc/commands';
 
 async function main() {
   const canvas = document.getElementById('pet-canvas') as HTMLCanvasElement;
@@ -21,8 +22,17 @@ async function main() {
   });
 
   const chatBubble = new ChatBubble((message) => {
-    console.log('Chat message sent:', message);
+    sendChatMessage(message).catch(console.error);
   });
+
+  onStreamToken((token) => {
+    chatBubble.streamToken(token);
+  });
+
+  onStreamDone(() => {
+    chatBubble.hideTypingIndicator();
+  });
+
   chatBubble.mount(app);
 
   canvas.addEventListener('dblclick', () => {

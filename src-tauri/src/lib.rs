@@ -16,7 +16,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::set_ignore_cursor_events,
             commands::get_cursor_position,
-            commands::set_window_position
+            commands::set_window_position,
+            commands::send_chat_message,
+            commands::load_chat_history
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -96,10 +98,19 @@ mod tests {
             .join("src")
             .join("lib.rs");
         let content = fs::read_to_string(&src).unwrap();
-        assert!(
-            content.contains("set_ignore_cursor_events"),
-            "command should be registered in generate_handler"
-        );
+        for cmd in [
+            "set_ignore_cursor_events",
+            "get_cursor_position",
+            "set_window_position",
+            "send_chat_message",
+            "load_chat_history",
+        ] {
+            assert!(
+                content.contains(cmd),
+                "command {} should be registered in generate_handler",
+                cmd
+            );
+        }
     }
 
     fn load_animations_config() -> Value {

@@ -3,9 +3,14 @@ use rig::tool::Tool;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::fmt;
+
+#[cfg(not(test))]
 use std::sync::Mutex;
+
+#[cfg(not(test))]
 use tauri::Emitter;
 
+#[cfg(not(test))]
 use crate::db::Database;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -177,6 +182,7 @@ pub struct MoveToArgs {
 
 #[derive(Serialize, Clone)]
 pub struct MoveToTool {
+    #[cfg(not(test))]
     #[serde(skip)]
     pub app: Option<tauri::AppHandle>,
 }
@@ -209,6 +215,7 @@ impl Tool for MoveToTool {
         });
         match result {
             ToolResult::Success(msg) => {
+                #[cfg(not(test))]
                 if let Some(app) = &self.app {
                     let _ = app.emit(
                         "pet-action",
@@ -229,6 +236,7 @@ pub struct ChangeStateArgs {
 
 #[derive(Serialize, Clone)]
 pub struct ChangeStateTool {
+    #[cfg(not(test))]
     #[serde(skip)]
     pub app: Option<tauri::AppHandle>,
 }
@@ -259,6 +267,7 @@ impl Tool for ChangeStateTool {
         });
         match result {
             ToolResult::Success(msg) => {
+                #[cfg(not(test))]
                 if let Some(app) = &self.app {
                     let _ = app.emit(
                         "pet-action",
@@ -316,6 +325,7 @@ pub struct ShowEmotionArgs {
 
 #[derive(Serialize, Clone)]
 pub struct ShowEmotionTool {
+    #[cfg(not(test))]
     #[serde(skip)]
     pub app: Option<tauri::AppHandle>,
 }
@@ -346,6 +356,7 @@ impl Tool for ShowEmotionTool {
         });
         match result {
             ToolResult::Success(msg) => {
+                #[cfg(not(test))]
                 if let Some(app) = &self.app {
                     let _ = app.emit(
                         "pet-action",
@@ -367,6 +378,7 @@ pub struct RememberArgs {
 
 #[derive(Serialize, Clone)]
 pub struct RememberTool {
+    #[cfg(not(test))]
     #[serde(skip)]
     pub db: Option<std::sync::Arc<Mutex<Database>>>,
 }
@@ -396,6 +408,7 @@ impl Tool for RememberTool {
         if args.key.is_empty() {
             return Err(ToolExecError);
         }
+        #[cfg(not(test))]
         if let Some(db) = &self.db {
             if let Ok(db) = db.lock() {
                 let _ = db.save_memory(&args.key, &args.value, "long_term");
@@ -412,6 +425,7 @@ pub struct RecallArgs {
 
 #[derive(Serialize, Clone)]
 pub struct RecallTool {
+    #[cfg(not(test))]
     #[serde(skip)]
     pub db: Option<std::sync::Arc<Mutex<Database>>>,
 }
@@ -440,6 +454,7 @@ impl Tool for RecallTool {
         if args.key.is_empty() {
             return Err(ToolExecError);
         }
+        #[cfg(not(test))]
         if let Some(db) = &self.db {
             if let Ok(db) = db.lock() {
                 if let Ok(Some(value)) = db.load_memory(&args.key) {
@@ -578,7 +593,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_move_to_tool_definition() {
-        let tool = MoveToTool { app: None };
+        let tool = MoveToTool {};
         let def = tool.definition("test".to_string()).await;
         assert_eq!(def.name, "move_to");
         assert!(def.parameters["properties"]["x"].is_object());
@@ -587,7 +602,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_move_to_tool_execution() {
-        let tool = MoveToTool { app: None };
+        let tool = MoveToTool {};
         let result = tool.call(MoveToArgs { x: 100.0, y: 200.0 }).await;
         assert!(result.is_ok());
         assert!(result.unwrap().contains("100"));
@@ -595,7 +610,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_change_state_tool_execution() {
-        let tool = ChangeStateTool { app: None };
+        let tool = ChangeStateTool {};
         let result = tool
             .call(ChangeStateArgs {
                 state: "idle".to_string(),
@@ -617,7 +632,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_remember_tool_execution() {
-        let tool = RememberTool { db: None };
+        let tool = RememberTool {};
         let result = tool
             .call(RememberArgs {
                 key: "user_name".to_string(),
@@ -630,7 +645,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_recall_tool_execution() {
-        let tool = RecallTool { db: None };
+        let tool = RecallTool {};
         let result = tool
             .call(RecallArgs {
                 key: "user_name".to_string(),

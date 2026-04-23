@@ -1,12 +1,15 @@
-use rig::client::completion::CompletionClient;
 use rig::completion::{Chat, Message, Prompt};
+#[cfg(not(test))]
+use rig::client::completion::CompletionClient;
 use rig::providers;
 use rig::providers::openai::client::CompletionsClient as OpenAIClient;
 use serde::{Deserialize, Serialize};
 
+#[cfg(not(test))]
 use super::tools::{
     ChangeStateTool, MoveToTool, RecallTool, RememberTool, ShowEmotionTool, SpeakTool,
 };
+#[cfg(not(test))]
 use crate::db::Database;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -152,6 +155,7 @@ pub enum DittoAgent {
 }
 
 impl DittoAgent {
+    #[cfg(not(test))]
     pub fn new(
         config: &ProviderConfig,
         preamble: &str,
@@ -401,12 +405,12 @@ mod tests {
 
     #[test]
     fn test_openai_config_builds_client() {
-        let config = ProviderConfig::OpenAI {
+        let _config = ProviderConfig::OpenAI {
             api_key: "sk-test-key".to_string(),
             model: "gpt-4o".to_string(),
             base_url: None,
         };
-        let mut builder = OpenAIClient::builder().api_key("sk-test-key");
+        let builder = OpenAIClient::builder().api_key("sk-test-key");
         let client = builder.build();
         assert!(client.is_ok());
     }

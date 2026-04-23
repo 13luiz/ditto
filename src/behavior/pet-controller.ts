@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { availableMonitors } from '@tauri-apps/api/window';
 
 export type PetState =
   | 'idle'
@@ -23,15 +24,20 @@ const RUN_SPEED = 140; // px/s
 const GRAVITY = 980; // px/s²
 const IDLE_WANDER_INTERVAL_MS = 5000;
 
+interface MonitorBounds {
+  xStart: number;
+  xEnd: number;
+  groundY: number;
+  ceilingY: number;
+}
+
 export class PetController {
   private state: PetState = 'idle';
   private windowX: number = 0;
   private windowY: number = 0;
   private velocityX: number = 0;
   private velocityY: number = 0;
-  private screenWidth: number;
-  private screenHeight: number;
-  private totalWidth: number;
+  private monitors: MonitorBounds[] = [];
   private petWidth: number = 64;
   private petHeight: number = 64;
   private wanderTimer: number | null = null;
@@ -41,16 +47,71 @@ export class PetController {
 
   constructor(onStateChange: (state: PetState) => void) {
     this.onStateChange = onStateChange;
-    // Use screen properties for multi-monitor support
-    this.screenWidth = window.screen.width;
-    this.screenHeight = window.screen.availHeight;
-    // Total available width across monitors (may be wider than primary)
-    this.totalWidth = window.screen.availWidth > this.screenWidth
-      ? window.screen.availWidth
-      : this.screenWidth;
-    this.windowX = Math.floor(this.screenWidth / 2);
-    this.windowY = this.screenHeight - this.petHeight;
-    this.updateWindowPosition();
+    this.loadMonitors();
+  }
+
+  async loadMonitors(): Promise<void> {
+    try {
+      const mons = await availableMonitors();
+      this.monitors = mons.map(m => ({
+        xStart: m.position.x,
+        xEnd: m.position.x + m.size.width,
+        groundY: m.workArea.position.y + m.workArea.size.height,
+        ceilingY: m.workArea.position.y,
+      }));
+
+      if (this.monitors.length === 0) {
+        this.monitors = [{
+          xStart: 0,
+          xEnd: window.screen.width,
+          groundY: window.screen.availHeight,
+          ceilingY: 0,
+        }];
+      }
+
+      // If first init, place pet on primary monitor's ground
+      if (this.windowX === 0 && this.windowY === 0) {
+        const primary = this.monitors[0];
+        this.windowX = Math.floor((primary.xStart + primary.xEnd) / 2);
+        this.windowY = primary.groundY - this.petHeight;
+        this.updateWindowPosition();
+      }
+    } catch {
+      this.monitors = [{
+        xStart: 0,
+        xEnd: window.screen.width,
+        groundY: window.screen.availHeight,
+        ceilingY: 0,
+      }];
+      this.windowX = Math.floor(window.screen.width / 2);
+      this.windowY = this.monitors[0].groundY - this.petHeight;
+      this.updateWindowPosition();
+    }
+  }
+
+  private getMonitorAt(x: number): MonitorBounds | null {
+    // Check with tolerance for the pet width — use center of pet
+    const cx = x + this.petWidth / 2;
+    for (const m of this.monitors) {
+      if (cx >= m.xStart && cx < m.xEnd) return m;
+    }
+    // Fallback: find closest monitor
+    let closest = this.monitors[0];
+    let minDist = Infinity;
+    for (const m of this.monitors) {
+      const mid = (m.xStart + m.xEnd) / 2;
+      const dist = Math.abs(cx - mid);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = m;
+      }
+    }
+    return closest;
+  }
+
+  private get totalWidth(): number {
+    if (this.monitors.length === 0) return window.screen.width;
+    return Math.max(...this.monitors.map(m => m.xEnd));
   }
 
   getState(): PetState {
@@ -110,21 +171,22 @@ export class PetController {
     if (this.state === 'fall') {
       this.velocityY += GRAVITY * dt;
       this.windowY += this.velocityY * dt;
-      if (this.windowY >= this.screenHeight - this.petHeight) {
-        this.windowY = this.screenHeight - this.petHeight;
+      const mon = this.getMonitorAt(this.windowX);
+      if (mon && this.windowY >= mon.groundY - this.petHeight) {
+        this.windowY = mon.groundY - this.petHeight;
         this.velocityY = 0;
         this.setState('idle');
       }
     } else if (this.state === 'walk_left' || this.state === 'walk_right' ||
                this.state === 'run_left' || this.state === 'run_right') {
       this.windowX += this.velocityX * dt;
-      // Allow multi-monitor: clamp to total display bounds, not just primary
+      const tw = this.totalWidth;
       if (this.windowX <= -this.petWidth) {
         this.windowX = -this.petWidth;
         this.setState('idle');
       }
-      if (this.windowX >= this.totalWidth) {
-        this.windowX = this.totalWidth;
+      if (this.windowX >= tw) {
+        this.windowX = tw;
         this.setState('idle');
       }
     }

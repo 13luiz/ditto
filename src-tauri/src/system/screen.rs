@@ -1,6 +1,3 @@
-#[allow(unused_imports)]
-use std::io::Write;
-
 /// Captures the primary monitor and returns PNG-encoded bytes.
 pub fn capture_primary_monitor() -> Result<Vec<u8>, String> {
     let monitors = xcap::Monitor::all().map_err(|e| format!("Failed to list monitors: {}", e))?;

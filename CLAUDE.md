@@ -76,6 +76,11 @@ The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime de
 
 The Rust FSM (`state_machine.rs`) is well-tested but currently not wired to the frontend at runtime — the frontend `PetController` manages state unilaterally. Phase 3 will integrate the backend FSM via IPC when the AI agent drives behavior.
 
+### Sound System
+
+- Sound effects use procedural Web Audio API synthesis (`src/ui/sound.ts`) — no audio files needed
+- For future sampled audio (voice lines, richer effects), switch to `rodio` crate in the Rust backend
+
 ### Asset Pipeline
 
 - `assets/` is Vite's `publicDir` — files are served at root (e.g., `/pets/default/spritesheet.png` not `/assets/...`)

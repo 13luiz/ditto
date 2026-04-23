@@ -84,7 +84,7 @@
       "Verify triggers don't fire outside their conditions"
     ],
     "passes": true,
-    "commit": "cf7f6bf7a8f9d0f9f9f9f9f9f9f9f9f9f9f9f9f9"
+    "commit": "6f3686d"
   },
   {
     "id": "P4-007",
@@ -98,7 +98,7 @@
       "Record new activity, verify state returns to 'active'"
     ],
     "passes": true,
-    "commit": "cf7f6bf7a8f9d0f9f9f9f9f9f9f9f9f9f9f9f9f9"
+    "commit": "6f3686d"
   },
   {
     "id": "P4-008",

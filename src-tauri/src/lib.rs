@@ -15,6 +15,9 @@ mod db;
 #[allow(dead_code)]
 mod agent;
 
+#[allow(dead_code)]
+mod system;
+
 #[cfg(not(test))]
 fn load_env_provider_config(db: &db::Database) {
     let api_key = match std::env::var("DITTO_LLM_API_KEY") {

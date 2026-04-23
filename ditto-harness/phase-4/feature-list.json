@@ -111,8 +111,8 @@
       "Verify captured image has non-zero dimensions",
       "Verify image can be encoded to PNG for LLM vision input"
     ],
-    "passes": false,
-    "commit": null
+    "passes": true,
+    "commit": "6f3686d"
   },
   {
     "id": "P4-009",

@@ -276,7 +276,7 @@ mod tests {
         let mut care = CareSystem::with_needs(needs(10.0, 20.0, 30.0, 40.0));
         care.save(&db).unwrap();
 
-        let mut care2 = CareSystem::with_needs(needs(80.0, 90.0, 70.0, 60.0));
+        let care2 = CareSystem::with_needs(needs(80.0, 90.0, 70.0, 60.0));
         care2.save(&db).unwrap();
 
         let loaded = CareSystem::load(&db).unwrap();

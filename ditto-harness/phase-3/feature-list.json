@@ -17,8 +17,8 @@
         "Write unit test: insert and retrieve a conversation with messages",
         "Write unit test: insert and query memory by key"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "c84aef01d167bb94d87cf6ce6f28eff2e9cdf25e"
     },
     {
       "id": "P3-002",
@@ -34,8 +34,8 @@
         "Write unit test: ProviderConfig deserialization from JSON",
         "Write unit test: AgentError display and from implementations"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "d5fb3000f8a9bfd0537bfe20355858c8514abb17"
     },
     {
       "id": "P3-003",
@@ -50,8 +50,8 @@
         "Write unit test: prompt includes current time context",
         "Write unit test: prompt includes mood label and needs percentages"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "53aabdabc1e8cb2651a6413578fe97c9d6d0535d"
     },
     {
       "id": "P3-004",
@@ -66,8 +66,8 @@
         "Write unit test: tool dispatch routes to correct handler",
         "Write unit test: invalid tool name returns appropriate error"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "53aabdabc1e8cb2651a6413578fe97c9d6d0535d"
     },
     {
       "id": "P3-005",
@@ -82,8 +82,8 @@
         "Chat bubble positioned near the pet, semi-transparent background",
         "Use Playwright to verify chat bubble appears, accepts input, and displays messages"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "fb28b2503f31ef0fe4791e4ee67161be10240d28"
     },
     {
       "id": "P3-006",
@@ -97,8 +97,8 @@
         "Smooth animation for text appearance",
         "Manual verification: chat text streams in token by token, not all at once"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "63e13365c0ca1d211ab4bace1378b74eb2125873"
     },
     {
       "id": "P3-007",
@@ -113,8 +113,8 @@
         "Write integration test (mocked): handle API error gracefully",
         "Register chat IPC commands in lib.rs"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "cbb5d3d7ff1362016051ae6a0ae430cc921b27b9"
     },
     {
       "id": "P3-008",
@@ -126,8 +126,8 @@
         "Write integration test (mocked): construct Anthropic provider, send message, verify response parsing",
         "Write integration test (mocked): handle API error gracefully"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "cbb5d3d7ff1362016051ae6a0ae430cc921b27b9"
     },
     {
       "id": "P3-009",
@@ -139,8 +139,8 @@
         "Write integration test (mocked): construct Ollama provider with localhost URL, send message, verify response",
         "Write integration test (mocked): handle connection refused gracefully"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "cbb5d3d7ff1362016051ae6a0ae430cc921b27b9"
     },
     {
       "id": "P3-010",
@@ -154,8 +154,8 @@
         "Write integration test (mocked): move_to tool changes pet position",
         "Write integration test (mocked): change_state tool changes pet animation"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "a18b2b05aa3c7dd31ef70d861b6368905a89f3d0"
     },
     {
       "id": "P3-011",
@@ -168,8 +168,8 @@
         "Write integration test: send 5 messages, restart (reopen DB), verify all 5 reload",
         "Write integration test: conversation with tool calls is saved correctly"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "aedb424538b3d87447a4f3c1dfecb1a258c1e217"
     },
     {
       "id": "P3-012",
@@ -184,8 +184,8 @@
         "Write integration test: store fact 'user name is Alice', recall it in next conversation",
         "Write integration test: short-term memory limited to 20 messages"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "aedb424538b3d87447a4f3c1dfecb1a258c1e217"
     },
     {
       "id": "P3-013",
@@ -199,8 +199,8 @@
         "Write integration test: all LLM providers fail → rule-based response returned",
         "Write integration test: fallback does not add excessive latency"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "aedb424538b3d87447a4f3c1dfecb1a258c1e217"
     },
     {
       "id": "P3-014",
@@ -214,8 +214,8 @@
         "Write integration test: rapid proactive calls are throttled to 1 per 30s",
         "Write integration test: user-initiated calls bypass rate limit"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "aedb424538b3d87447a4f3c1dfecb1a258c1e217"
     },
     {
       "id": "P3-015",
@@ -229,8 +229,8 @@
         "Manual verification: set high cheerfulness + curiosity, verify responses are upbeat and inquisitive",
         "Manual verification: set low cheerfulness + high clinginess, verify responses are needy and subdued"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "aedb424538b3d87447a4f3c1dfecb1a258c1e217"
     }
   ]
 }

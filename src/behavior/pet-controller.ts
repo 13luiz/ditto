@@ -43,7 +43,7 @@ export class PetController {
     this.onStateChange = onStateChange;
     // Use screen properties for multi-monitor support
     this.screenWidth = window.screen.width;
-    this.screenHeight = window.screen.height;
+    this.screenHeight = window.screen.availHeight;
     // Total available width across monitors (may be wider than primary)
     this.totalWidth = window.screen.availWidth > this.screenWidth
       ? window.screen.availWidth

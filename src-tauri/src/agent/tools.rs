@@ -3,6 +3,10 @@ use rig::tool::Tool;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::fmt;
+use std::sync::Mutex;
+use tauri::Emitter;
+
+use crate::db::Database;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ToolName {
@@ -171,8 +175,11 @@ pub struct MoveToArgs {
     pub y: f64,
 }
 
-#[derive(Serialize)]
-pub struct MoveToTool;
+#[derive(Serialize, Clone)]
+pub struct MoveToTool {
+    #[serde(skip)]
+    pub app: Option<tauri::AppHandle>,
+}
 
 impl Tool for MoveToTool {
     const NAME: &'static str = "move_to";
@@ -201,7 +208,15 @@ impl Tool for MoveToTool {
             y: args.y,
         });
         match result {
-            ToolResult::Success(msg) => Ok(msg),
+            ToolResult::Success(msg) => {
+                if let Some(app) = &self.app {
+                    let _ = app.emit(
+                        "pet-action",
+                        json!({ "type": "move_to", "x": args.x, "y": args.y }),
+                    );
+                }
+                Ok(msg)
+            }
             ToolResult::Error(_) => Err(ToolExecError),
         }
     }
@@ -212,8 +227,11 @@ pub struct ChangeStateArgs {
     pub state: String,
 }
 
-#[derive(Serialize)]
-pub struct ChangeStateTool;
+#[derive(Serialize, Clone)]
+pub struct ChangeStateTool {
+    #[serde(skip)]
+    pub app: Option<tauri::AppHandle>,
+}
 
 impl Tool for ChangeStateTool {
     const NAME: &'static str = "change_state";
@@ -236,9 +254,19 @@ impl Tool for ChangeStateTool {
     }
 
     async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
-        let result = dispatch_tool(&ToolCall::ChangeState { state: args.state });
+        let result = dispatch_tool(&ToolCall::ChangeState {
+            state: args.state.clone(),
+        });
         match result {
-            ToolResult::Success(msg) => Ok(msg),
+            ToolResult::Success(msg) => {
+                if let Some(app) = &self.app {
+                    let _ = app.emit(
+                        "pet-action",
+                        json!({ "type": "change_state", "state": args.state }),
+                    );
+                }
+                Ok(msg)
+            }
             ToolResult::Error(_) => Err(ToolExecError),
         }
     }
@@ -282,13 +310,66 @@ impl Tool for SpeakTool {
 }
 
 #[derive(Deserialize)]
+pub struct ShowEmotionArgs {
+    pub emotion: String,
+}
+
+#[derive(Serialize, Clone)]
+pub struct ShowEmotionTool {
+    #[serde(skip)]
+    pub app: Option<tauri::AppHandle>,
+}
+
+impl Tool for ShowEmotionTool {
+    const NAME: &'static str = "show_emotion";
+    type Error = ToolExecError;
+    type Args = ShowEmotionArgs;
+    type Output = String;
+
+    async fn definition(&self, _prompt: String) -> ToolDefinition {
+        ToolDefinition {
+            name: "show_emotion".to_string(),
+            description: "Display an emotion on the pet (happy, sad, curious, etc.)".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "emotion": { "type": "string", "description": "The emotion to display" }
+                },
+                "required": ["emotion"]
+            }),
+        }
+    }
+
+    async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
+        let result = dispatch_tool(&ToolCall::ShowEmotion {
+            emotion: args.emotion.clone(),
+        });
+        match result {
+            ToolResult::Success(msg) => {
+                if let Some(app) = &self.app {
+                    let _ = app.emit(
+                        "pet-action",
+                        json!({ "type": "show_emotion", "emotion": args.emotion }),
+                    );
+                }
+                Ok(msg)
+            }
+            ToolResult::Error(_) => Err(ToolExecError),
+        }
+    }
+}
+
+#[derive(Deserialize)]
 pub struct RememberArgs {
     pub key: String,
     pub value: String,
 }
 
-#[derive(Serialize)]
-pub struct RememberTool;
+#[derive(Serialize, Clone)]
+pub struct RememberTool {
+    #[serde(skip)]
+    pub db: Option<std::sync::Arc<Mutex<Database>>>,
+}
 
 impl Tool for RememberTool {
     const NAME: &'static str = "remember";
@@ -312,14 +393,15 @@ impl Tool for RememberTool {
     }
 
     async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
-        let result = dispatch_tool(&ToolCall::Remember {
-            key: args.key,
-            value: args.value,
-        });
-        match result {
-            ToolResult::Success(msg) => Ok(msg),
-            ToolResult::Error(_) => Err(ToolExecError),
+        if args.key.is_empty() {
+            return Err(ToolExecError);
         }
+        if let Some(db) = &self.db {
+            if let Ok(db) = db.lock() {
+                let _ = db.save_memory(&args.key, &args.value, "long_term");
+            }
+        }
+        Ok(format!("Remembered: {} = {}", args.key, args.value))
     }
 }
 
@@ -328,8 +410,11 @@ pub struct RecallArgs {
     pub key: String,
 }
 
-#[derive(Serialize)]
-pub struct RecallTool;
+#[derive(Serialize, Clone)]
+pub struct RecallTool {
+    #[serde(skip)]
+    pub db: Option<std::sync::Arc<Mutex<Database>>>,
+}
 
 impl Tool for RecallTool {
     const NAME: &'static str = "recall";
@@ -352,11 +437,17 @@ impl Tool for RecallTool {
     }
 
     async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
-        let result = dispatch_tool(&ToolCall::Recall { key: args.key });
-        match result {
-            ToolResult::Success(msg) => Ok(msg),
-            ToolResult::Error(_) => Err(ToolExecError),
+        if args.key.is_empty() {
+            return Err(ToolExecError);
         }
+        if let Some(db) = &self.db {
+            if let Ok(db) = db.lock() {
+                if let Ok(Some(value)) = db.load_memory(&args.key) {
+                    return Ok(format!("{}: {}", args.key, value));
+                }
+            }
+        }
+        Ok(format!("No memory found for key: {}", args.key))
     }
 }
 
@@ -487,7 +578,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_move_to_tool_definition() {
-        let tool = MoveToTool;
+        let tool = MoveToTool { app: None };
         let def = tool.definition("test".to_string()).await;
         assert_eq!(def.name, "move_to");
         assert!(def.parameters["properties"]["x"].is_object());
@@ -496,7 +587,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_move_to_tool_execution() {
-        let tool = MoveToTool;
+        let tool = MoveToTool { app: None };
         let result = tool.call(MoveToArgs { x: 100.0, y: 200.0 }).await;
         assert!(result.is_ok());
         assert!(result.unwrap().contains("100"));
@@ -504,7 +595,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_change_state_tool_execution() {
-        let tool = ChangeStateTool;
+        let tool = ChangeStateTool { app: None };
         let result = tool
             .call(ChangeStateArgs {
                 state: "idle".to_string(),
@@ -526,7 +617,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_remember_tool_execution() {
-        let tool = RememberTool;
+        let tool = RememberTool { db: None };
         let result = tool
             .call(RememberArgs {
                 key: "user_name".to_string(),
@@ -534,11 +625,12 @@ mod tests {
             })
             .await;
         assert!(result.is_ok());
+        assert!(result.unwrap().contains("Remembered"));
     }
 
     #[tokio::test]
     async fn test_recall_tool_execution() {
-        let tool = RecallTool;
+        let tool = RecallTool { db: None };
         let result = tool
             .call(RecallArgs {
                 key: "user_name".to_string(),

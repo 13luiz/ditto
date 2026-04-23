@@ -55,7 +55,7 @@ pub fn run() {
     let db = db::Database::open(&db_path.to_string_lossy()).expect("failed to open database");
     load_env_provider_config(&db);
     let state = AppState {
-        db: std::sync::Mutex::new(db),
+        db: std::sync::Arc::new(std::sync::Mutex::new(db)),
     };
 
     tauri::Builder::default()

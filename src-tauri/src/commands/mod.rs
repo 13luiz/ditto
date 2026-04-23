@@ -4,11 +4,12 @@ use crate::agent::personality::PersonalityTraits;
 use crate::agent::prompt::{PetContext, SystemPromptBuilder};
 use crate::db::models::MessageRole;
 use crate::db::Database;
-use std::sync::Mutex;
+use rig::completion::Message;
+use std::sync::{Arc, Mutex};
 use tauri::Emitter;
 
 pub struct AppState {
-    pub db: Mutex<Database>,
+    pub db: Arc<Mutex<Database>>,
 }
 
 #[tauri::command]
@@ -39,8 +40,10 @@ pub async fn send_chat_message(
     state: tauri::State<'_, AppState>,
     message: String,
 ) -> Result<(), String> {
+    let db_arc = state.db.clone();
+
     // Phase 1: DB operations (synchronous, drop lock before await)
-    let (conv_id, preamble, agent_config) = {
+    let (conv_id, preamble, agent_config, chat_history) = {
         let db = state.db.lock().map_err(|e| e.to_string())?;
 
         let conv_id = match db.get_latest_conversation_id().map_err(|e| e.to_string())? {
@@ -65,11 +68,31 @@ pub async fn send_chat_message(
             .load_setting("provider_config")
             .map_err(|e| e.to_string())?;
 
-        (conv_id, preamble, config_json)
+        let history_msgs = db.load_messages(conv_id, 20).map_err(|e| e.to_string())?;
+        let chat_history: Vec<Message> = history_msgs
+            .into_iter()
+            .rev()
+            .map(|msg| match msg.role {
+                MessageRole::User => Message::user(msg.content),
+                MessageRole::Assistant => Message::assistant(msg.content),
+                _ => Message::user(msg.content),
+            })
+            .collect();
+
+        (conv_id, preamble, config_json, chat_history)
     }; // db lock dropped here
 
-    // Phase 2: LLM call (async, no DB lock held)
-    let response = match try_agent_response(&agent_config, &preamble, &message).await {
+    // Phase 2: LLM call with tools + chat history (async, no DB lock held)
+    let response = match try_agent_response(
+        &app,
+        db_arc,
+        &agent_config,
+        &preamble,
+        &message,
+        chat_history,
+    )
+    .await
+    {
         Ok(resp) => resp,
         Err(_) => rule_based_response(&message),
     };
@@ -100,9 +123,12 @@ pub async fn send_chat_message(
 }
 
 async fn try_agent_response(
+    app: &tauri::AppHandle,
+    db: Arc<Mutex<Database>>,
     config_json: &Option<String>,
     preamble: &str,
     message: &str,
+    chat_history: Vec<Message>,
 ) -> Result<String, String> {
     let config_json = match config_json {
         Some(json) => json,
@@ -110,8 +136,11 @@ async fn try_agent_response(
     };
 
     let config: ProviderConfig = serde_json::from_str(config_json).map_err(|e| e.to_string())?;
-    let agent = DittoAgent::new(&config, preamble).map_err(|e| e.to_string())?;
-    agent.prompt(message).await.map_err(|e| e.to_string())
+    let agent = DittoAgent::new(&config, preamble, app.clone(), db).map_err(|e| e.to_string())?;
+    agent
+        .chat(message, chat_history)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]

@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { SpriteEngine } from './renderer/sprite-engine';
 import { ClickThroughHandler } from './input/click-through';
 import { DragHandler } from './input/drag-handler';
@@ -19,10 +20,8 @@ async function main() {
   });
 
   canvas.addEventListener('dblclick', async () => {
-    console.log('[ditto] dblclick fired');
     try {
-      const result = await toggleChatWindow();
-      console.log('[ditto] toggle_chat_window result:', result);
+      await toggleChatWindow();
     } catch (e) {
       console.error('[ditto] toggle_chat_window error:', e);
     }
@@ -37,6 +36,28 @@ async function main() {
   dragHandler.attach();
 
   controller.startWandering();
+
+  // Handle pet actions from LLM tool calls
+  listen<{ type: string; x?: number; y?: number; state?: string; emotion?: string }>('pet-action', (event) => {
+    const { type, x, y, state: stateName, emotion } = event.payload;
+    switch (type) {
+      case 'move_to':
+        if (x !== undefined && y !== undefined) {
+          invoke('set_window_position', { x: Math.round(x), y: Math.round(y) });
+        }
+        break;
+      case 'change_state':
+        if (stateName) {
+          engine.playAnimation(stateName);
+        }
+        break;
+      case 'show_emotion':
+        if (emotion) {
+          engine.playAnimation(emotion);
+        }
+        break;
+    }
+  });
 }
 
 main().catch(console.error);

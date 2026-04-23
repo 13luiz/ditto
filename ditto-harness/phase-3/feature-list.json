@@ -1,0 +1,236 @@
+{
+  "phase": 3,
+  "name": "Mind",
+  "description": "Pet can think, converse, and remember",
+  "features": [
+    {
+      "id": "P3-001",
+      "description": "SQLite database with migrations and connection management for conversations, memory, and settings",
+      "category": "functional",
+      "test_type": "unit",
+      "steps": [
+        "Add rusqlite dependency to Cargo.toml",
+        "Create src-tauri/src/db/mod.rs with connection management",
+        "Create src-tauri/src/db/migrations.rs with schema for conversations, messages, memory, and settings tables",
+        "Create src-tauri/src/db/models.rs with data models (Message, Conversation, Memory)",
+        "Write unit test: open in-memory database, run migrations, verify tables exist",
+        "Write unit test: insert and retrieve a conversation with messages",
+        "Write unit test: insert and query memory by key"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-002",
+      "description": "LLM provider abstraction layer with config types and error handling",
+      "category": "functional",
+      "test_type": "unit",
+      "steps": [
+        "Create src-tauri/src/agent/mod.rs with module structure",
+        "Create src-tauri/src/agent/core.rs with provider trait and config types",
+        "Define LlmProvider trait with send_message and stream_message methods",
+        "Define ProviderConfig enum (OpenAI, Anthropic, Ollama) with API key, model, base URL fields",
+        "Define AgentError type for provider failures",
+        "Write unit test: ProviderConfig deserialization from JSON",
+        "Write unit test: AgentError display and from implementations"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-003",
+      "description": "System prompt builder with personality traits, pet state, and time context",
+      "category": "functional",
+      "test_type": "unit",
+      "steps": [
+        "Create src-tauri/src/agent/prompt.rs with SystemPromptBuilder",
+        "Define PersonalityTraits struct (cheerfulness, curiosity, mischievousness, clinginess)",
+        "Build dynamic system prompt including personality, mood, needs, time of day, recent memories",
+        "Write unit test: prompt includes personality trait values",
+        "Write unit test: prompt includes current time context",
+        "Write unit test: prompt includes mood label and needs percentages"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-004",
+      "description": "Agent tool definitions (move_to, change_state, speak, remember, recall, show_emotion)",
+      "category": "functional",
+      "test_type": "unit",
+      "steps": [
+        "Create src-tauri/src/agent/tools.rs with tool definitions",
+        "Define each tool as a struct with typed parameters and description",
+        "Implement tool execution dispatch (match on tool name, validate params)",
+        "Write unit test: each tool has correct name and parameter schema",
+        "Write unit test: tool dispatch routes to correct handler",
+        "Write unit test: invalid tool name returns appropriate error"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-005",
+      "description": "Chat UI with text input bubble for conversation",
+      "category": "functional",
+      "test_type": "visual",
+      "steps": [
+        "Create src/ui/chat-bubble.ts with chat input and message display",
+        "Add chat bubble HTML/CSS overlay that appears when pet is clicked or chat is triggered",
+        "Text input field with send button for user messages",
+        "Message list showing user and pet messages with timestamps",
+        "Chat bubble positioned near the pet, semi-transparent background",
+        "Use Playwright to verify chat bubble appears, accepts input, and displays messages"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-006",
+      "description": "Streaming response display — chat text appears token by token",
+      "category": "functional",
+      "test_type": "manual",
+      "steps": [
+        "Implement streaming response handler in chat-bubble.ts",
+        "Display tokens incrementally as they arrive from the LLM",
+        "Show typing indicator while waiting for first token",
+        "Smooth animation for text appearance",
+        "Manual verification: chat text streams in token by token, not all at once"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-007",
+      "description": "LLM connection via OpenAI provider — sends message, receives response",
+      "category": "functional",
+      "test_type": "integration",
+      "steps": [
+        "Add rig-core dependency to Cargo.toml",
+        "Implement OpenAI provider using rig-core's OpenAI integration",
+        "Create Tauri IPC command for sending chat messages",
+        "Write integration test (mocked): construct OpenAI provider, send message, verify response parsing",
+        "Write integration test (mocked): handle API error gracefully",
+        "Register chat IPC commands in lib.rs"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-008",
+      "description": "LLM connection via Anthropic provider — sends message, receives response",
+      "category": "functional",
+      "test_type": "integration",
+      "steps": [
+        "Implement Anthropic provider using rig-core's Anthropic integration",
+        "Write integration test (mocked): construct Anthropic provider, send message, verify response parsing",
+        "Write integration test (mocked): handle API error gracefully"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-009",
+      "description": "LLM connection via Ollama provider — sends message, receives response",
+      "category": "functional",
+      "test_type": "integration",
+      "steps": [
+        "Implement Ollama provider using rig-core's Ollama integration",
+        "Write integration test (mocked): construct Ollama provider with localhost URL, send message, verify response",
+        "Write integration test (mocked): handle connection refused gracefully"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-010",
+      "description": "Tool calling — agent can invoke move_to and other tools to control pet",
+      "category": "functional",
+      "test_type": "integration",
+      "steps": [
+        "Wire tool definitions to rig-core agent builder",
+        "Implement tool execution that bridges to frontend via Tauri IPC events",
+        "Write integration test (mocked): agent response contains tool call, tool is executed",
+        "Write integration test (mocked): move_to tool changes pet position",
+        "Write integration test (mocked): change_state tool changes pet animation"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-011",
+      "description": "Conversation persistence — messages saved to SQLite, reloadable after restart",
+      "category": "functional",
+      "test_type": "integration",
+      "steps": [
+        "Save user messages and agent responses to SQLite on each exchange",
+        "Load recent conversation history on app startup",
+        "Write integration test: send 5 messages, restart (reopen DB), verify all 5 reload",
+        "Write integration test: conversation with tool calls is saved correctly"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-012",
+      "description": "Memory recall — pet remembers facts across conversations",
+      "category": "functional",
+      "test_type": "integration",
+      "steps": [
+        "Create src-tauri/src/agent/memory.rs with short-term and long-term memory",
+        "Short-term: sliding window of last 20 messages in current conversation",
+        "Long-term: key-value memory store in SQLite with timestamps",
+        "Integrate remember/recall tools with memory system",
+        "Write integration test: store fact 'user name is Alice', recall it in next conversation",
+        "Write integration test: short-term memory limited to 20 messages"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-013",
+      "description": "Fallback chain — cloud → local → rules provider priority with graceful degradation",
+      "category": "functional",
+      "test_type": "integration",
+      "steps": [
+        "Implement provider chain: try primary provider, on failure try fallback, on failure use rules",
+        "Rule-based fallback: predefined responses for common inputs (greetings, simple questions)",
+        "Write integration test: primary fails → fallback succeeds",
+        "Write integration test: all LLM providers fail → rule-based response returned",
+        "Write integration test: fallback does not add excessive latency"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-014",
+      "description": "Rate limiting — no more than 1 proactive LLM call per 30 seconds",
+      "category": "functional",
+      "test_type": "integration",
+      "steps": [
+        "Implement rate limiter for proactive (non-user-initiated) LLM calls",
+        "Track last proactive call timestamp, enforce 30-second minimum interval",
+        "No rate limit on user-initiated conversation",
+        "Write integration test: rapid proactive calls are throttled to 1 per 30s",
+        "Write integration test: user-initiated calls bypass rate limit"
+      ],
+      "passes": false,
+      "commit": null
+    },
+    {
+      "id": "P3-015",
+      "description": "Persona consistency — responses match configured personality traits",
+      "category": "functional",
+      "test_type": "manual",
+      "steps": [
+        "Create src-tauri/src/agent/personality.rs with personality trait engine",
+        "Personality traits influence system prompt tone and behavior rules",
+        "Traits shift slightly based on interaction patterns over time",
+        "Manual verification: set high cheerfulness + curiosity, verify responses are upbeat and inquisitive",
+        "Manual verification: set low cheerfulness + high clinginess, verify responses are needy and subdued"
+      ],
+      "passes": false,
+      "commit": null
+    }
+  ]
+}

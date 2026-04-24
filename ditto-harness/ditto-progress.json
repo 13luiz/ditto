@@ -5,10 +5,10 @@
     "2": "completed",
     "3": "completed",
     "4": "completed",
-    "5": "pending"
+    "5": "in_progress"
   },
   "total_features_completed": 41,
-  "total_features_remaining": 0,
-  "last_session_summary": "Phase 4 COMPLETE. All eval issues fixed: PRD-aligned constants, break reminder bug, unused imports, fake commit hashes, empty sounds dir. DEFERRED to Phase 5: (1) wire BehaviorScheduler to runtime (morning greeting, break reminders, idle comments), (2) wire CareSystem decay to runtime (on-demand in get_care_state). 176 tests passing, zero warnings.",
-  "last_commit": "d4fa2ab"
+  "total_features_remaining": 17,
+  "last_session_summary": "Phase 5 initialized with 17 features: 2 unit (deferred P4 wiring), 3 integration, 1 visual, 8 manual, 2 profiling, 1 manual (style). Starting with P5-001 (wire BehaviorScheduler to runtime).",
+  "last_commit": "pending"
 }

@@ -260,4 +260,28 @@ mod tests {
         let value = db.load_setting("nonexistent").unwrap();
         assert_eq!(value, None);
     }
+
+    #[test]
+    fn test_settings_persistence_roundtrip() {
+        let db = Database::open_in_memory().unwrap();
+
+        let provider_config = r#"{"type":"openai","api_key":"sk-test","model":"gpt-4o"}"#;
+        db.save_setting("provider_config", provider_config).unwrap();
+        db.save_setting("pet_name", "Ditto").unwrap();
+        db.save_setting("auto_launch", "true").unwrap();
+
+        // Simulate restart: load all settings back
+        let loaded_config = db.load_setting("provider_config").unwrap();
+        assert_eq!(loaded_config, Some(provider_config.to_string()));
+        let config: serde_json::Value =
+            serde_json::from_str(&loaded_config.unwrap()).unwrap();
+        assert_eq!(config["type"], "openai");
+        assert_eq!(config["api_key"], "sk-test");
+
+        let loaded_name = db.load_setting("pet_name").unwrap();
+        assert_eq!(loaded_name, Some("Ditto".to_string()));
+
+        let loaded_launch = db.load_setting("auto_launch").unwrap();
+        assert_eq!(loaded_launch, Some("true".to_string()));
+    }
 }

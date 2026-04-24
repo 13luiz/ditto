@@ -30,20 +30,8 @@
       "commit": "fb312fee5e2f88d864c6ce450a7192eb459976e1"
     },
     {
-      "id": "P5-005",
-      "description": "Settings UI panel — full settings panel with LLM config, appearance, behavior preferences",
-      "category": "functional",
-      "test_type": "visual",
-      "steps": [
-        "Open settings panel from tray menu or keyboard shortcut",
-        "Verify LLM provider configuration section (provider type, API key, model, base URL)",
-        "Verify appearance section (pet name, theme selection)",
-        "Verify behavior section (auto-launch toggle, break reminder interval)",
-        "Verify Save and Cancel buttons work",
-        "Verify settings panel can be closed without losing unsaved changes (confirmation)"
-      ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "a8893a3e1de17b77cd7497836ac640a063960104"
     },
     {
       "id": "P5-006",

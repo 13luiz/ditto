@@ -7,6 +7,7 @@ import { DragHandler } from './input/drag-handler';
 import { PetController } from './behavior/pet-controller';
 import { toggleChatWindow } from './ui/chat-bubble';
 import { openCarePanel } from './ui/care-panel';
+import { checkScheduledTriggers, recordUserActivity } from './ipc/commands';
 
 async function main() {
   try {
@@ -72,6 +73,32 @@ async function main() {
         break;
     }
   });
+
+  // Record user activity on mouse interaction
+  document.addEventListener('mousemove', () => { recordUserActivity().catch(() => {}); }, { passive: true });
+  document.addEventListener('mousedown', () => { recordUserActivity().catch(() => {}); }, { passive: true });
+  document.addEventListener('keydown', () => { recordUserActivity().catch(() => {}); }, { passive: true });
+
+  // Scheduler tick: check triggers every 60 seconds
+  const TRIGGER_MESSAGES: Record<string, string> = {
+    MorningGreeting: 'Good morning! Ready for a new day?',
+    BreakReminder: 'You\'ve been working for a while. Take a break!',
+    IdleComment: 'Hey, are you still there?',
+  };
+
+  setInterval(async () => {
+    try {
+      const triggers = await checkScheduledTriggers();
+      for (const t of triggers) {
+        const msg = TRIGGER_MESSAGES[t];
+        if (msg) {
+          const { emit } = await import('@tauri-apps/api/event');
+          await emit('chat-stream-token', { token: msg });
+          await emit('chat-stream-done', { full_response: msg });
+        }
+      }
+    } catch { /* scheduler tick failed silently */ }
+  }, 60_000);
 }
 
 main().catch(console.error);

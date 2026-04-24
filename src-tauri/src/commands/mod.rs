@@ -2,15 +2,18 @@ use crate::agent::core::{rule_based_response, DittoAgent, ProviderConfig};
 use crate::agent::memory::MemorySystem;
 use crate::agent::personality::PersonalityTraits;
 use crate::agent::prompt::{PetContext, SystemPromptBuilder};
+use crate::behavior::scheduler::BehaviorScheduler;
 use crate::care::{CareAction, CareSystem};
 use crate::db::models::MessageRole;
 use crate::db::Database;
+use chrono::Timelike;
 use rig::completion::Message;
 use std::sync::{Arc, Mutex};
 use tauri::Emitter;
 
 pub struct AppState {
     pub db: Arc<Mutex<Database>>,
+    pub scheduler: Arc<Mutex<BehaviorScheduler>>,
 }
 
 #[tauri::command]
@@ -244,4 +247,23 @@ pub fn apply_care_action(
         "mood_score": mood.score,
         "mood_label": format!("{:?}", mood.label).to_lowercase(),
     }))
+}
+
+#[tauri::command]
+pub fn check_scheduled_triggers(
+    state: tauri::State<'_, AppState>,
+) -> Result<Vec<String>, String> {
+    let now = chrono::Local::now();
+    let hour = now.hour() as u32;
+    let mut scheduler = state.scheduler.lock().map_err(|e| e.to_string())?;
+    scheduler.update_activity();
+    let fired = scheduler.check_and_fire_triggers(hour);
+    Ok(fired.iter().map(|t| format!("{:?}", t)).collect())
+}
+
+#[tauri::command]
+pub fn record_user_activity(state: tauri::State<'_, AppState>) -> Result<(), String> {
+    let mut scheduler = state.scheduler.lock().map_err(|e| e.to_string())?;
+    scheduler.record_activity();
+    Ok(())
 }

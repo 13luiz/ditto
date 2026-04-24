@@ -9,6 +9,14 @@ export async function loadChatHistory(): Promise<ChatMessageData[]> {
   return await invoke<ChatMessageData[]>('load_chat_history');
 }
 
+export async function checkScheduledTriggers(): Promise<string[]> {
+  return await invoke<string[]>('check_scheduled_triggers');
+}
+
+export async function recordUserActivity(): Promise<void> {
+  await invoke('record_user_activity');
+}
+
 export interface ChatMessageData {
   role: string;
   content: string;

@@ -62,6 +62,9 @@ pub fn run() {
     load_env_provider_config(&db);
     let state = AppState {
         db: std::sync::Arc::new(std::sync::Mutex::new(db)),
+        scheduler: std::sync::Arc::new(std::sync::Mutex::new(
+            behavior::scheduler::BehaviorScheduler::new(),
+        )),
     };
 
     tauri::Builder::default()
@@ -73,7 +76,9 @@ pub fn run() {
             commands::send_chat_message,
             commands::load_chat_history,
             commands::get_care_state,
-            commands::apply_care_action
+            commands::apply_care_action,
+            commands::check_scheduled_triggers,
+            commands::record_user_activity
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -161,6 +166,8 @@ mod tests {
             "load_chat_history",
             "get_care_state",
             "apply_care_action",
+            "check_scheduled_triggers",
+            "record_user_activity",
         ] {
             assert!(
                 content.contains(cmd),

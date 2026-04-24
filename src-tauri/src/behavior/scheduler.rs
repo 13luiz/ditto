@@ -126,6 +126,27 @@ impl BehaviorScheduler {
     pub fn update_activity(&mut self) {
         self.activity.update();
     }
+
+    pub fn check_and_fire_triggers(&mut self, hour: u32) -> Vec<TriggerType> {
+        let mut fired = Vec::new();
+
+        if self.check_morning_greeting(hour) {
+            self.morning_greeting.mark_fired();
+            fired.push(TriggerType::MorningGreeting);
+        }
+
+        if self.check_break_reminder() {
+            self.break_reminder.mark_fired();
+            fired.push(TriggerType::BreakReminder);
+        }
+
+        if self.check_idle_comment() {
+            self.idle_comment.mark_fired();
+            fired.push(TriggerType::IdleComment);
+        }
+
+        fired
+    }
 }
 
 #[cfg(test)]
@@ -209,5 +230,49 @@ mod tests {
         let mut scheduler = BehaviorScheduler::new();
         scheduler.record_activity();
         assert!(!scheduler.activity.is_idle());
+    }
+
+    #[test]
+    fn test_check_and_fire_morning_greeting() {
+        let mut scheduler = BehaviorScheduler::new();
+        let fired = scheduler.check_and_fire_triggers(8);
+        assert!(fired.contains(&TriggerType::MorningGreeting));
+    }
+
+    #[test]
+    fn test_check_and_fire_marks_fired() {
+        let mut scheduler = BehaviorScheduler::new();
+        let fired1 = scheduler.check_and_fire_triggers(8);
+        assert!(fired1.contains(&TriggerType::MorningGreeting));
+        let fired2 = scheduler.check_and_fire_triggers(8);
+        assert!(!fired2.contains(&TriggerType::MorningGreeting));
+    }
+
+    #[test]
+    fn test_check_and_fire_break_reminder_when_active() {
+        let mut scheduler = BehaviorScheduler::new();
+        scheduler.record_activity();
+        let fired = scheduler.check_and_fire_triggers(14);
+        assert!(fired.contains(&TriggerType::BreakReminder));
+    }
+
+    #[test]
+    fn test_check_and_fire_idle_comment_when_idle() {
+        let mut scheduler = BehaviorScheduler::new();
+        scheduler.activity.last_activity =
+            Instant::now() - Duration::from_secs(600);
+        scheduler.activity.state = UserActivityState::Idle;
+        let fired = scheduler.check_and_fire_triggers(14);
+        assert!(fired.contains(&TriggerType::IdleComment));
+    }
+
+    #[test]
+    fn test_check_and_fire_no_triggers_wrong_hour() {
+        let mut scheduler = BehaviorScheduler::new();
+        scheduler.morning_greeting.mark_fired();
+        scheduler.break_reminder.mark_fired();
+        scheduler.idle_comment.mark_fired();
+        let fired = scheduler.check_and_fire_triggers(14);
+        assert!(fired.is_empty());
     }
 }

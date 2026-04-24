@@ -1,6 +1,5 @@
 type SoundId = 'happy' | 'sad' | 'hungry' | 'pet' | 'feed' | 'sleep' | 'chat' | 'greeting';
 
-const ctx: AudioContext | null = null;
 let audioCtx: AudioContext | null = null;
 
 function getCtx(): AudioContext {

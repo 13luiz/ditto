@@ -3,7 +3,6 @@ mod commands;
 
 #[cfg(not(test))]
 use commands::AppState;
-#[allow(dead_code)]
 mod behavior;
 
 #[allow(dead_code)]
@@ -66,6 +65,9 @@ pub fn run() {
         scheduler: std::sync::Arc::new(std::sync::Mutex::new(
             behavior::scheduler::BehaviorScheduler::new(),
         )),
+        state_machine: std::sync::Arc::new(std::sync::Mutex::new(
+            behavior::state_machine::StateMachine::new(),
+        )),
     };
 
     tauri::Builder::default()
@@ -86,7 +88,8 @@ pub fn run() {
             commands::record_user_activity,
             commands::get_settings,
             commands::save_settings,
-            commands::list_themes
+            commands::list_themes,
+            commands::transition_pet_state
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -219,6 +222,7 @@ mod tests {
             "get_settings",
             "save_settings",
             "list_themes",
+            "transition_pet_state",
         ] {
             assert!(
                 content.contains(cmd),

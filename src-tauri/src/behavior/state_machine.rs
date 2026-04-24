@@ -44,6 +44,30 @@ impl fmt::Display for PetState {
     }
 }
 
+impl PetState {
+    pub fn try_from_str(s: &str) -> Option<Self> {
+        match s {
+            "idle" => Some(PetState::Idle),
+            "walk_left" => Some(PetState::WalkLeft),
+            "walk_right" => Some(PetState::WalkRight),
+            "run_left" => Some(PetState::RunLeft),
+            "run_right" => Some(PetState::RunRight),
+            "climb" => Some(PetState::Climb),
+            "fall" => Some(PetState::Fall),
+            "sleep" => Some(PetState::Sleep),
+            "eat" => Some(PetState::Eat),
+            "play" => Some(PetState::Play),
+            "drag" => Some(PetState::Drag),
+            "talk" => Some(PetState::Talk),
+            "happy" => Some(PetState::Happy),
+            "sad" => Some(PetState::Sad),
+            "curious" => Some(PetState::Curious),
+            "sit" => Some(PetState::Sit),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct TransitionContext {
     pub cursor_distance: f64,
@@ -90,6 +114,10 @@ impl StateMachine {
 
     pub fn current_state(&self) -> PetState {
         self.state
+    }
+
+    pub fn force_state(&mut self, state: PetState) {
+        self.state = state;
     }
 
     pub fn try_transition(
@@ -549,5 +577,49 @@ mod tests {
         assert!(sm
             .try_transition(PetState::RunLeft, &default_ctx())
             .is_err());
+    }
+
+    // --- try_from_str ---
+
+    #[test]
+    fn test_try_from_str_all_states() {
+        let states = [
+            "idle",
+            "walk_left",
+            "walk_right",
+            "run_left",
+            "run_right",
+            "climb",
+            "fall",
+            "sleep",
+            "eat",
+            "play",
+            "drag",
+            "talk",
+            "happy",
+            "sad",
+            "curious",
+            "sit",
+        ];
+        for s in states {
+            assert!(PetState::try_from_str(s).is_some(), "should parse '{}'", s);
+        }
+    }
+
+    #[test]
+    fn test_try_from_str_invalid() {
+        assert!(PetState::try_from_str("unknown").is_none());
+        assert!(PetState::try_from_str("").is_none());
+    }
+
+    // --- force_state ---
+
+    #[test]
+    fn test_force_state() {
+        let mut sm = StateMachine::new();
+        sm.force_state(PetState::Drag);
+        assert_eq!(sm.current_state(), PetState::Drag);
+        sm.force_state(PetState::Fall);
+        assert_eq!(sm.current_state(), PetState::Fall);
     }
 }

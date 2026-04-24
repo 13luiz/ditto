@@ -50,6 +50,7 @@
   },
   "plugins": {
     "updater": {
+      "_comment": "TODO: Configure endpoints URL and signing pubkey when a release channel is set up",
       "endpoints": [],
       "pubkey": ""
     }

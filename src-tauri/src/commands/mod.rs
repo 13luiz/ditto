@@ -3,17 +3,18 @@ use crate::agent::memory::MemorySystem;
 use crate::agent::personality::PersonalityTraits;
 use crate::agent::prompt::{PetContext, SystemPromptBuilder};
 use crate::behavior::scheduler::BehaviorScheduler;
+use crate::behavior::state_machine::{PetState, StateMachine, TransitionContext};
 use crate::care::{CareAction, CareSystem};
 use crate::db::models::MessageRole;
 use crate::db::Database;
 use chrono::Timelike;
-use rig::completion::Message;
 use std::sync::{Arc, Mutex};
 use tauri::Emitter;
 
 pub struct AppState {
     pub db: Arc<Mutex<Database>>,
     pub scheduler: Arc<Mutex<BehaviorScheduler>>,
+    pub state_machine: Arc<Mutex<StateMachine>>,
 }
 
 #[tauri::command]
@@ -47,7 +48,7 @@ pub async fn send_chat_message(
     let db_arc = state.db.clone();
 
     // Phase 1: DB operations (synchronous, drop lock before await)
-    let (conv_id, preamble, agent_config, _chat_history) = {
+    let (conv_id, preamble, agent_config) = {
         let db = state.db.lock().map_err(|e| e.to_string())?;
 
         let conv_id = match db.get_latest_conversation_id().map_err(|e| e.to_string())? {
@@ -72,18 +73,7 @@ pub async fn send_chat_message(
             .load_setting("provider_config")
             .map_err(|e| e.to_string())?;
 
-        let history_msgs = db.load_messages(conv_id, 20).map_err(|e| e.to_string())?;
-        let chat_history: Vec<Message> = history_msgs
-            .into_iter()
-            .rev()
-            .map(|msg| match msg.role {
-                MessageRole::User => Message::user(msg.content),
-                MessageRole::Assistant => Message::assistant(msg.content),
-                _ => Message::user(msg.content),
-            })
-            .collect();
-
-        (conv_id, preamble, config_json, chat_history)
+        (conv_id, preamble, config_json)
     }; // db lock dropped here
 
     // Phase 2: LLM call with fallback chain
@@ -178,28 +168,6 @@ async fn try_streaming_response(
     stream_task
         .await
         .map_err(|e| e.to_string())?
-        .map_err(|e| e.to_string())
-}
-
-#[allow(dead_code)]
-async fn try_agent_response(
-    app: &tauri::AppHandle,
-    db: Arc<Mutex<Database>>,
-    config_json: &Option<String>,
-    preamble: &str,
-    message: &str,
-    chat_history: Vec<Message>,
-) -> Result<String, String> {
-    let config_json = match config_json {
-        Some(json) => json,
-        None => return Err("no provider configured".to_string()),
-    };
-
-    let config: ProviderConfig = serde_json::from_str(config_json).map_err(|e| e.to_string())?;
-    let agent = DittoAgent::new(&config, preamble, app.clone(), db).map_err(|e| e.to_string())?;
-    agent
-        .chat(message, chat_history)
-        .await
         .map_err(|e| e.to_string())
 }
 
@@ -328,4 +296,45 @@ pub fn save_settings(
 #[tauri::command]
 pub fn list_themes() -> Result<Vec<String>, String> {
     Ok(crate::system::themes::list_themes())
+}
+
+#[tauri::command]
+pub fn transition_pet_state(
+    state: tauri::State<'_, AppState>,
+    target: String,
+    cursor_distance: f64,
+    idle_time_secs: f64,
+) -> Result<String, String> {
+    let target_state =
+        PetState::try_from_str(&target).ok_or_else(|| format!("unknown state: {}", target))?;
+
+    // Physical transitions bypass FSM validation
+    if matches!(
+        target_state,
+        PetState::Drag | PetState::Fall | PetState::Idle
+    ) {
+        let mut sm = state.state_machine.lock().map_err(|e| e.to_string())?;
+        sm.force_state(target_state);
+        return Ok(sm.current_state().to_string());
+    }
+
+    // Behavioral transitions require context validation
+    let (energy, mood) = {
+        let db = state.db.lock().map_err(|e| e.to_string())?;
+        let care = CareSystem::load_with_decay(&db)?;
+        let m = care.mood();
+        (care.needs.energy.get(), m.score)
+    };
+
+    let ctx = TransitionContext {
+        cursor_distance,
+        energy,
+        mood,
+        idle_time: std::time::Duration::from_secs_f64(idle_time_secs),
+    };
+
+    let mut sm = state.state_machine.lock().map_err(|e| e.to_string())?;
+    sm.try_transition(target_state, &ctx)
+        .map(|s| s.to_string())
+        .map_err(|e| e.to_string())
 }

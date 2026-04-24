@@ -47,6 +47,9 @@ async function main() {
   engine.start(controller);
 
   const clickThrough = new ClickThroughHandler(canvas);
+  clickThrough.setCursorDistanceCallback((dist) => {
+    controller.updateCursorDistance(dist);
+  });
   clickThrough.attach();
 
   const dragHandler = new DragHandler(canvas, controller, clickThrough);

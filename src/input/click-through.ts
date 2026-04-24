@@ -11,6 +11,7 @@ export class ClickThroughHandler {
   private intervalId: number | null = null;
   private interactionActive = false;
   private cachedScale = 1;
+  private onCursorDistance: ((distance: number) => void) | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -32,6 +33,11 @@ export class ClickThroughHandler {
     }
   }
 
+  /** Set callback to receive cursor distance from pet center */
+  setCursorDistanceCallback(cb: (distance: number) => void) {
+    this.onCursorDistance = cb;
+  }
+
   async checkAndToggle(): Promise<void> {
     if (this.interactionActive) return;
 
@@ -48,6 +54,16 @@ export class ClickThroughHandler {
 
       const alpha = this.getPixelAlpha(Math.floor(canvasX), Math.floor(canvasY));
       await this.setCursorIgnore(alpha < ALPHA_THRESHOLD);
+
+      // Report cursor distance from pet center for FSM context
+      if (this.onCursorDistance) {
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        const dx = canvasX - centerX;
+        const dy = canvasY - centerY;
+        const dist = Math.sqrt(dx * dx + dy * dy) * this.cachedScale;
+        this.onCursorDistance(dist);
+      }
     } catch { /* */ }
   }
 

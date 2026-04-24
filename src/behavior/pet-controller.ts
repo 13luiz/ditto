@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { currentMonitor, availableMonitors, getCurrentWindow } from '@tauri-apps/api/window';
+import { transitionPetState } from '../ipc/commands';
 
 export type PetState =
   | 'idle' | 'walk_left' | 'walk_right' | 'run_left' | 'run_right'
@@ -30,6 +31,8 @@ export class PetController {
   private facingRight = true;
   private monitorFrameCounter = 0;
   private userPlaced = false;  // true when user dragged to non-ground position
+  private idleStartTime = 0;   // timestamp when pet last entered idle
+  private lastCursorDistance = Infinity;
 
   constructor(onStateChange: (s: PetState) => void) {
     this.onStateChange = onStateChange;
@@ -37,6 +40,7 @@ export class PetController {
     this.monitorRanges = [{ xStart: 0, xEnd: 1920 }];
     this.windowX = 960;
     this.windowY = this.groundY - this.physH();
+    this.idleStartTime = performance.now();
     this.init();
   }
 
@@ -86,8 +90,21 @@ export class PetController {
   getState() { return this.state; }
   getFacingRight() { return this.facingRight; }
 
+  /** Physical states that bypass FSM validation for zero-latency response */
+  private static readonly PHYSICAL_STATES: ReadonlySet<PetState> = new Set([
+    'drag', 'fall', 'idle',
+  ]);
+
   setState(s: PetState) {
     if (this.state === s) return;
+    if (PetController.PHYSICAL_STATES.has(s)) {
+      this.applyState(s);
+    } else {
+      this.requestStateFromBackend(s);
+    }
+  }
+
+  private applyState(s: PetState) {
     this.state = s;
     switch (s) {
       case 'walk_left':  this.velocityX = -WALK_SPEED; this.facingRight = false; break;
@@ -95,11 +112,28 @@ export class PetController {
       case 'run_left':   this.velocityX = -RUN_SPEED;  this.facingRight = false; break;
       case 'run_right':  this.velocityX = RUN_SPEED;   this.facingRight = true;  break;
       case 'fall':  this.velocityX = 0; break;
-      case 'idle':  this.velocityX = 0; break;
+      case 'idle':  this.velocityX = 0; this.idleStartTime = performance.now(); break;
       case 'drag':  this.velocityX = 0; this.velocityY = 0; break;
       default:      this.velocityX = 0; break;
     }
     this.onStateChange?.(s);
+  }
+
+  private async requestStateFromBackend(target: PetState) {
+    const idleSecs = this.state === 'idle'
+      ? (performance.now() - this.idleStartTime) / 1000
+      : 0;
+    try {
+      const accepted = await transitionPetState(target, this.lastCursorDistance, idleSecs);
+      this.applyState(accepted as PetState);
+    } catch {
+      // Backend rejected — stay in current state
+    }
+  }
+
+  /** Update cursor distance for FSM context (called from click-through handler) */
+  updateCursorDistance(distance: number) {
+    this.lastCursorDistance = distance;
   }
 
   update(ts: number) {
@@ -179,7 +213,7 @@ export class PetController {
     this.wanderTimer = window.setInterval(() => {
       if (this.state !== 'idle') return;
       if (Math.random() < 0.6) {
-        this.setState(Math.random() < 0.5 ? 'walk_right' : 'walk_left');
+        this.requestStateFromBackend(Math.random() < 0.5 ? 'walk_right' : 'walk_left');
       }
     }, IDLE_WANDER_INTERVAL_MS);
   }

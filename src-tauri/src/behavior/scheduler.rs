@@ -9,6 +9,7 @@ pub enum TriggerType {
 
 #[derive(Debug)]
 pub struct ScheduledTrigger {
+    #[allow(dead_code)]
     pub trigger_type: TriggerType,
     pub last_fired: Option<Instant>,
     pub cooldown: Duration,
@@ -73,6 +74,7 @@ impl ActivityDetector {
         changed
     }
 
+    #[allow(dead_code)]
     pub fn idle_duration(&self) -> Duration {
         self.last_activity.elapsed()
     }
@@ -87,6 +89,7 @@ pub struct BehaviorScheduler {
     pub break_reminder: ScheduledTrigger,
     pub idle_comment: ScheduledTrigger,
     pub activity: ActivityDetector,
+    #[allow(dead_code)]
     break_work_duration: Duration,
 }
 

@@ -17,6 +17,18 @@ export async function recordUserActivity(): Promise<void> {
   await invoke('record_user_activity');
 }
 
+export async function transitionPetState(
+  target: string,
+  cursorDistance: number,
+  idleTimeSecs: number
+): Promise<string> {
+  return await invoke<string>('transition_pet_state', {
+    target,
+    cursorDistance,
+    idleTimeSecs,
+  });
+}
+
 export interface ChatMessageData {
   role: string;
   content: string;

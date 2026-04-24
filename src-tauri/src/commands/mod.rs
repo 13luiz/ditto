@@ -58,7 +58,7 @@ pub async fn send_chat_message(
         db.save_message(conv_id, &MessageRole::User, &message)
             .map_err(|e| e.to_string())?;
 
-        let traits = PersonalityTraits::default();
+        let traits = PersonalityTraits::load(&db).unwrap_or_default();
         let mem = MemorySystem::new();
         let memories = mem.get_all_long_term(&db).unwrap_or_default();
 
@@ -96,22 +96,46 @@ pub async fn send_chat_message(
         let mut resp = None;
         for provider in &providers {
             let config_str = serde_json::to_string(&provider).unwrap_or_default();
-            match try_streaming_response(&app, db_arc.clone(), &Some(config_str), &preamble, &message).await {
-                Ok(r) => { resp = Some(r); break; }
-                Err(e) => eprintln!("[ditto] Provider {} failed: {}", provider.provider_name(), e),
+            match try_streaming_response(
+                &app,
+                db_arc.clone(),
+                &Some(config_str),
+                &preamble,
+                &message,
+            )
+            .await
+            {
+                Ok(r) => {
+                    resp = Some(r);
+                    break;
+                }
+                Err(e) => eprintln!(
+                    "[ditto] Provider {} failed: {}",
+                    provider.provider_name(),
+                    e
+                ),
             }
         }
 
         match resp {
             Some(r) => {
-                let _ = app.emit("chat-stream-done", serde_json::json!({ "full_response": &r }));
+                let _ = app.emit(
+                    "chat-stream-done",
+                    serde_json::json!({ "full_response": &r }),
+                );
                 r
             }
             None => {
                 eprintln!("[ditto] All providers failed, using rule-based fallback");
                 let fallback = rule_based_response(&message);
-                let _ = app.emit("chat-stream-token", serde_json::json!({ "token": &fallback }));
-                let _ = app.emit("chat-stream-done", serde_json::json!({ "full_response": &fallback }));
+                let _ = app.emit(
+                    "chat-stream-token",
+                    serde_json::json!({ "token": &fallback }),
+                );
+                let _ = app.emit(
+                    "chat-stream-done",
+                    serde_json::json!({ "full_response": &fallback }),
+                );
                 fallback
             }
         }
@@ -249,11 +273,9 @@ pub fn apply_care_action(
 }
 
 #[tauri::command]
-pub fn check_scheduled_triggers(
-    state: tauri::State<'_, AppState>,
-) -> Result<Vec<String>, String> {
+pub fn check_scheduled_triggers(state: tauri::State<'_, AppState>) -> Result<Vec<String>, String> {
     let now = chrono::Local::now();
-    let hour = now.hour() as u32;
+    let hour = now.hour();
     let mut scheduler = state.scheduler.lock().map_err(|e| e.to_string())?;
     scheduler.update_activity();
     let fired = scheduler.check_and_fire_triggers(hour);
@@ -273,12 +295,8 @@ pub fn get_settings(state: tauri::State<'_, AppState>) -> Result<serde_json::Val
     let provider_config = db
         .load_setting("provider_config")
         .map_err(|e| e.to_string())?;
-    let pet_name = db
-        .load_setting("pet_name")
-        .map_err(|e| e.to_string())?;
-    let auto_launch = db
-        .load_setting("auto_launch")
-        .map_err(|e| e.to_string())?;
+    let pet_name = db.load_setting("pet_name").map_err(|e| e.to_string())?;
+    let auto_launch = db.load_setting("auto_launch").map_err(|e| e.to_string())?;
     Ok(serde_json::json!({
         "provider_config": provider_config,
         "pet_name": pet_name,
@@ -297,8 +315,7 @@ pub fn save_settings(
             .map_err(|e| e.to_string())?;
     }
     if let Some(v) = settings.get("pet_name").and_then(|v| v.as_str()) {
-        db.save_setting("pet_name", v)
-            .map_err(|e| e.to_string())?;
+        db.save_setting("pet_name", v).map_err(|e| e.to_string())?;
     }
     if let Some(v) = settings.get("auto_launch").and_then(|v| v.as_str()) {
         db.save_setting("auto_launch", v)

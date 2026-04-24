@@ -284,8 +284,7 @@ mod tests {
         // Simulate restart: load all settings back
         let loaded_config = db.load_setting("provider_config").unwrap();
         assert_eq!(loaded_config, Some(provider_config.to_string()));
-        let config: serde_json::Value =
-            serde_json::from_str(&loaded_config.unwrap()).unwrap();
+        let config: serde_json::Value = serde_json::from_str(&loaded_config.unwrap()).unwrap();
         assert_eq!(config["type"], "openai");
         assert_eq!(config["api_key"], "sk-test");
 
@@ -316,7 +315,10 @@ mod tests {
         // Recovery should succeed by recreating the database
         let db = Database::open_with_recovery(&path_str).unwrap();
         let value = db.load_setting("test_key").unwrap();
-        assert_eq!(value, None, "corrupted data should be lost but db should work");
+        assert_eq!(
+            value, None,
+            "corrupted data should be lost but db should work"
+        );
 
         // New data should work fine
         db.save_setting("after_recovery", "works").unwrap();

@@ -18,34 +18,125 @@
       "commit": "12d37639089d14b2d058cfab16444c3909603f46"
     },
     {
+      "id": "P5-002",
+      "description": "Wire CareSystem decay to runtime — needs decay on demand in get_care_state",
+      "category": "functional",
+      "test_type": "unit",
+      "steps": [
+        "Verify get_care_state applies elapsed-time decay before returning",
+        "Verify hunger decays at -1.0/hr, happiness at -0.5/hr, energy at -0.3/hr, social at -0.2/hr",
+        "Verify needs clamp to 0 after decay",
+        "Verify mood recalculated after decay"
+      ],
       "passes": true,
       "commit": "92802a45e4442e2155ce27696514124f397148c9"
     },
     {
+      "id": "P5-003",
+      "description": "LLM error recovery — graceful fallback when API fails",
+      "category": "functional",
+      "test_type": "integration",
+      "steps": [
+        "Simulate network error on primary LLM provider",
+        "Verify fallback to secondary provider activates",
+        "Simulate all providers failing",
+        "Verify rule-based fallback generates response",
+        "Verify no panic or crash on any error path",
+        "Verify error is logged appropriately"
+      ],
       "passes": true,
       "commit": "d64afef84bb05bf06d033cd97b72253b0862e998"
     },
     {
+      "id": "P5-004",
+      "description": "System tray icon and menu — tray icon appears, menu with show/hide, settings, quit",
+      "category": "functional",
+      "test_type": "manual",
+      "steps": [
+        "Launch app and verify tray icon appears in system tray",
+        "Right-click tray icon and verify menu appears with: Show/Hide, Settings, Quit",
+        "Click Show/Hide to toggle pet window visibility",
+        "Click Settings to open settings panel",
+        "Click Quit to close the application",
+        "Verify tray icon tooltip shows app name"
+      ],
       "passes": true,
       "commit": "fb312fee5e2f88d864c6ce450a7192eb459976e1"
     },
     {
+      "id": "P5-005",
+      "description": "Settings UI panel — full settings panel with LLM config, appearance, behavior preferences",
+      "category": "functional",
+      "test_type": "visual",
+      "steps": [
+        "Open settings panel from tray menu or keyboard shortcut",
+        "Verify LLM provider configuration section (provider type, API key, model, base URL)",
+        "Verify appearance section (pet name, theme selection)",
+        "Verify behavior section (auto-launch toggle, break reminder interval)",
+        "Verify Save and Cancel buttons work",
+        "Verify settings panel can be closed without losing unsaved changes (confirmation)"
+      ],
       "passes": true,
       "commit": "a8893a3e1de17b77cd7497836ac640a063960104"
     },
     {
+      "id": "P5-006",
+      "description": "Settings persistence — settings saved to SQLite and survive app restarts",
+      "category": "functional",
+      "test_type": "integration",
+      "steps": [
+        "Save settings via settings panel",
+        "Close and restart the application",
+        "Verify all settings are preserved (LLM config, pet name, behavior prefs)",
+        "Verify settings loaded match what was saved"
+      ],
       "passes": true,
       "commit": "0d17098845c13d75e2124103c74ef96687e1738a"
     },
     {
+      "id": "P5-007",
+      "description": "Auto-launch registration — app starts with OS after enabling in settings",
+      "category": "functional",
+      "test_type": "manual",
+      "steps": [
+        "Enable auto-launch in settings panel",
+        "Verify registry entry (Windows) or login item (macOS) is created",
+        "Restart OS or log out/in",
+        "Verify Ditto starts automatically",
+        "Disable auto-launch in settings",
+        "Verify registry entry/login item is removed"
+      ],
       "passes": true,
       "commit": "303aafd002a5e8f3024f123a3c0188dc4b9d515c"
     },
     {
+      "id": "P5-008",
+      "description": "Custom pet theme loading — load external spritesheet + animation JSON",
+      "category": "functional",
+      "test_type": "integration",
+      "steps": [
+        "Place custom spritesheet.png and animations.json in a theme directory",
+        "Select custom theme in settings",
+        "Verify app loads the custom spritesheet and animation definitions",
+        "Verify pet renders with new sprites",
+        "Verify animation states (idle, walk, sleep) use custom frame sequences",
+        "Verify reverting to default theme works"
+      ],
       "passes": true,
       "commit": "ac245e07f7bc8d1bc3a6ee0ac15ece639efb266c"
     },
     {
+      "id": "P5-009",
+      "description": "First-run onboarding wizard — guides user through setup",
+      "category": "functional",
+      "test_type": "manual",
+      "steps": [
+        "Delete app data / fresh install",
+        "Launch app for first time",
+        "Verify onboarding wizard appears with steps: name pet, choose appearance, configure LLM",
+        "Complete each step and verify values are saved",
+        "Verify wizard does not appear on subsequent launches"
+      ],
       "passes": true,
       "commit": "36107d7551e32d3cfb789973a3accc4d6e7ca515"
     },

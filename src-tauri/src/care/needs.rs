@@ -382,7 +382,10 @@ mod tests {
             .unwrap();
 
         let loaded = CareSystem::load_with_decay(&db).unwrap();
-        assert!(loaded.needs.hunger.get() < 80.0, "hunger should have decayed");
+        assert!(
+            loaded.needs.hunger.get() < 80.0,
+            "hunger should have decayed"
+        );
         assert!(
             (loaded.needs.hunger.get() - 79.0).abs() < 0.1,
             "hunger should decay ~1.0/hr, got {}",

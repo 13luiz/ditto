@@ -259,8 +259,7 @@ mod tests {
     #[test]
     fn test_check_and_fire_idle_comment_when_idle() {
         let mut scheduler = BehaviorScheduler::new();
-        scheduler.activity.last_activity =
-            Instant::now() - Duration::from_secs(600);
+        scheduler.activity.last_activity = Instant::now() - Duration::from_secs(600);
         scheduler.activity.state = UserActivityState::Idle;
         let fired = scheduler.check_and_fire_triggers(14);
         assert!(fired.contains(&TriggerType::IdleComment));

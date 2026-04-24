@@ -46,19 +46,8 @@
       "commit": "ac245e07f7bc8d1bc3a6ee0ac15ece639efb266c"
     },
     {
-      "id": "P5-009",
-      "description": "First-run onboarding wizard — guides user through setup",
-      "category": "functional",
-      "test_type": "manual",
-      "steps": [
-        "Delete app data / fresh install",
-        "Launch app for first time",
-        "Verify onboarding wizard appears with steps: name pet, choose appearance, configure LLM",
-        "Complete each step and verify values are saved",
-        "Verify wizard does not appear on subsequent launches"
-      ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "36107d7551e32d3cfb789973a3accc4d6e7ca515"
     },
     {
       "id": "P5-010",

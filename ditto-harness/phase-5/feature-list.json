@@ -26,20 +26,8 @@
       "commit": "d64afef84bb05bf06d033cd97b72253b0862e998"
     },
     {
-      "id": "P5-004",
-      "description": "System tray icon and menu — tray icon appears, menu with show/hide, settings, quit",
-      "category": "functional",
-      "test_type": "manual",
-      "steps": [
-        "Launch app and verify tray icon appears in system tray",
-        "Right-click tray icon and verify menu appears with: Show/Hide, Settings, Quit",
-        "Click Show/Hide to toggle pet window visibility",
-        "Click Settings to open settings panel",
-        "Click Quit to close the application",
-        "Verify tray icon tooltip shows app name"
-      ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "fb312fee5e2f88d864c6ce450a7192eb459976e1"
     },
     {
       "id": "P5-005",

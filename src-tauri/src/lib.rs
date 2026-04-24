@@ -82,7 +82,9 @@ pub fn run() {
             commands::get_care_state,
             commands::apply_care_action,
             commands::check_scheduled_triggers,
-            commands::record_user_activity
+            commands::record_user_activity,
+            commands::get_settings,
+            commands::save_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -198,6 +200,8 @@ mod tests {
             "apply_care_action",
             "check_scheduled_triggers",
             "record_user_activity",
+            "get_settings",
+            "save_settings",
         ] {
             assert!(
                 content.contains(cmd),

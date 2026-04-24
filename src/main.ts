@@ -7,6 +7,7 @@ import { DragHandler } from './input/drag-handler';
 import { PetController } from './behavior/pet-controller';
 import { toggleChatWindow } from './ui/chat-bubble';
 import { openCarePanel } from './ui/care-panel';
+import { openSettingsWindow } from './ui/settings';
 import { checkScheduledTriggers, recordUserActivity } from './ipc/commands';
 
 async function main() {
@@ -72,6 +73,11 @@ async function main() {
         }
         break;
     }
+  });
+
+  // Handle settings open from tray menu
+  listen('open_settings', () => {
+    openSettingsWindow().catch(console.error);
   });
 
   // Record user activity on mouse interaction

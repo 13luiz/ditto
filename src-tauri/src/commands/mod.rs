@@ -266,3 +266,43 @@ pub fn record_user_activity(state: tauri::State<'_, AppState>) -> Result<(), Str
     scheduler.record_activity();
     Ok(())
 }
+
+#[tauri::command]
+pub fn get_settings(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let provider_config = db
+        .load_setting("provider_config")
+        .map_err(|e| e.to_string())?;
+    let pet_name = db
+        .load_setting("pet_name")
+        .map_err(|e| e.to_string())?;
+    let auto_launch = db
+        .load_setting("auto_launch")
+        .map_err(|e| e.to_string())?;
+    Ok(serde_json::json!({
+        "provider_config": provider_config,
+        "pet_name": pet_name,
+        "auto_launch": auto_launch,
+    }))
+}
+
+#[tauri::command]
+pub fn save_settings(
+    state: tauri::State<'_, AppState>,
+    settings: serde_json::Value,
+) -> Result<(), String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    if let Some(v) = settings.get("provider_config").and_then(|v| v.as_str()) {
+        db.save_setting("provider_config", v)
+            .map_err(|e| e.to_string())?;
+    }
+    if let Some(v) = settings.get("pet_name").and_then(|v| v.as_str()) {
+        db.save_setting("pet_name", v)
+            .map_err(|e| e.to_string())?;
+    }
+    if let Some(v) = settings.get("auto_launch").and_then(|v| v.as_str()) {
+        db.save_setting("auto_launch", v)
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}

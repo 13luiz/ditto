@@ -14,8 +14,8 @@
         "Verify trigger cooldowns prevent duplicate firings",
         "Verify scheduler records activity timestamps correctly"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "12d37639089d14b2d058cfab16444c3909603f46"
     },
     {
       "id": "P5-002",

@@ -208,7 +208,7 @@ pub fn load_chat_history(
 #[tauri::command]
 pub fn get_care_state(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
-    let care = CareSystem::load(&db)?;
+    let care = CareSystem::load_with_decay(&db)?;
     let mood = care.mood();
     Ok(serde_json::json!({
         "hunger": care.needs.hunger.get(),

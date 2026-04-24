@@ -169,6 +169,12 @@ impl CareSystem {
     pub fn save(&self, db: &crate::db::Database) -> Result<(), String> {
         let json = serde_json::to_string(&self.needs).map_err(|e| e.to_string())?;
         db.save_setting("care_state", &json)
+            .map_err(|e| e.to_string())?;
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        db.save_setting("care_last_updated", &now.to_string())
             .map_err(|e| e.to_string())
     }
 
@@ -180,6 +186,28 @@ impl CareSystem {
             }
             None => Ok(Self::new()),
         }
+    }
+
+    pub fn load_with_decay(db: &crate::db::Database) -> Result<Self, String> {
+        let mut care = Self::load(db)?;
+        let last_updated = db
+            .load_setting("care_last_updated")
+            .map_err(|e| e.to_string())?
+            .and_then(|s| s.parse::<u64>().ok())
+            .unwrap_or(0);
+
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+
+        if last_updated > 0 && now > last_updated {
+            let elapsed = std::time::Duration::from_secs(now - last_updated);
+            care.decay(elapsed);
+            care.save(db)?;
+        }
+
+        Ok(care)
     }
 }
 
@@ -336,5 +364,37 @@ mod tests {
 
         let loaded = CareSystem::load(&db).unwrap();
         assert!((loaded.needs.hunger.get() - 80.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_load_with_decay_applies_elapsed_decay() {
+        let db = crate::db::Database::open_in_memory().unwrap();
+        let care = CareSystem::with_needs(needs(80.0, 80.0, 80.0, 80.0));
+        care.save(&db).unwrap();
+
+        // Overwrite timestamp to 1 hour ago
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        let one_hour_ago = now - 3600;
+        db.save_setting("care_last_updated", &one_hour_ago.to_string())
+            .unwrap();
+
+        let loaded = CareSystem::load_with_decay(&db).unwrap();
+        assert!(loaded.needs.hunger.get() < 80.0, "hunger should have decayed");
+        assert!(
+            (loaded.needs.hunger.get() - 79.0).abs() < 0.1,
+            "hunger should decay ~1.0/hr, got {}",
+            loaded.needs.hunger.get()
+        );
+    }
+
+    #[test]
+    fn test_load_with_decay_no_timestamp() {
+        let db = crate::db::Database::open_in_memory().unwrap();
+        // No care state saved — should return defaults
+        let loaded = CareSystem::load_with_decay(&db).unwrap();
+        assert_eq!(loaded.needs.hunger.get(), 100.0);
     }
 }

@@ -106,8 +106,8 @@
         "Measure CPU usage over 30 second window",
         "Verify average CPU < 5%"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "5fe7e66c52d6cd6d578f4fca7c7b7ba110653363"
     },
     {
       "id": "P5-014",
@@ -122,8 +122,8 @@
         "Measure CPU during response streaming",
         "Verify average CPU < 15%"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "5fe7e66c52d6cd6d578f4fca7c7b7ba110653363"
     },
     {
       "id": "P5-015",

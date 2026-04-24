@@ -28,6 +28,17 @@ impl Database {
         Ok(())
     }
 
+    pub fn open_with_recovery(path: &str) -> Result<Self> {
+        match Self::open(path) {
+            Ok(db) => Ok(db),
+            Err(_) => {
+                // Database is corrupted — delete and recreate
+                let _ = std::fs::remove_file(path);
+                Self::open(path)
+            }
+        }
+    }
+
     pub fn create_conversation(&self) -> Result<i64> {
         self.conn.execute(
             "INSERT INTO conversations (created_at, updated_at) VALUES (datetime('now'), datetime('now'))",
@@ -283,5 +294,37 @@ mod tests {
 
         let loaded_launch = db.load_setting("auto_launch").unwrap();
         assert_eq!(loaded_launch, Some("true".to_string()));
+    }
+
+    #[test]
+    fn test_corruption_recovery() {
+        let dir = std::env::temp_dir().join("ditto_test_corruption");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let db_path = dir.join("test.db");
+        let path_str = db_path.to_string_lossy().to_string();
+
+        // Create a valid database first
+        {
+            let db = Database::open(&path_str).unwrap();
+            db.save_setting("test_key", "test_value").unwrap();
+        }
+
+        // Corrupt the database file
+        std::fs::write(&db_path, b"this is not a valid sqlite database").unwrap();
+
+        // Recovery should succeed by recreating the database
+        let db = Database::open_with_recovery(&path_str).unwrap();
+        let value = db.load_setting("test_key").unwrap();
+        assert_eq!(value, None, "corrupted data should be lost but db should work");
+
+        // New data should work fine
+        db.save_setting("after_recovery", "works").unwrap();
+        assert_eq!(
+            db.load_setting("after_recovery").unwrap(),
+            Some("works".to_string())
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

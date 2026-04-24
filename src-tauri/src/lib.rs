@@ -58,7 +58,8 @@ pub fn run() {
         .join("ditto")
         .join("ditto.db");
     std::fs::create_dir_all(db_path.parent().unwrap()).ok();
-    let db = db::Database::open(&db_path.to_string_lossy()).expect("failed to open database");
+    let db = db::Database::open_with_recovery(&db_path.to_string_lossy())
+        .expect("failed to open database");
     load_env_provider_config(&db);
     let state = AppState {
         db: std::sync::Arc::new(std::sync::Mutex::new(db)),

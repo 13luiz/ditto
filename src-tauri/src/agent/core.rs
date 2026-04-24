@@ -594,4 +594,19 @@ mod tests {
         let resp = rule_based_response("anything at all");
         assert!(!resp.is_empty());
     }
+
+    #[test]
+    fn test_rule_based_covers_common_inputs() {
+        assert!(!rule_based_response("hello").is_empty());
+        assert!(!rule_based_response("how are you").is_empty());
+        assert!(!rule_based_response("goodnight").is_empty());
+        assert!(!rule_based_response("I'm hungry").is_empty());
+        assert!(!rule_based_response("random text").is_empty());
+    }
+
+    #[test]
+    fn test_offline_mode_returns_valid_response() {
+        let resp = rule_based_response("what's up?");
+        assert!(resp.len() > 5, "rule-based response should be meaningful");
+    }
 }

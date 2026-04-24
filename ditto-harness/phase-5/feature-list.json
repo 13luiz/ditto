@@ -61,8 +61,8 @@
         "Verify user can accept or dismiss update",
         "Verify update downloads and installs correctly"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "6909ea77dbdf143703078c4107c0cf46b28994ed"
     },
     {
       "id": "P5-011",
@@ -77,8 +77,8 @@
         "Uninstall via Add/Remove Programs",
         "Verify all files are cleaned up"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "6909ea77dbdf143703078c4107c0cf46b28994ed"
     },
     {
       "id": "P5-012",
@@ -91,8 +91,8 @@
         "Verify app launches from Applications",
         "Move to Trash and verify cleanup"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "6909ea77dbdf143703078c4107c0cf46b28994ed"
     },
     {
       "id": "P5-013",

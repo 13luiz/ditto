@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ditto Care</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #1e1e1e;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        color: #fff;
+        user-select: none;
+      }
+      #care {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 12px;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .title { font-size: 13px; font-weight: bold; }
+      .close-btn {
+        background: none;
+        border: none;
+        color: #666;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 0 4px;
+        line-height: 1;
+      }
+      .close-btn:hover { color: #aaa; }
+      .mood {
+        font-size: 14px;
+        text-align: center;
+        margin-bottom: 10px;
+        padding: 6px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 8px;
+      }
+      .bars { display: flex; flex-direction: column; gap: 6px; }
+      .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .bar-label {
+        width: 64px;
+        font-size: 11px;
+        color: #ccc;
+        text-transform: capitalize;
+      }
+      .bar-track {
+        flex: 1;
+        height: 10px;
+        background: #333;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        border-radius: 5px;
+        transition: width 0.3s;
+      }
+      .bar-val {
+        width: 28px;
+        font-size: 10px;
+        color: #aaa;
+        text-align: right;
+      }
+      .actions {
+        display: flex;
+        gap: 4px;
+        margin-top: 12px;
+      }
+      .action-btn {
+        flex: 1;
+        padding: 6px 0;
+        border: 1px solid #555;
+        border-radius: 6px;
+        background: #2a2a2a;
+        color: #ddd;
+        font-size: 11px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .action-btn:hover { background: #444; }
+      .error {
+        color: #e74c3c;
+        font-size: 11px;
+        text-align: center;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="care">
+      <div class="header">
+        <span class="title">Ditto Care</span>
+        <button class="close-btn" id="close-btn">×</button>
+      </div>
+      <div class="mood" id="mood">Loading...</div>
+      <div class="bars" id="bars"></div>
+      <div class="actions" id="actions">
+        <button class="action-btn" data-action="feed">Feed</button>
+        <button class="action-btn" data-action="pet">Pet</button>
+        <button class="action-btn" data-action="chat">Chat</button>
+        <button class="action-btn" data-action="sleep">Sleep</button>
+      </div>
+    </div>
+    <script type="module" src="/src/care-window.ts"></script>
+  </body>
+</html>

@@ -83,36 +83,28 @@ pub async fn send_chat_message(
         (conv_id, preamble, config_json, chat_history)
     }; // db lock dropped here
 
-    // Phase 2: LLM call with tools + chat history (async, no DB lock held)
-    let response = match try_agent_response(
+    // Phase 2: LLM call with streaming
+    let response = match try_streaming_response(
         &app,
-        db_arc,
+        db_arc.clone(),
         &agent_config,
         &preamble,
         &message,
-        chat_history,
     )
     .await
     {
-        Ok(resp) => resp,
-        Err(_) => rule_based_response(&message),
+        Ok(resp) => {
+            let _ = app.emit("chat-stream-done", serde_json::json!({ "full_response": &resp }));
+            resp
+        }
+        Err(e) => {
+            eprintln!("[ditto] LLM streaming error, falling back: {}", e);
+            let fallback = format!("[LLM error: {}]\n{}", e, rule_based_response(&message));
+            let _ = app.emit("chat-stream-token", serde_json::json!({ "token": &fallback }));
+            let _ = app.emit("chat-stream-done", serde_json::json!({ "full_response": &fallback }));
+            fallback
+        }
     };
-
-    // Phase 3: Stream tokens + save response
-    let tokens: Vec<&str> = response.split_whitespace().collect();
-    for (i, token) in tokens.iter().enumerate() {
-        let text = if i == 0 {
-            token.to_string()
-        } else {
-            format!(" {}", token)
-        };
-        let _ = app.emit("chat-stream-token", serde_json::json!({ "token": text }));
-    }
-
-    let _ = app.emit(
-        "chat-stream-done",
-        serde_json::json!({ "full_response": response }),
-    );
 
     {
         let db = state.db.lock().map_err(|e| e.to_string())?;
@@ -121,6 +113,36 @@ pub async fn send_chat_message(
     }
 
     Ok(())
+}
+
+async fn try_streaming_response(
+    app: &tauri::AppHandle,
+    db: Arc<Mutex<Database>>,
+    config_json: &Option<String>,
+    preamble: &str,
+    message: &str,
+) -> Result<String, String> {
+    let config_json = match config_json {
+        Some(json) => json,
+        None => return Err("no provider configured".to_string()),
+    };
+
+    let config: ProviderConfig = serde_json::from_str(config_json).map_err(|e| e.to_string())?;
+    let agent = DittoAgent::new(&config, preamble, app.clone(), db).map_err(|e| e.to_string())?;
+
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+    let app = app.clone();
+    let msg = message.to_string();
+
+    let stream_task = tokio::spawn(async move {
+        agent.stream_chat(&msg, tx).await
+    });
+
+    while let Some(token) = rx.recv().await {
+        let _ = app.emit("chat-stream-token", serde_json::json!({ "token": token }));
+    }
+
+    stream_task.await.map_err(|e| e.to_string())?.map_err(|e| e.to_string())
 }
 
 async fn try_agent_response(

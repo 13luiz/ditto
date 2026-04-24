@@ -10,19 +10,18 @@
         padding: 0;
         box-sizing: border-box;
       }
-      html, body {
+      html, body, #app {
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background: transparent;
-      }
-      #app {
-        position: relative;
-        width: 100%;
-        height: 100%;
+        background-color: transparent !important;
       }
       canvas {
         display: block;
+        outline: none;
+        border: none;
+        box-shadow: none;
+        background-color: transparent !important;
       }
     </style>
   </head>

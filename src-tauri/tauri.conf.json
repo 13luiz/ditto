@@ -17,11 +17,13 @@
         "transparent": true,
         "decorations": false,
         "alwaysOnTop": true,
+        "shadow": false,
         "width": 64,
         "height": 64,
         "resizable": false,
         "skipTaskbar": true,
-        "visible": true
+        "visible": true,
+        "backgroundColor": "#00000000"
       }
     ],
     "security": {

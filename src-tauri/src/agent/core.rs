@@ -1,6 +1,10 @@
 use rig::completion::{Chat, Message, Prompt};
 #[cfg(not(test))]
 use rig::client::completion::CompletionClient;
+#[cfg(not(test))]
+use rig::streaming::StreamingPrompt;
+#[cfg(not(test))]
+use futures::StreamExt;
 use rig::providers;
 use rig::providers::openai::client::CompletionsClient as OpenAIClient;
 use serde::{Deserialize, Serialize};
@@ -194,6 +198,7 @@ impl DittoAgent {
                     .tool(RecallTool {
                         db: Some(db.clone()),
                     })
+                    .default_max_turns(25)
                     .build();
                 Ok(DittoAgent::OpenAI(agent))
             }
@@ -229,6 +234,7 @@ impl DittoAgent {
                     .tool(RecallTool {
                         db: Some(db.clone()),
                     })
+                    .default_max_turns(25)
                     .build();
                 Ok(DittoAgent::Anthropic(agent))
             }
@@ -257,6 +263,7 @@ impl DittoAgent {
                     .tool(RecallTool {
                         db: Some(db.clone()),
                     })
+                    .default_max_turns(25)
                     .build();
                 Ok(DittoAgent::Ollama(agent))
             }
@@ -295,6 +302,53 @@ impl DittoAgent {
                 .await
                 .map_err(|e| AgentError::ApiError(e.to_string())),
         }
+    }
+
+    #[cfg(not(test))]
+    pub async fn stream_chat(
+        &self,
+        message: &str,
+        tx: tokio::sync::mpsc::UnboundedSender<String>,
+    ) -> Result<String, AgentError> {
+        use rig::agent::MultiTurnStreamItem;
+        use rig::streaming::{StreamedAssistantContent, StreamingPrompt};
+
+        let mut full_response = String::new();
+
+        macro_rules! process_stream {
+            ($stream:expr) => {
+                let mut stream = Box::pin($stream);
+                while let Some(chunk) = stream.next().await {
+                    match chunk {
+                        Ok(MultiTurnStreamItem::StreamAssistantItem(
+                            StreamedAssistantContent::Text(text),
+                        )) => {
+                            let _ = tx.send(text.text.clone());
+                            full_response.push_str(&text.text);
+                        }
+                        Ok(_) => {}
+                        Err(e) => return Err(AgentError::ApiError(e.to_string())),
+                    }
+                }
+            };
+        }
+
+        match self {
+            DittoAgent::OpenAI(agent) => {
+                let stream = agent.stream_prompt(message).await;
+                process_stream!(stream);
+            }
+            DittoAgent::Anthropic(agent) => {
+                let stream = agent.stream_prompt(message).await;
+                process_stream!(stream);
+            }
+            DittoAgent::Ollama(agent) => {
+                let stream = agent.stream_prompt(message).await;
+                process_stream!(stream);
+            }
+        }
+
+        Ok(full_response)
     }
 }
 

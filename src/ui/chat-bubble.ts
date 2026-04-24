@@ -5,9 +5,9 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 let chatWindow: WebviewWindow | null = null;
 
 export async function toggleChatWindow(): Promise<void> {
-  if (chatWindow) {
-    await chatWindow.close();
-    chatWindow = null;
+  const existing = await WebviewWindow.getByLabel('chat');
+  if (existing) {
+    await existing.destroy();
     return;
   }
 

@@ -38,7 +38,7 @@ inputEl.addEventListener('keydown', (e) => {
 
 document.getElementById('close-btn')!.addEventListener('click', () => {
   import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
-    getCurrentWindow().close();
+    getCurrentWindow().destroy();
   });
 });
 

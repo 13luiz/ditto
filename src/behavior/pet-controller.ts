@@ -29,6 +29,7 @@ export class PetController {
   private lastTimestamp = 0;
   private facingRight = true;
   private monitorFrameCounter = 0;
+  private userPlaced = false;  // true when user dragged to non-ground position
 
   constructor(onStateChange: (s: PetState) => void) {
     this.onStateChange = onStateChange;
@@ -127,19 +128,26 @@ export class PetController {
       }
     } else if (this.state === 'walk_left' || this.state === 'walk_right' ||
                this.state === 'run_left' || this.state === 'run_right') {
-      this.windowX += this.velocityX * dt;
-      this.windowY = ground;
-      // Clamp to current monitor's edges
-      if (this.windowX < range.xStart) {
-        this.windowX = range.xStart;
+      if (this.userPlaced) {
+        // Don't move when user has placed the pet at a custom position
         this.setState('idle');
-      }
-      if (this.windowX + this.physW() > range.xEnd) {
-        this.windowX = range.xEnd - this.physW();
-        this.setState('idle');
+      } else {
+        this.windowX += this.velocityX * dt;
+        this.windowY = ground;
+        // Clamp to current monitor's edges
+        if (this.windowX < range.xStart) {
+          this.windowX = range.xStart;
+          this.setState('idle');
+        }
+        if (this.windowX + this.physW() > range.xEnd) {
+          this.windowX = range.xEnd - this.physW();
+          this.setState('idle');
+        }
       }
     } else if (this.state === 'idle') {
-      this.windowY = ground;
+      if (!this.userPlaced) {
+        this.windowY = ground;
+      }
     }
 
     this.updateWindowPosition();
@@ -154,8 +162,17 @@ export class PetController {
   }
 
   endDrag() {
-    this.setState('fall');
-    this.refreshGround(); // immediate refresh for new monitor
+    this.refreshGround();
+    this.stopWandering();
+    const ground = this.groundY - this.physH();
+    if (this.windowY >= ground - 10) {
+      this.windowY = ground;
+      this.userPlaced = false;
+      this.startWandering();
+    } else {
+      this.userPlaced = true;
+    }
+    this.setState('idle');
   }
 
   startWandering() {

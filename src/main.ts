@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { SpriteEngine } from './renderer/sprite-engine';
 import { ClickThroughHandler } from './input/click-through';
 import { DragHandler } from './input/drag-handler';
@@ -8,6 +9,9 @@ import { toggleChatWindow } from './ui/chat-bubble';
 import { openCarePanel } from './ui/care-panel';
 
 async function main() {
+  try {
+    await getCurrentWindow().setBackgroundColor({ r: 0, g: 0, b: 0, a: 0 });
+  } catch { /* not supported on all platforms */ }
   const canvas = document.getElementById('pet-canvas') as HTMLCanvasElement;
   if (!canvas) throw new Error('Canvas element not found');
 

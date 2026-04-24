@@ -140,8 +140,8 @@
         "Verify care system works offline",
         "Verify settings are accessible offline"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "f2f23b9581055f5ace4ae8b65fd1cebbe21672e9"
     },
     {
       "id": "P5-016",
@@ -155,8 +155,8 @@
         "Verify app continues running without crash",
         "Verify default settings are loaded after recovery"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "f2f23b9581055f5ace4ae8b65fd1cebbe21672e9"
     },
     {
       "id": "P5-017",
@@ -170,8 +170,8 @@
         "Verify Enter/Space activates buttons and toggles",
         "Verify screen reader announces control labels"
       ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "f2f23b9581055f5ace4ae8b65fd1cebbe21672e9"
     }
   ]
 }

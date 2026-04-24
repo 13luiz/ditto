@@ -167,6 +167,20 @@ mod tests {
     }
 
     #[test]
+    fn test_autolaunch_module_exists() {
+        let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("src")
+            .join("system")
+            .join("autolaunch.rs");
+        assert!(src.exists(), "system/autolaunch.rs should exist");
+        let content = fs::read_to_string(&src).unwrap();
+        assert!(
+            content.contains("set_auto_launch"),
+            "autolaunch module should have set_auto_launch function"
+        );
+    }
+
+    #[test]
     fn test_commands_module_exists() {
         let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("src")

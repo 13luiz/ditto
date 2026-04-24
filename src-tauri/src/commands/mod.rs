@@ -303,6 +303,7 @@ pub fn save_settings(
     if let Some(v) = settings.get("auto_launch").and_then(|v| v.as_str()) {
         db.save_setting("auto_launch", v)
             .map_err(|e| e.to_string())?;
+        let _ = crate::system::autolaunch::set_auto_launch(v == "true");
     }
     Ok(())
 }

@@ -34,18 +34,8 @@
       "commit": "a8893a3e1de17b77cd7497836ac640a063960104"
     },
     {
-      "id": "P5-006",
-      "description": "Settings persistence — settings saved to SQLite and survive app restarts",
-      "category": "functional",
-      "test_type": "integration",
-      "steps": [
-        "Save settings via settings panel",
-        "Close and restart the application",
-        "Verify all settings are preserved (LLM config, pet name, behavior prefs)",
-        "Verify settings loaded match what was saved"
-      ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "0d17098845c13d75e2124103c74ef96687e1738a"
     },
     {
       "id": "P5-007",

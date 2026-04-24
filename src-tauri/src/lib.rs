@@ -84,7 +84,8 @@ pub fn run() {
             commands::check_scheduled_triggers,
             commands::record_user_activity,
             commands::get_settings,
-            commands::save_settings
+            commands::save_settings,
+            commands::list_themes
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -216,6 +217,7 @@ mod tests {
             "record_user_activity",
             "get_settings",
             "save_settings",
+            "list_themes",
         ] {
             assert!(
                 content.contains(cmd),

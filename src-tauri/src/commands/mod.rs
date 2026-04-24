@@ -307,3 +307,8 @@ pub fn save_settings(
     }
     Ok(())
 }
+
+#[tauri::command]
+pub fn list_themes() -> Result<Vec<String>, String> {
+    Ok(crate::system::themes::list_themes())
+}

@@ -1,4 +1,4 @@
-use crate::agent::core::{rule_based_response, DittoAgent, ProviderConfig};
+use crate::agent::core::{parse_provider_chain, rule_based_response, DittoAgent, ProviderConfig};
 use crate::agent::memory::MemorySystem;
 use crate::agent::personality::PersonalityTraits;
 use crate::agent::prompt::{PetContext, SystemPromptBuilder};
@@ -86,35 +86,34 @@ pub async fn send_chat_message(
         (conv_id, preamble, config_json, chat_history)
     }; // db lock dropped here
 
-    // Phase 2: LLM call with streaming
-    let response = match try_streaming_response(
-        &app,
-        db_arc.clone(),
-        &agent_config,
-        &preamble,
-        &message,
-    )
-    .await
-    {
-        Ok(resp) => {
-            let _ = app.emit(
-                "chat-stream-done",
-                serde_json::json!({ "full_response": &resp }),
-            );
-            resp
+    // Phase 2: LLM call with fallback chain
+    let response = {
+        let providers = agent_config
+            .as_deref()
+            .and_then(|json| parse_provider_chain(json).ok())
+            .unwrap_or_default();
+
+        let mut resp = None;
+        for provider in &providers {
+            let config_str = serde_json::to_string(&provider).unwrap_or_default();
+            match try_streaming_response(&app, db_arc.clone(), &Some(config_str), &preamble, &message).await {
+                Ok(r) => { resp = Some(r); break; }
+                Err(e) => eprintln!("[ditto] Provider {} failed: {}", provider.provider_name(), e),
+            }
         }
-        Err(e) => {
-            eprintln!("[ditto] LLM streaming error, falling back: {}", e);
-            let fallback = format!("[LLM error: {}]\n{}", e, rule_based_response(&message));
-            let _ = app.emit(
-                "chat-stream-token",
-                serde_json::json!({ "token": &fallback }),
-            );
-            let _ = app.emit(
-                "chat-stream-done",
-                serde_json::json!({ "full_response": &fallback }),
-            );
-            fallback
+
+        match resp {
+            Some(r) => {
+                let _ = app.emit("chat-stream-done", serde_json::json!({ "full_response": &r }));
+                r
+            }
+            None => {
+                eprintln!("[ditto] All providers failed, using rule-based fallback");
+                let fallback = rule_based_response(&message);
+                let _ = app.emit("chat-stream-token", serde_json::json!({ "token": &fallback }));
+                let _ = app.emit("chat-stream-done", serde_json::json!({ "full_response": &fallback }));
+                fallback
+            }
         }
     };
 

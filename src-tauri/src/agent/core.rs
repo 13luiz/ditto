@@ -150,6 +150,19 @@ pub fn rule_based_response(input: &str) -> String {
     }
 }
 
+pub fn parse_provider_chain(config_json: &str) -> Result<Vec<ProviderConfig>, AgentError> {
+    if let Ok(chain) = serde_json::from_str::<ProviderChain>(config_json) {
+        let fb = FallbackChain::new(&chain);
+        return Ok(fb.providers().to_vec());
+    }
+    if let Ok(config) = serde_json::from_str::<ProviderConfig>(config_json) {
+        return Ok(vec![config]);
+    }
+    Err(AgentError::ConfigError(
+        "invalid provider config format".to_string(),
+    ))
+}
+
 pub enum DittoAgent {
     OpenAI(rig::agent::Agent<providers::openai::completion::CompletionModel>),
     Anthropic(rig::agent::Agent<providers::anthropic::completion::CompletionModel>),
@@ -550,5 +563,35 @@ mod tests {
         let mut limiter = RateLimiter::new(0);
         limiter.record_proactive_call();
         assert!(limiter.can_call_proactive());
+    }
+
+    #[test]
+    fn test_parse_provider_chain_single() {
+        let json = r#"{"type":"openai","api_key":"sk-test","model":"gpt-4o"}"#;
+        let providers = parse_provider_chain(json).unwrap();
+        assert_eq!(providers.len(), 1);
+        assert_eq!(providers[0].provider_name(), "openai");
+    }
+
+    #[test]
+    fn test_parse_provider_chain_with_fallback() {
+        let json = r#"{"primary":{"type":"openai","api_key":"sk-test","model":"gpt-4o"},"fallback":{"type":"ollama","model":"llama3.2"}}"#;
+        let providers = parse_provider_chain(json).unwrap();
+        assert_eq!(providers.len(), 2);
+        assert_eq!(providers[0].provider_name(), "openai");
+        assert_eq!(providers[1].provider_name(), "ollama");
+    }
+
+    #[test]
+    fn test_parse_provider_chain_invalid() {
+        let json = r#"{"type":"invalid","api_key":"x","model":"x"}"#;
+        assert!(parse_provider_chain(json).is_err());
+    }
+
+    #[test]
+    fn test_fallback_to_rule_based_on_all_failures() {
+        // Simulate all providers failing — rule-based response must always succeed
+        let resp = rule_based_response("anything at all");
+        assert!(!resp.is_empty());
     }
 }

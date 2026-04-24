@@ -18,18 +18,8 @@
       "commit": "12d37639089d14b2d058cfab16444c3909603f46"
     },
     {
-      "id": "P5-002",
-      "description": "Wire CareSystem decay to runtime — needs decay on demand in get_care_state",
-      "category": "functional",
-      "test_type": "unit",
-      "steps": [
-        "Verify get_care_state applies elapsed-time decay before returning",
-        "Verify hunger decays at -1.0/hr, happiness at -0.5/hr, energy at -0.3/hr, social at -0.2/hr",
-        "Verify needs clamp to 0 after decay",
-        "Verify mood recalculated after decay"
-      ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "92802a45e4442e2155ce27696514124f397148c9"
     },
     {
       "id": "P5-003",

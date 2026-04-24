@@ -1,10 +1,8 @@
-use rig::completion::{Chat, Message, Prompt};
-#[cfg(not(test))]
-use rig::client::completion::CompletionClient;
-#[cfg(not(test))]
-use rig::streaming::StreamingPrompt;
 #[cfg(not(test))]
 use futures::StreamExt;
+#[cfg(not(test))]
+use rig::client::completion::CompletionClient;
+use rig::completion::{Chat, Message, Prompt};
 use rig::providers;
 use rig::providers::openai::client::CompletionsClient as OpenAIClient;
 use serde::{Deserialize, Serialize};

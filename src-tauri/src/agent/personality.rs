@@ -43,11 +43,15 @@ impl PersonalityTraits {
 
     pub fn save(&self, db: &crate::db::Database) -> Result<(), String> {
         let json = serde_json::to_string(self).map_err(|e| e.to_string())?;
-        db.save_setting("personality_traits", &json).map_err(|e| e.to_string())
+        db.save_setting("personality_traits", &json)
+            .map_err(|e| e.to_string())
     }
 
     pub fn load(db: &crate::db::Database) -> Result<Self, String> {
-        match db.load_setting("personality_traits").map_err(|e| e.to_string())? {
+        match db
+            .load_setting("personality_traits")
+            .map_err(|e| e.to_string())?
+        {
             Some(json) => serde_json::from_str(&json).map_err(|e| e.to_string()),
             None => Ok(Self::default()),
         }

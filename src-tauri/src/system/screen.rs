@@ -29,7 +29,10 @@ mod tests {
         if let Ok(data) = result {
             assert!(!data.is_empty(), "captured image should have non-zero size");
             // Check PNG header
-            assert!(data.starts_with(&[0x89, 0x50, 0x4E, 0x47]), "should be valid PNG");
+            assert!(
+                data.starts_with(&[0x89, 0x50, 0x4E, 0x47]),
+                "should be valid PNG"
+            );
         }
     }
 

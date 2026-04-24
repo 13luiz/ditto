@@ -16,7 +16,11 @@ pub struct ScheduledTrigger {
 
 impl ScheduledTrigger {
     pub fn new(trigger_type: TriggerType, cooldown: Duration) -> Self {
-        Self { trigger_type, last_fired: None, cooldown }
+        Self {
+            trigger_type,
+            last_fired: None,
+            cooldown,
+        }
     }
 
     pub fn should_fire(&self) -> bool {
@@ -90,14 +94,14 @@ impl BehaviorScheduler {
     pub fn new() -> Self {
         Self {
             morning_greeting: ScheduledTrigger::new(
-                TriggerType::MorningGreeting, Duration::from_secs(3600 * 6),
+                TriggerType::MorningGreeting,
+                Duration::from_secs(3600 * 6),
             ),
             break_reminder: ScheduledTrigger::new(
-                TriggerType::BreakReminder, Duration::from_secs(3600),
+                TriggerType::BreakReminder,
+                Duration::from_secs(3600),
             ),
-            idle_comment: ScheduledTrigger::new(
-                TriggerType::IdleComment, Duration::from_secs(900),
-            ),
+            idle_comment: ScheduledTrigger::new(TriggerType::IdleComment, Duration::from_secs(900)),
             activity: ActivityDetector::new(Duration::from_secs(300)),
             break_work_duration: Duration::from_secs(3600),
         }
@@ -108,8 +112,7 @@ impl BehaviorScheduler {
     }
 
     pub fn check_break_reminder(&self) -> bool {
-        !self.activity.is_idle()
-            && self.break_reminder.should_fire()
+        !self.activity.is_idle() && self.break_reminder.should_fire()
     }
 
     pub fn check_idle_comment(&self) -> bool {
@@ -137,7 +140,8 @@ mod tests {
 
     #[test]
     fn test_trigger_cooldown() {
-        let mut trigger = ScheduledTrigger::new(TriggerType::MorningGreeting, Duration::from_secs(60));
+        let mut trigger =
+            ScheduledTrigger::new(TriggerType::MorningGreeting, Duration::from_secs(60));
         trigger.mark_fired();
         assert!(!trigger.should_fire());
     }

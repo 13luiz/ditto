@@ -10,7 +10,7 @@ import { openCarePanel } from './ui/care-panel';
 
 async function main() {
   try {
-    await getCurrentWindow().setBackgroundColor({ r: 0, g: 0, b: 0, a: 0 });
+    await getCurrentWindow().setBackgroundColor({ red: 0, green: 0, blue: 0, alpha: 0 });
   } catch { /* not supported on all platforms */ }
   const canvas = document.getElementById('pet-canvas') as HTMLCanvasElement;
   if (!canvas) throw new Error('Canvas element not found');

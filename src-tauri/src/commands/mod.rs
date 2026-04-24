@@ -44,7 +44,7 @@ pub async fn send_chat_message(
     let db_arc = state.db.clone();
 
     // Phase 1: DB operations (synchronous, drop lock before await)
-    let (conv_id, preamble, agent_config, chat_history) = {
+    let (conv_id, preamble, agent_config, _chat_history) = {
         let db = state.db.lock().map_err(|e| e.to_string())?;
 
         let conv_id = match db.get_latest_conversation_id().map_err(|e| e.to_string())? {
@@ -94,14 +94,23 @@ pub async fn send_chat_message(
     .await
     {
         Ok(resp) => {
-            let _ = app.emit("chat-stream-done", serde_json::json!({ "full_response": &resp }));
+            let _ = app.emit(
+                "chat-stream-done",
+                serde_json::json!({ "full_response": &resp }),
+            );
             resp
         }
         Err(e) => {
             eprintln!("[ditto] LLM streaming error, falling back: {}", e);
             let fallback = format!("[LLM error: {}]\n{}", e, rule_based_response(&message));
-            let _ = app.emit("chat-stream-token", serde_json::json!({ "token": &fallback }));
-            let _ = app.emit("chat-stream-done", serde_json::json!({ "full_response": &fallback }));
+            let _ = app.emit(
+                "chat-stream-token",
+                serde_json::json!({ "token": &fallback }),
+            );
+            let _ = app.emit(
+                "chat-stream-done",
+                serde_json::json!({ "full_response": &fallback }),
+            );
             fallback
         }
     };
@@ -134,17 +143,19 @@ async fn try_streaming_response(
     let app = app.clone();
     let msg = message.to_string();
 
-    let stream_task = tokio::spawn(async move {
-        agent.stream_chat(&msg, tx).await
-    });
+    let stream_task = tokio::spawn(async move { agent.stream_chat(&msg, tx).await });
 
     while let Some(token) = rx.recv().await {
         let _ = app.emit("chat-stream-token", serde_json::json!({ "token": token }));
     }
 
-    stream_task.await.map_err(|e| e.to_string())?.map_err(|e| e.to_string())
+    stream_task
+        .await
+        .map_err(|e| e.to_string())?
+        .map_err(|e| e.to_string())
 }
 
+#[allow(dead_code)]
 async fn try_agent_response(
     app: &tauri::AppHandle,
     db: Arc<Mutex<Database>>,

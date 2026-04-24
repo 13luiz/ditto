@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5] - 2026-04-24
+
+### Added
+
+- **Phase 4 — Soul**: Pet has needs, awareness, and mood-driven behavior
+- Care system with four needs (hunger, happiness, energy, social) and PRD-aligned decay rates
+- Mood engine with weighted scoring (hunger×0.3 + happiness×0.3 + energy×0.2 + social×0.2)
+- Five mood bands: Ecstatic (≥80), Happy (≥60), Neutral (≥40), Sad (≥20), Miserable (<20)
+- Care panel as separate WebviewWindow (care.html + care-window.ts) with dark theme UI
+- Procedural sound effects via Web Audio API (happy, sad, hungry, pet, feed, sleep, chat, greeting)
+- Behavior scheduler with morning greeting, break reminder, and idle comment triggers
+- Activity detector with idle/work state tracking
+- Screen capture module using `xcap` crate for screen awareness
+- LLM provider tool for screen context (`CaptureScreen`)
+- Real LLM streaming via rig-core `StreamingPrompt` + tokio mpsc channel
+- `get_care_state` and `apply_care_action` IPC commands
+
+### Fixed
+
+- Care panel opens as independent window instead of injecting into pet's 64×64 window
+- Window close uses `destroy()` instead of `close()` for chat and care panels (fully removes window)
+- Added Tauri capabilities for care window and destroy permission
+- LLM errors now surfaced visibly in chat (`[LLM error: ...]` prefix) instead of silent fallback
+- Set `default_max_turns` to 25 for long-running autonomous agent behavior
+- Pet drag positioning preserved with `userPlaced` flag — pet stays where dropped, doesn't snap to ground
+- Transparent window border fixed: `backgroundColor: #00000000`, `shadow: false`, explicit transparent CSS on all elements
+- Added `futures` dependency for `StreamExt` in streaming implementation
+
 ## [0.0.4] - 2026-04-23
 
 ### Added
@@ -85,6 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI workflow (Rust checks: fmt, clippy, test)
 - `.gitignore` for `.repos/` and `.claude/`
 
+[0.0.5]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.5
 [0.0.4]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.4
 [0.0.3]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.3
 [0.0.2]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.2

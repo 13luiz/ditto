@@ -4,13 +4,24 @@ use std::time::Duration;
 pub struct NeedValue(f64);
 
 impl NeedValue {
-    pub fn new(value: f64) -> Self { Self(value.clamp(0.0, 100.0)) }
-    pub fn get(&self) -> f64 { self.0 }
-    pub fn set(&mut self, value: f64) { self.0 = value.clamp(0.0, 100.0); }
+    pub fn new(value: f64) -> Self {
+        Self(value.clamp(0.0, 100.0))
+    }
+    pub fn get(&self) -> f64 {
+        self.0
+    }
+    pub fn set(&mut self, value: f64) {
+        self.0 = value.clamp(0.0, 100.0);
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum NeedType { Hunger, Happiness, Energy, Social }
+pub enum NeedType {
+    Hunger,
+    Happiness,
+    Energy,
+    Social,
+}
 
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct Needs {
@@ -23,8 +34,10 @@ pub struct Needs {
 impl Needs {
     pub fn full() -> Self {
         Self {
-            hunger: NeedValue::new(100.0), happiness: NeedValue::new(100.0),
-            energy: NeedValue::new(100.0), social: NeedValue::new(100.0),
+            hunger: NeedValue::new(100.0),
+            happiness: NeedValue::new(100.0),
+            energy: NeedValue::new(100.0),
+            social: NeedValue::new(100.0),
         }
     }
 
@@ -39,10 +52,14 @@ impl Needs {
 
     pub fn decay(&mut self, elapsed: Duration) {
         let secs = elapsed.as_secs_f64();
-        self.hunger.set(self.hunger.get() - Self::decay_rate(NeedType::Hunger) * secs);
-        self.happiness.set(self.happiness.get() - Self::decay_rate(NeedType::Happiness) * secs);
-        self.energy.set(self.energy.get() - Self::decay_rate(NeedType::Energy) * secs);
-        self.social.set(self.social.get() - Self::decay_rate(NeedType::Social) * secs);
+        self.hunger
+            .set(self.hunger.get() - Self::decay_rate(NeedType::Hunger) * secs);
+        self.happiness
+            .set(self.happiness.get() - Self::decay_rate(NeedType::Happiness) * secs);
+        self.energy
+            .set(self.energy.get() - Self::decay_rate(NeedType::Energy) * secs);
+        self.social
+            .set(self.social.get() - Self::decay_rate(NeedType::Social) * secs);
     }
 
     pub fn get(&self, need: NeedType) -> f64 {
@@ -65,40 +82,77 @@ impl Needs {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum MoodLabel { Ecstatic, Happy, Neutral, Sad, Miserable }
+pub enum MoodLabel {
+    Ecstatic,
+    Happy,
+    Neutral,
+    Sad,
+    Miserable,
+}
 
 impl MoodLabel {
     pub fn from_score(score: f64) -> Self {
-        if score >= 80.0 { MoodLabel::Ecstatic }
-        else if score >= 60.0 { MoodLabel::Happy }
-        else if score >= 40.0 { MoodLabel::Neutral }
-        else if score >= 20.0 { MoodLabel::Sad }
-        else { MoodLabel::Miserable }
+        if score >= 80.0 {
+            MoodLabel::Ecstatic
+        } else if score >= 60.0 {
+            MoodLabel::Happy
+        } else if score >= 40.0 {
+            MoodLabel::Neutral
+        } else if score >= 20.0 {
+            MoodLabel::Sad
+        } else {
+            MoodLabel::Miserable
+        }
     }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Mood { pub score: f64, pub label: MoodLabel }
+pub struct Mood {
+    pub score: f64,
+    pub label: MoodLabel,
+}
 
 impl Mood {
     pub fn from_needs(needs: &Needs) -> Self {
-        let score = needs.hunger.get() * 0.3 + needs.happiness.get() * 0.3
-            + needs.energy.get() * 0.2 + needs.social.get() * 0.2;
-        Self { score, label: MoodLabel::from_score(score) }
+        let score = needs.hunger.get() * 0.3
+            + needs.happiness.get() * 0.3
+            + needs.energy.get() * 0.2
+            + needs.social.get() * 0.2;
+        Self {
+            score,
+            label: MoodLabel::from_score(score),
+        }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum CareAction { Feed, Pet, Chat, Sleep }
+pub enum CareAction {
+    Feed,
+    Pet,
+    Chat,
+    Sleep,
+}
 
 #[derive(Debug, Clone)]
-pub struct CareSystem { pub needs: Needs }
+pub struct CareSystem {
+    pub needs: Needs,
+}
 
 impl CareSystem {
-    pub fn new() -> Self { Self { needs: Needs::full() } }
-    pub fn with_needs(needs: Needs) -> Self { Self { needs } }
-    pub fn decay(&mut self, elapsed: Duration) { self.needs.decay(elapsed); }
-    pub fn mood(&self) -> Mood { Mood::from_needs(&self.needs) }
+    pub fn new() -> Self {
+        Self {
+            needs: Needs::full(),
+        }
+    }
+    pub fn with_needs(needs: Needs) -> Self {
+        Self { needs }
+    }
+    pub fn decay(&mut self, elapsed: Duration) {
+        self.needs.decay(elapsed);
+    }
+    pub fn mood(&self) -> Mood {
+        Mood::from_needs(&self.needs)
+    }
 
     pub fn apply_action(&mut self, action: CareAction) -> f64 {
         let (need, amount): (NeedType, f64) = match action {
@@ -114,7 +168,8 @@ impl CareSystem {
 
     pub fn save(&self, db: &crate::db::Database) -> Result<(), String> {
         let json = serde_json::to_string(&self.needs).map_err(|e| e.to_string())?;
-        db.save_setting("care_state", &json).map_err(|e| e.to_string())
+        db.save_setting("care_state", &json)
+            .map_err(|e| e.to_string())
     }
 
     pub fn load(db: &crate::db::Database) -> Result<Self, String> {
@@ -134,8 +189,10 @@ mod tests {
 
     fn needs(a: f64, b: f64, c: f64, d: f64) -> Needs {
         Needs {
-            hunger: NeedValue::new(a), happiness: NeedValue::new(b),
-            energy: NeedValue::new(c), social: NeedValue::new(d),
+            hunger: NeedValue::new(a),
+            happiness: NeedValue::new(b),
+            energy: NeedValue::new(c),
+            social: NeedValue::new(d),
         }
     }
 

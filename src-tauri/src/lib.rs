@@ -69,6 +69,10 @@ pub fn run() {
 
     tauri::Builder::default()
         .manage(state)
+        .setup(|app| {
+            system::tray::setup_tray(app);
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::set_ignore_cursor_events,
             commands::get_cursor_position,
@@ -132,6 +136,32 @@ mod tests {
         let config = load_tauri_config();
         let win = get_main_window_config(&config);
         assert_eq!(win["skipTaskbar"].as_bool(), Some(true));
+    }
+
+    #[test]
+    fn test_tray_module_exists() {
+        let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("src")
+            .join("system")
+            .join("tray.rs");
+        assert!(src.exists(), "system/tray.rs should exist");
+        let content = fs::read_to_string(&src).unwrap();
+        assert!(
+            content.contains("setup_tray"),
+            "tray module should have setup_tray function"
+        );
+    }
+
+    #[test]
+    fn test_tray_setup_called_in_run() {
+        let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("src")
+            .join("lib.rs");
+        let content = fs::read_to_string(&src).unwrap();
+        assert!(
+            content.contains("system::tray::setup_tray"),
+            "lib.rs should call system::tray::setup_tray"
+        );
     }
 
     #[test]

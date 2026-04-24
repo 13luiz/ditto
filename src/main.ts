@@ -8,6 +8,7 @@ import { PetController } from './behavior/pet-controller';
 import { toggleChatWindow } from './ui/chat-bubble';
 import { openCarePanel } from './ui/care-panel';
 import { openSettingsWindow } from './ui/settings';
+import { showOnboardingIfNeeded } from './ui/onboarding';
 import { checkScheduledTriggers, recordUserActivity } from './ipc/commands';
 
 async function main() {
@@ -52,6 +53,9 @@ async function main() {
   dragHandler.attach();
 
   controller.startWandering();
+
+  // Show onboarding on first run
+  showOnboardingIfNeeded().catch(console.error);
 
   // Handle pet actions from LLM tool calls
   listen<{ type: string; x?: number; y?: number; state?: string; emotion?: string }>('pet-action', (event) => {

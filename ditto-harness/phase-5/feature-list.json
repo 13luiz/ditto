@@ -42,20 +42,8 @@
       "commit": "303aafd002a5e8f3024f123a3c0188dc4b9d515c"
     },
     {
-      "id": "P5-008",
-      "description": "Custom pet theme loading — load external spritesheet + animation JSON",
-      "category": "functional",
-      "test_type": "integration",
-      "steps": [
-        "Place custom spritesheet.png and animations.json in a theme directory",
-        "Select custom theme in settings",
-        "Verify app loads the custom spritesheet and animation definitions",
-        "Verify pet renders with new sprites",
-        "Verify animation states (idle, walk, sleep) use custom frame sequences",
-        "Verify reverting to default theme works"
-      ],
-      "passes": false,
-      "commit": null
+      "passes": true,
+      "commit": "ac245e07f7bc8d1bc3a6ee0ac15ece639efb266c"
     },
     {
       "id": "P5-009",

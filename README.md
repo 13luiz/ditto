@@ -10,14 +10,20 @@ Ditto is an agent-driven desktop pet built with [Rust](https://www.rust-lang.org
 - **Movement & Physics** — Autonomous wandering, gravity simulation, screen boundary detection
 - **Grab & Drag** — Pick up and move your pet; it falls when released
 - **Cursor Interaction** — Pet notices when your cursor is nearby
-- **AI Agent** — Chat with your pet via natural language; powered by cloud or local LLMs (planned)
-- **Personality Engine** — Traits that evolve based on your interactions over time (planned)
-- **Memory System** — Your pet remembers you across sessions (planned)
-- **Care System** — Hunger, happiness, energy, and social needs with mood-driven behavior (planned)
+- **AI Agent** — Chat with your pet via natural language; powered by cloud or local LLMs
+- **Personality Engine** — Traits that evolve based on your interactions over time
+- **Memory System** — Your pet remembers you across sessions
+- **Care System** — Hunger, happiness, energy, and social needs with mood-driven behavior
+- **Screen Awareness** — Pet can perceive your screen contents via screen capture
+- **Behavior Scheduler** — Morning greetings, idle comments, break reminders
+- **System Tray** — Show/hide, settings, quit from tray icon
+- **Settings UI** — LLM config, pet name, behavior preferences, auto-launch
+- **Custom Themes** — Load pet themes from data directory
+- **Onboarding Wizard** — First-run setup for pet name and LLM provider
 
 ## Status
 
-Ditto is in **early development**. Phases 1 (Skeleton) and 2 (Life) are complete — the pet renders on a transparent window, walks autonomously, reacts to your cursor, and can be grabbed and dragged. See [CHANGELOG.md](CHANGELOG.md) for details.
+Ditto is in **active development**. All five phases are complete — the pet renders on a transparent window, walks autonomously, reacts to your cursor, chats via LLM, has needs and moods, and is packaged for distribution. See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ## Tech Stack
 
@@ -26,8 +32,8 @@ Ditto is in **early development**. Phases 1 (Skeleton) and 2 (Life) are complete
 | App framework | Tauri v2 |
 | Backend | Rust |
 | Frontend | Canvas 2D + TypeScript |
-| AI Agent | rig-core (planned) |
-| Database | SQLite via rusqlite (planned) |
+| AI Agent | rig-core (OpenAI, Anthropic, Ollama) |
+| Database | SQLite via rusqlite |
 
 ## Project Structure
 
@@ -35,13 +41,19 @@ Ditto is in **early development**. Phases 1 (Skeleton) and 2 (Life) are complete
 ditto/
 ├── src-tauri/
 │   ├── src/
-│   │   ├── behavior/      # FSM, physics, cursor detection
+│   │   ├── agent/         # LLM agent, tools, memory, personality
+│   │   ├── behavior/      # FSM, physics, cursor, scheduler
+│   │   ├── care/          # Needs, mood, care actions
+│   │   ├── db/            # SQLite migrations and queries
+│   │   ├── system/        # Screen capture, themes, tray, autolaunch
 │   │   └── commands/      # Tauri IPC commands
 │   └── capabilities/      # Tauri v2 permissions
 ├── src/
 │   ├── behavior/          # PetController (state, movement)
 │   ├── renderer/          # SpriteEngine, AnimationPlayer
-│   └── input/             # Click-through, drag handler
+│   ├── input/             # Click-through, drag handler
+│   ├── ipc/               # Tauri command wrappers
+│   └── ui/                # Chat, care, settings, onboarding windows
 ├── assets/pets/default/   # Spritesheet + animation definitions
 ├── docs/                  # PRD, specs
 └── ditto-harness/         # TDD implementation harness state
@@ -79,9 +91,9 @@ cargo fmt --manifest-path src-tauri/Cargo.toml
 |-------|------|--------|
 | 1 — Skeleton | Pet on screen with transparent window | Done |
 | 2 — Life | Movement, interaction, physics | Done |
-| 3 — Mind | AI agent, chat, memory | Planned |
-| 4 — Soul | Care system, screen awareness | Planned |
-| 5 — Polish | System tray, settings, packaging | Planned |
+| 3 — Mind | AI agent, chat, memory | Done |
+| 4 — Soul | Care system, screen awareness | Done |
+| 5 — Polish | System tray, settings, packaging | Done |
 
 ## Implementation Harness
 

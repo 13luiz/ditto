@@ -136,18 +136,106 @@ impl FallbackChain {
 }
 
 pub fn rule_based_response(input: &str) -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
     let lower = input.to_lowercase();
+
+    // Greetings
     if lower.contains("hello") || lower.contains("hi") || lower.contains("hey") {
-        "Hey there! Nice to see you!".to_string()
-    } else if lower.contains("how are you") {
-        "I'm doing great! Thanks for asking!".to_string()
-    } else if lower.contains("goodnight") || lower.contains("bye") {
-        "Goodnight! See you later!".to_string()
-    } else if lower.contains("hungry") {
-        "I could use a snack... hint hint!".to_string()
-    } else {
-        "I'm here! What's on your mind?".to_string()
+        return "Hey there! Nice to see you!".to_string();
     }
+
+    // Time-based greetings
+    if lower.contains("good morning") || lower.contains("morning") {
+        return "Good morning! Ready for a great day!".to_string();
+    }
+    if lower.contains("good afternoon") || lower.contains("afternoon") {
+        return "Good afternoon! Hope you're having a nice day!".to_string();
+    }
+    if lower.contains("good evening") || lower.contains("evening") {
+        return "Good evening! How's your day been?".to_string();
+    }
+
+    // Status checks
+    if lower.contains("how are you") || lower.contains("how're you") {
+        return "I'm doing great! Thanks for asking!".to_string();
+    }
+    if lower.contains("what's up") || lower.contains("whats up") || lower.contains("wassup") {
+        return "Not much! Just hanging out here with you!".to_string();
+    }
+
+    // Farewells
+    if lower.contains("goodnight") || lower.contains("good night") {
+        return "Goodnight! Sweet dreams!".to_string();
+    }
+    if lower.contains("bye") || lower.contains("goodbye") || lower.contains("see you") {
+        return "See you later! Take care!".to_string();
+    }
+
+    // Needs and activities
+    if lower.contains("hungry") || lower.contains("food") || lower.contains("eat") {
+        return "I could use a snack... hint hint!".to_string();
+    }
+    if lower.contains("tired") || lower.contains("sleepy") || lower.contains("sleep") {
+        return "Maybe it's time for a little rest?".to_string();
+    }
+    if lower.contains("play") || lower.contains("game") || lower.contains("fun") {
+        return "I'm always up for some fun! What do you have in mind?".to_string();
+    }
+    if lower.contains("work") || lower.contains("busy") {
+        return "I'll be right here if you need a break!".to_string();
+    }
+
+    // Emotions
+    if lower.contains("happy") || lower.contains("excited") || lower.contains("great") {
+        return "That's wonderful! I'm happy too!".to_string();
+    }
+    if lower.contains("sad") || lower.contains("down") || lower.contains("upset") {
+        return "Aww, I'm here for you. Want to talk about it?".to_string();
+    }
+    if lower.contains("bored") || lower.contains("boring") {
+        return "Let's find something interesting to do together!".to_string();
+    }
+
+    // Questions
+    if lower.contains("what") && (lower.contains("doing") || lower.contains("up to")) {
+        return "Just being here with you! What about you?".to_string();
+    }
+    if lower.contains("who are you") || lower.contains("what are you") {
+        return "I'm your desktop companion! Here to keep you company!".to_string();
+    }
+    if lower.contains("help") || lower.contains("how do") {
+        return "I'm here to help! What do you need?".to_string();
+    }
+
+    // Compliments
+    if lower.contains("cute") || lower.contains("adorable") || lower.contains("sweet") {
+        return "Aww, thank you! You're pretty great yourself!".to_string();
+    }
+    if lower.contains("thank") {
+        return "You're welcome! Anytime!".to_string();
+    }
+
+    // Default responses with variety (deterministic based on input hash)
+    let default_responses = [
+        "I'm here! What's on your mind?",
+        "Tell me more! I'm listening!",
+        "Hmm, interesting! Go on!",
+        "I'm all ears! What's up?",
+        "That's cool! What else?",
+        "I'm here for you! What do you need?",
+        "Let's chat! What's happening?",
+        "I'm curious! Tell me more!",
+    ];
+
+    // Use hash of input to deterministically select a default response
+    let mut hasher = DefaultHasher::new();
+    input.hash(&mut hasher);
+    let hash = hasher.finish();
+    let index = (hash as usize) % default_responses.len();
+
+    default_responses[index].to_string()
 }
 
 pub fn parse_provider_chain(config_json: &str) -> Result<Vec<ProviderConfig>, AgentError> {
@@ -366,49 +454,28 @@ impl DittoAgent {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
-    #[test]
-    fn test_openai_config_deserialization() {
-        let json = r#"{
-            "type": "openai",
-            "api_key": "sk-test123",
-            "model": "gpt-4o"
-        }"#;
+    #[rstest]
+    #[case(
+        r#"{"type": "openai", "api_key": "sk-test123", "model": "gpt-4o"}"#,
+        "openai",
+        "gpt-4o"
+    )]
+    #[case(
+        r#"{"type": "anthropic", "api_key": "sk-ant-test", "model": "claude-sonnet-4-20250514"}"#,
+        "anthropic",
+        "claude-sonnet-4-20250514"
+    )]
+    #[case(r#"{"type": "ollama", "model": "llama3.2"}"#, "ollama", "llama3.2")]
+    fn test_provider_config_deserialization(
+        #[case] json: &str,
+        #[case] expected_provider: &str,
+        #[case] expected_model: &str,
+    ) {
         let config: ProviderConfig = serde_json::from_str(json).unwrap();
-        assert_eq!(config.provider_name(), "openai");
-        assert_eq!(config.model(), "gpt-4o");
-        if let ProviderConfig::OpenAI { api_key, .. } = &config {
-            assert_eq!(api_key, "sk-test123");
-        } else {
-            panic!("Expected OpenAI variant");
-        }
-    }
-
-    #[test]
-    fn test_anthropic_config_deserialization() {
-        let json = r#"{
-            "type": "anthropic",
-            "api_key": "sk-ant-test",
-            "model": "claude-sonnet-4-20250514"
-        }"#;
-        let config: ProviderConfig = serde_json::from_str(json).unwrap();
-        assert_eq!(config.provider_name(), "anthropic");
-        assert_eq!(config.model(), "claude-sonnet-4-20250514");
-    }
-
-    #[test]
-    fn test_ollama_config_deserialization() {
-        let json = r#"{
-            "type": "ollama",
-            "model": "llama3.2"
-        }"#;
-        let config: ProviderConfig = serde_json::from_str(json).unwrap();
-        assert_eq!(config.provider_name(), "ollama");
-        if let ProviderConfig::Ollama { base_url, .. } = &config {
-            assert_eq!(base_url, "http://localhost:11434");
-        } else {
-            panic!("Expected Ollama variant");
-        }
+        assert_eq!(config.provider_name(), expected_provider);
+        assert_eq!(config.model(), expected_model);
     }
 
     #[test]

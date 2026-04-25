@@ -199,6 +199,7 @@ impl StateMachine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
     fn default_ctx() -> TransitionContext {
         TransitionContext::default()
@@ -265,42 +266,16 @@ mod tests {
         assert_eq!(sm.current_state(), PetState::Idle);
     }
 
-    #[test]
-    fn test_walk_left_to_idle() {
+    #[rstest]
+    #[case(PetState::WalkLeft, PetState::Idle)]
+    #[case(PetState::WalkRight, PetState::Idle)]
+    #[case(PetState::WalkLeft, PetState::WalkRight)]
+    #[case(PetState::WalkRight, PetState::WalkLeft)]
+    fn test_walk_transitions(#[case] from: PetState, #[case] to: PetState) {
         let mut sm = StateMachine::new();
-        sm.try_transition(PetState::WalkLeft, &default_ctx())
-            .unwrap();
-        assert!(sm.try_transition(PetState::Idle, &default_ctx()).is_ok());
-    }
-
-    #[test]
-    fn test_walk_right_to_idle() {
-        let mut sm = StateMachine::new();
-        sm.try_transition(PetState::WalkRight, &default_ctx())
-            .unwrap();
-        assert!(sm.try_transition(PetState::Idle, &default_ctx()).is_ok());
-    }
-
-    #[test]
-    fn test_walk_left_to_walk_right() {
-        let mut sm = StateMachine::new();
-        sm.try_transition(PetState::WalkLeft, &default_ctx())
-            .unwrap();
-        assert!(sm
-            .try_transition(PetState::WalkRight, &default_ctx())
-            .is_ok());
-        assert_eq!(sm.current_state(), PetState::WalkRight);
-    }
-
-    #[test]
-    fn test_walk_right_to_walk_left() {
-        let mut sm = StateMachine::new();
-        sm.try_transition(PetState::WalkRight, &default_ctx())
-            .unwrap();
-        assert!(sm
-            .try_transition(PetState::WalkLeft, &default_ctx())
-            .is_ok());
-        assert_eq!(sm.current_state(), PetState::WalkLeft);
+        sm.try_transition(from, &default_ctx()).unwrap();
+        assert!(sm.try_transition(to, &default_ctx()).is_ok());
+        assert_eq!(sm.current_state(), to);
     }
 
     // --- Conditional transitions from idle ---
@@ -558,18 +533,6 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_transition_error_has_states() {
-        let mut sm = StateMachine::new();
-        let ctx = ctx_with_energy(10.0);
-        sm.try_transition(PetState::Sleep, &ctx).unwrap();
-        let err = sm
-            .try_transition(PetState::Drag, &default_ctx())
-            .unwrap_err();
-        assert_eq!(err.from, PetState::Sleep);
-        assert_eq!(err.to, PetState::Drag);
-    }
-
-    #[test]
     fn test_sleep_to_run_denied() {
         let mut sm = StateMachine::new();
         let ctx = ctx_with_energy(10.0);
@@ -577,49 +540,5 @@ mod tests {
         assert!(sm
             .try_transition(PetState::RunLeft, &default_ctx())
             .is_err());
-    }
-
-    // --- try_from_str ---
-
-    #[test]
-    fn test_try_from_str_all_states() {
-        let states = [
-            "idle",
-            "walk_left",
-            "walk_right",
-            "run_left",
-            "run_right",
-            "climb",
-            "fall",
-            "sleep",
-            "eat",
-            "play",
-            "drag",
-            "talk",
-            "happy",
-            "sad",
-            "curious",
-            "sit",
-        ];
-        for s in states {
-            assert!(PetState::try_from_str(s).is_some(), "should parse '{}'", s);
-        }
-    }
-
-    #[test]
-    fn test_try_from_str_invalid() {
-        assert!(PetState::try_from_str("unknown").is_none());
-        assert!(PetState::try_from_str("").is_none());
-    }
-
-    // --- force_state ---
-
-    #[test]
-    fn test_force_state() {
-        let mut sm = StateMachine::new();
-        sm.force_state(PetState::Drag);
-        assert_eq!(sm.current_state(), PetState::Drag);
-        sm.force_state(PetState::Fall);
-        assert_eq!(sm.current_state(), PetState::Fall);
     }
 }

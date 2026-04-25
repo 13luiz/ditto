@@ -27,6 +27,7 @@ Thumbs.db
 
 # Reference repos (not part of the project)
 .repos/
+!.repos/bongo-cat/
 
 # Database (stored in %LOCALAPPDATA%/ditto/)
 *.db

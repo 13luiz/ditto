@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6] - 2026-04-25
+
+### Added
+
+- **Phase 5 — Polish**: System tray, settings, packaging, performance
+- System tray icon with show/hide, settings, and quit menu
+- Settings UI panel with LLM config, pet name, and behavior preferences
+- Settings persistence with roundtrip save/load to SQLite
+- Auto-launch registration via settings toggle
+- Custom pet theme loading with theme discovery from data directory
+- First-run onboarding wizard for pet name and LLM setup
+- Bundler config for MSI, NSIS, and DMG installers with auto-update capability
+- LLM error recovery with provider fallback chain (try primary → fallbacks → rule-based)
+- Behavior scheduler wired to runtime with check_and_fire triggers for greetings and idle comments
+- Care system decay wired to runtime via load_with_decay (applies elapsed time on startup)
+- Offline rule-based coverage expanded with more response categories (time greetings, emotions, questions, compliments)
+- Database corruption recovery — auto-recreates DB if migration fails
+- Performance measurement script for profiling
+- `rstest` dev-dependency for parameterized tests
+- Spec documents for interaction modes and visual rendering
+
+### Changed
+
+- Refactored movement and state machine tests to use `rstest` parameterized cases (reduced duplication)
+- Consolidated agent tests into dedicated `tests/` subdirectory with integration, tool, and error recovery modules
+- Expanded rule-based responses with deterministic variety via input hashing for default fallbacks
+
 ## [0.0.5] - 2026-04-24
 
 ### Added
@@ -113,6 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI workflow (Rust checks: fmt, clippy, test)
 - `.gitignore` for `.repos/` and `.claude/`
 
+[0.0.6]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.6
 [0.0.5]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.5
 [0.0.4]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.4
 [0.0.3]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.3

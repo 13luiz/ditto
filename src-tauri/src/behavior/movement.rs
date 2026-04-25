@@ -135,6 +135,7 @@ impl PetPhysics {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
     const SCREEN_W: f64 = 1920.0;
     const SCREEN_H: f64 = 1080.0;
@@ -153,36 +154,24 @@ mod tests {
         assert!(p.is_on_ground());
     }
 
-    #[test]
-    fn test_clamp_negative_x() {
+    #[rstest]
+    #[case(-50.0, 0.0)]
+    #[case(SCREEN_W - PET_W + 100.0, SCREEN_W - PET_W)]
+    fn test_clamp_x_boundaries(#[case] input_x: f64, #[case] expected_x: f64) {
         let mut p = test_physics();
-        p.position.x = -50.0;
+        p.position.x = input_x;
         p.clamp_to_screen();
-        assert_eq!(p.position.x, 0.0);
+        assert_eq!(p.position.x, expected_x);
     }
 
-    #[test]
-    fn test_clamp_exceeds_right() {
+    #[rstest]
+    #[case(-30.0, 0.0)]
+    #[case(SCREEN_H, SCREEN_H - PET_H)]
+    fn test_clamp_y_boundaries(#[case] input_y: f64, #[case] expected_y: f64) {
         let mut p = test_physics();
-        p.position.x = SCREEN_W - PET_W + 100.0;
+        p.position.y = input_y;
         p.clamp_to_screen();
-        assert_eq!(p.position.x, SCREEN_W - PET_W);
-    }
-
-    #[test]
-    fn test_clamp_negative_y() {
-        let mut p = test_physics();
-        p.position.y = -30.0;
-        p.clamp_to_screen();
-        assert_eq!(p.position.y, 0.0);
-    }
-
-    #[test]
-    fn test_clamp_exceeds_bottom() {
-        let mut p = test_physics();
-        p.position.y = SCREEN_H;
-        p.clamp_to_screen();
-        assert_eq!(p.position.y, SCREEN_H - PET_H);
+        assert_eq!(p.position.y, expected_y);
     }
 
     #[test]
@@ -204,29 +193,21 @@ mod tests {
         assert_eq!(p.position.y, SCREEN_H - PET_H);
     }
 
-    #[test]
-    fn test_boundary_detection_left() {
+    #[rstest]
+    #[case(0.0, true, false, true)]
+    #[case(SCREEN_W - PET_W, false, true, true)]
+    #[case(960.0, false, false, false)]
+    fn test_boundary_detection(
+        #[case] x: f64,
+        #[case] expect_left: bool,
+        #[case] expect_right: bool,
+        #[case] expect_horizontal: bool,
+    ) {
         let mut p = test_physics();
-        p.position.x = 0.0;
-        assert!(p.is_at_left_edge());
-        assert!(!p.is_at_right_edge());
-        assert!(p.is_at_horizontal_boundary());
-    }
-
-    #[test]
-    fn test_boundary_detection_right() {
-        let mut p = test_physics();
-        p.position.x = SCREEN_W - PET_W;
-        assert!(p.is_at_right_edge());
-        assert!(!p.is_at_left_edge());
-        assert!(p.is_at_horizontal_boundary());
-    }
-
-    #[test]
-    fn test_boundary_detection_middle() {
-        let mut p = test_physics();
-        p.position.x = 960.0;
-        assert!(!p.is_at_horizontal_boundary());
+        p.position.x = x;
+        assert_eq!(p.is_at_left_edge(), expect_left);
+        assert_eq!(p.is_at_right_edge(), expect_right);
+        assert_eq!(p.is_at_horizontal_boundary(), expect_horizontal);
     }
 
     #[test]

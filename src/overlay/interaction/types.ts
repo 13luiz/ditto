@@ -46,7 +46,8 @@ export type SystemOutput =
   | { kind: 'fsm_transition'; from: string; to: string }
   | { kind: 'bond_level_up'; oldLevel: number; newLevel: number }
   | { kind: 'letter_received'; letterId: string }
-  | { kind: 'skit_start'; participants: string[]; dialogue: SkitLine[] };
+  | { kind: 'skit_start'; participants: string[]; dialogue: SkitLine[] }
+  | { kind: 'gesture'; type: GestureType };
 
 export type CareNeed = 'hunger' | 'happiness' | 'energy' | 'social';
 

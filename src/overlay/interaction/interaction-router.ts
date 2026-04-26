@@ -61,6 +61,9 @@ export class InteractionRouter {
   handleGesture(gesture: GestureType): boolean {
     const target = this.gestureMap[gesture];
     if (!target || !this.modes.has(target)) return false;
+    const gestureOutput: SystemOutput = { kind: 'gesture', type: gesture };
+    const targetMode = this.modes.get(target)!;
+    targetMode.handleOutput(gestureOutput);
     this.dispatch({ kind: 'gesture', type: gesture });
     return true;
   }

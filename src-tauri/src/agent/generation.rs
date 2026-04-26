@@ -354,4 +354,114 @@ mod tests {
         assert!(entry.contains("No care actions"));
         assert!(entry.contains("hoping for better"));
     }
+
+    // --- Memory integration tests ---
+
+    #[test]
+    fn test_letter_content_stored_in_memory() {
+        let db = crate::db::Database::open_in_memory().unwrap();
+
+        let ctx = LetterContext {
+            offline_hours: 8.0,
+            last_mood: "Happy".to_string(),
+            last_conversation_topic: Some("coding".to_string()),
+            bond_level: 5,
+        };
+        let letter_content = rule_based_letter("Ditto", &ctx);
+
+        // Store letter in letters table
+        let _letter_id = db.insert_letter("to_user", &letter_content).unwrap();
+
+        // Store letter in memory for agent recall
+        let memory_key = "letter:2026-04-26";
+        db.save_memory(memory_key, &letter_content, "letter")
+            .unwrap();
+
+        // Verify memory roundtrip
+        let recalled = db.load_memory(memory_key).unwrap();
+        assert!(recalled.is_some());
+        assert!(recalled.unwrap().contains("Ditto"));
+    }
+
+    #[test]
+    fn test_journal_content_stored_in_memory() {
+        let db = crate::db::Database::open_in_memory().unwrap();
+
+        let ctx = JournalContext {
+            entry_date: "2026-04-26".to_string(),
+            conversation_count: 3,
+            care_actions_count: 2,
+            mood_summary: "Happy".to_string(),
+            notable_events: vec!["Got fed chicken".to_string()],
+        };
+        let journal_content = rule_based_journal_entry("Ditto", &ctx);
+
+        // Store journal entry in journal_entries table
+        db.insert_journal_entry("2026-04-26", &journal_content, Some("Happy"), None, None)
+            .unwrap();
+
+        // Store journal in memory for agent recall
+        let memory_key = "journal:2026-04-26";
+        db.save_memory(memory_key, &journal_content, "journal")
+            .unwrap();
+
+        // Verify memory roundtrip
+        let recalled = db.load_memory(memory_key).unwrap();
+        assert!(recalled.is_some());
+        assert!(recalled.unwrap().contains("3 conversations"));
+    }
+
+    #[test]
+    fn test_multiple_letters_accumulate_in_memory() {
+        let db = crate::db::Database::open_in_memory().unwrap();
+
+        let ctx1 = LetterContext {
+            offline_hours: 6.0,
+            last_mood: "Happy".to_string(),
+            last_conversation_topic: None,
+            bond_level: 3,
+        };
+        let ctx2 = LetterContext {
+            offline_hours: 12.0,
+            last_mood: "Sad".to_string(),
+            last_conversation_topic: None,
+            bond_level: 6,
+        };
+
+        let letter1 = rule_based_letter("Ditto", &ctx1);
+        let letter2 = rule_based_letter("Ditto", &ctx2);
+
+        db.save_memory("letter:2026-04-25", &letter1, "letter")
+            .unwrap();
+        db.save_memory("letter:2026-04-26", &letter2, "letter")
+            .unwrap();
+
+        let letters = db.load_memories_by_category("letter").unwrap();
+        assert_eq!(letters.len(), 2);
+    }
+
+    #[test]
+    fn test_prompt_builder_references_letter_memory() {
+        use crate::agent::personality::PersonalityTraits;
+        use crate::agent::prompt::{PetContext, SystemPromptBuilder};
+
+        let db = crate::db::Database::open_in_memory().unwrap();
+
+        // Store a letter in memory
+        let letter = "Dear owner, I missed you while you were away.";
+        db.save_memory("letter:2026-04-25", letter, "letter")
+            .unwrap();
+
+        // Build prompt with letter memory
+        let traits = PersonalityTraits::default();
+        let context = PetContext {
+            pet_name: "Ditto".to_string(),
+            recent_memories: vec![format!("Letter from 2026-04-25: {}", letter)],
+            ..Default::default()
+        };
+        let prompt = SystemPromptBuilder::new(traits, context).build();
+
+        assert!(prompt.contains("Letter from 2026-04-25"));
+        assert!(prompt.contains("missed you"));
+    }
 }

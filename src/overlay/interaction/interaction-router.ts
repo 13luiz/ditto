@@ -14,6 +14,11 @@ export class InteractionRouter {
   private modes = new Map<InteractionModeType, InteractionMode>();
   private gestureMap: GestureMap = {};
   private eventHandlers: EventHandler[] = [];
+  private overlayContainer: HTMLDivElement | null = null;
+
+  setOverlayContainer(container: HTMLDivElement): void {
+    this.overlayContainer = container;
+  }
 
   activeModes(): InteractionModeType[] {
     return Array.from(this.modes.keys());
@@ -32,7 +37,7 @@ export class InteractionRouter {
     this.modes.set(mode.type, mode);
     mode.mount({
       canvas: null,
-      overlayContainer: null,
+      overlayContainer: this.overlayContainer,
       getPetPosition: () => ({ x: 0, y: 0, width: 64, height: 64 }),
       getPetState: () => 'idle',
       dispatch: (event) => this.dispatch(event),

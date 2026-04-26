@@ -23,11 +23,21 @@
         box-shadow: none;
         background-color: transparent !important;
       }
+      #overlay-dom {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: visible;
+      }
     </style>
   </head>
   <body>
     <div id="app">
       <canvas id="pet-canvas"></canvas>
+      <div id="overlay-dom"></div>
     </div>
     <script type="module" src="/src/overlay/main.ts"></script>
   </body>

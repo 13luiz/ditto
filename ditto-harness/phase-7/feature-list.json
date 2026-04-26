@@ -31,8 +31,8 @@
       "test_target": "src/overlay/interaction/__tests__/gesture-dispatch.test.ts",
       "sprint_criterion": 1,
       "depends_on": ["P7-001"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "b7f341e",
       "notes": null
     },
     {

@@ -2,6 +2,7 @@ use rusqlite::{Connection, Result};
 
 pub fn run(conn: &Connection) -> Result<()> {
     conn.execute_batch(MIGRATION_V1)?;
+    conn.execute_batch(MIGRATION_V2)?;
     Ok(())
 }
 
@@ -41,6 +42,16 @@ CREATE INDEX IF NOT EXISTS idx_memory_key ON memory(key);
 CREATE INDEX IF NOT EXISTS idx_memory_category ON memory(category);
 ";
 
+const MIGRATION_V2: &str = "
+CREATE TABLE IF NOT EXISTS bond_level (
+    id INTEGER PRIMARY KEY CHECK(id = 1),
+    level INTEGER NOT NULL DEFAULT 1,
+    total_points INTEGER NOT NULL DEFAULT 0,
+    daily_points TEXT NOT NULL DEFAULT '{}',
+    last_award_date TEXT NOT NULL DEFAULT ''
+);
+";
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -63,6 +74,7 @@ mod tests {
         assert!(tables.contains(&"messages".to_string()));
         assert!(tables.contains(&"memory".to_string()));
         assert!(tables.contains(&"settings".to_string()));
+        assert!(tables.contains(&"bond_level".to_string()));
     }
 
     #[test]
@@ -78,6 +90,6 @@ mod tests {
                 |row| row.get(0),
             )
             .unwrap();
-        assert_eq!(count, 4);
+        assert_eq!(count, 5);
     }
 }

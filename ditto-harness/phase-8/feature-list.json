@@ -119,9 +119,9 @@
       "test_target": "src-tauri/src/care/minigame.rs",
       "sprint_criterion": [10, 11, 12],
       "depends_on": ["P8-010"],
-      "passes": false,
-      "commit": null,
-      "notes": null
+      "passes": true,
+      "commit": "de5b1ed",
+      "notes": "care/minigame.rs: RpsGame (5-round, pet AI, score tracking), CatchGameState (falling items, hit detection, 30s timer), mini_game_care_effects. IPC commands use real game structures. 29 tests."
     },
     {
       "id": "P8-012",
@@ -141,9 +141,9 @@
       "test_target": "src/overlay/interaction/modes/__tests__/dream-nail-mode.test.ts",
       "sprint_criterion": 13,
       "depends_on": ["P8-010"],
-      "passes": false,
-      "commit": null,
-      "notes": null
+      "passes": true,
+      "commit": "d59060e",
+      "notes": "DreamNailMode: translucent italic overlay, bond-gated Lv.5+, rate-limited 3/day, auto-fade 4s, emits dream_nail_activate. 13 TS tests."
     },
     {
       "id": "P8-014",
@@ -152,9 +152,9 @@
       "test_target": "src-tauri/src/agent/tests/integration_tests.rs",
       "sprint_criterion": [14, 15],
       "depends_on": ["P8-009", "P8-010"],
-      "passes": false,
-      "commit": null,
-      "notes": null
+      "passes": true,
+      "commit": "b4a9664",
+      "notes": "LetterMode: envelope notification, bond-gated Lv.6+, pending tracking, mark-read, reply dispatch. 9 TS tests."
     },
     {
       "id": "P8-015",
@@ -174,9 +174,9 @@
       "test_target": "src-tauri/src/agent/tests/integration_tests.rs",
       "sprint_criterion": [16, 17],
       "depends_on": ["P8-009", "P8-010"],
-      "passes": false,
-      "commit": null,
-      "notes": null
+      "passes": true,
+      "commit": "fd69503",
+      "notes": "JournalMode: bond-gated Lv.7+, entry storage with date-range queries, milestone support. 12 TS tests."
     },
     {
       "id": "P8-017",
@@ -196,9 +196,9 @@
       "test_target": "src/overlay/interaction/modes/__tests__/command-input-mode.test.ts",
       "sprint_criterion": [6, 7],
       "depends_on": ["P8-010"],
-      "passes": false,
-      "commit": null,
-      "notes": null
+      "passes": true,
+      "commit": "c388ce4",
+      "notes": "CommandInputMode: inline input bar, 18 slash commands parsed, autocomplete list exported, Enter submits. 27 TS tests."
     },
     {
       "id": "P8-019",
@@ -207,9 +207,9 @@
       "test_target": "src/overlay/interaction/modes/__tests__/chat-log-mode.test.ts",
       "sprint_criterion": [8, 9],
       "depends_on": ["P8-010"],
-      "passes": false,
-      "commit": null,
-      "notes": null
+      "passes": true,
+      "commit": "6043f10",
+      "notes": "ChatLogMode: multi-tab log (chat/system/memory/all), 200-entry cap, timestamps, entry filtering. 16 TS tests."
     },
     {
       "id": "P8-020",
@@ -218,9 +218,9 @@
       "test_target": "src/overlay/interaction/__tests__/interaction-router.test.ts",
       "sprint_criterion": [18, 19],
       "depends_on": ["P8-013", "P8-014", "P8-016", "P8-018", "P8-019"],
-      "passes": false,
-      "commit": null,
-      "notes": null
+      "passes": true,
+      "commit": "19d1862",
+      "notes": "Bond gating: dream_nail Lv.5+, letter Lv.6+, journal Lv.7+, mini_game Lv.7+. Profile updates: Nurture + RPG include new modes. 12 bond-gating tests."
     }
   ]
 }

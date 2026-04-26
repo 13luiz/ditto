@@ -37,10 +37,10 @@
   ],
   "current_phase_target_version": "0.3.0",
   "current_phase_theme": "Depth & Cozy Loop",
-  "total_features_completed": 119,
-  "total_features_remaining": 15,
-  "last_session_summary": "Session 9: 5 Phase 8 features completed (P8-006 through P8-010). SQLite migrations, DB CRUD, agent generation prompts/fallbacks, memory integration, 9 new IPC commands. 286 Rust tests passing. Backend foundation complete.",
-  "last_commit": "41b1277",
-  "session_count": 9,
-  "notes": "Phase 8 backend foundation done (migrations, CRUD, generation, IPC). Next session: P8-001 (Live2D PoC — critical gate) or P8-011 (MiniGame backend). P8-001 requires PixiJS + live app."
+  "total_features_completed": 131,
+  "total_features_remaining": 8,
+  "last_session_summary": "Session 10: 7 Phase 8 features completed (P8-011, P8-013, P8-014, P8-016, P8-018, P8-019, P8-020). MiniGame backend (RPS + CatchTheFood), 5 new interaction modes (DreamNail, Letter, Journal, CommandInput, ChatLog), bond-level gating in InteractionRouter, profile manager updates. 315 Rust + ~200 TS tests passing.",
+  "last_commit": "19d1862",
+  "session_count": 10,
+  "notes": "Phase 8 backend + interaction modes done. Remaining: P8-001 Live2D PoC (critical gate for P8-002 through P8-005), P8-012/P8-015/P8-017 visual frontend tests. Next session: P8-001 requires PixiJS v6 + live app."
 }

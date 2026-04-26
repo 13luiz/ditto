@@ -96,6 +96,73 @@ pub fn list_skins() -> Vec<String> {
     skins
 }
 
+#[derive(Debug)]
+pub struct ImportResult {
+    pub id: String,
+    pub path: PathBuf,
+}
+
+pub fn import_skin_zip(zip_path: &str, dest_dir: &std::path::Path) -> Result<ImportResult, String> {
+    let file = fs::File::open(zip_path).map_err(|e| format!("cannot open zip: {}", e))?;
+    let mut archive = zip::ZipArchive::new(file).map_err(|e| format!("invalid zip: {}", e))?;
+
+    // Find skin.json to determine the skin ID
+    let manifest_json = archive
+        .by_name("skin.json")
+        .map_err(|_| "zip missing skin.json".to_string())?;
+    let manifest: serde_json::Value =
+        serde_json::from_reader(manifest_json).map_err(|e| format!("invalid skin.json: {}", e))?;
+
+    let name = manifest["name"]
+        .as_str()
+        .ok_or("skin.json missing 'name' field")?;
+    let renderer = manifest["renderer"]
+        .as_str()
+        .ok_or("skin.json missing 'renderer' field")?;
+
+    if !["sprite", "spine", "live2d", "lottie", "vrm"].contains(&renderer) {
+        return Err(format!("unsupported renderer: {}", renderer));
+    }
+
+    let skin_id = name.to_lowercase().replace(' ', "-");
+    let skin_dir = dest_dir.join(&skin_id);
+
+    // Check for path traversal in all entries using raw names
+    for i in 0..archive.len() {
+        let entry = archive.by_index(i).map_err(|e| e.to_string())?;
+        let raw_name = entry.name().to_string();
+        if raw_name.starts_with('/') || raw_name.contains("..") {
+            return Err(format!("path traversal detected: {}", raw_name));
+        }
+    }
+
+    // Extract
+    fs::create_dir_all(&skin_dir).map_err(|e| format!("cannot create skin dir: {}", e))?;
+    for i in 0..archive.len() {
+        let mut entry = archive.by_index(i).map_err(|e| e.to_string())?;
+        let entry_path = entry.mangled_name();
+        let out_path = skin_dir.join(&entry_path);
+
+        if entry.is_dir() {
+            fs::create_dir_all(&out_path).map_err(|e| format!("cannot create dir: {}", e))?;
+        } else {
+            if let Some(parent) = out_path.parent() {
+                fs::create_dir_all(parent)
+                    .map_err(|e| format!("cannot create parent dir: {}", e))?;
+            }
+            let mut out_file =
+                fs::File::create(&out_path).map_err(|e| format!("cannot create file: {}", e))?;
+            std::io::copy(&mut entry, &mut out_file)
+                .map_err(|e| format!("cannot write file: {}", e))?;
+        }
+    }
+
+    Ok(ImportResult {
+        id: skin_id,
+        path: skin_dir,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -197,5 +264,98 @@ mod tests {
         let catalog = scan_skin_dir(base, SkinSource::Bundled);
         assert_eq!(catalog.len(), 1);
         assert_eq!(catalog[0].id, "has-manifest");
+    }
+
+    fn create_skin_zip(tmp_dir: &std::path::Path, skin_name: &str, renderer: &str) -> PathBuf {
+        let zip_path = tmp_dir.join("test-skin.zip");
+        let file = fs::File::create(&zip_path).unwrap();
+        let mut zip = zip::ZipWriter::new(file);
+        let options = zip::write::SimpleFileOptions::default();
+
+        let manifest = serde_json::json!({
+            "schema_version": "1.0",
+            "name": skin_name,
+            "author": "test",
+            "version": "1.0.0",
+            "renderer": renderer,
+            "size": { "width": 64, "height": 64 },
+            "state_map": {}
+        });
+        zip.start_file("skin.json", options).unwrap();
+        zip.write_all(serde_json::to_string(&manifest).unwrap().as_bytes())
+            .unwrap();
+
+        zip.start_file("spritesheet.png", options).unwrap();
+        zip.write_all(b"fake-png-data").unwrap();
+
+        zip.finish().unwrap();
+        zip_path
+    }
+
+    #[test]
+    fn test_import_skin_zip_roundtrip() {
+        let tmp_dir = tempfile::tempdir().unwrap();
+        let zip_path = create_skin_zip(tmp_dir.path(), "Test Pet", "sprite");
+        let dest = tmp_dir.path().join("installed");
+
+        let result = import_skin_zip(zip_path.to_str().unwrap(), &dest).unwrap();
+
+        assert_eq!(result.id, "test-pet");
+        assert!(dest.join("test-pet").exists());
+        assert!(dest.join("test-pet/skin.json").exists());
+        assert!(dest.join("test-pet/spritesheet.png").exists());
+
+        // Verify the installed skin appears in catalog
+        let catalog = scan_skin_dir(dest, SkinSource::User);
+        assert_eq!(catalog.len(), 1);
+        assert_eq!(catalog[0].id, "test-pet");
+        assert_eq!(catalog[0].renderer, "sprite");
+    }
+
+    #[test]
+    fn test_import_rejects_missing_manifest() {
+        let tmp_dir = tempfile::tempdir().unwrap();
+        let zip_path = tmp_dir.path().join("bad.zip");
+        let file = fs::File::create(&zip_path).unwrap();
+        let mut zip = zip::ZipWriter::new(file);
+        zip.start_file("spritesheet.png", zip::write::SimpleFileOptions::default())
+            .unwrap();
+        zip.write_all(b"data").unwrap();
+        zip.finish().unwrap();
+
+        let result = import_skin_zip(zip_path.to_str().unwrap(), &tmp_dir.path().join("dest"));
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("missing skin.json"));
+    }
+
+    #[test]
+    fn test_import_rejects_path_traversal() {
+        let tmp_dir = tempfile::tempdir().unwrap();
+        let zip_path = tmp_dir.path().join("evil.zip");
+        let file = fs::File::create(&zip_path).unwrap();
+        let mut zip = zip::ZipWriter::new(file);
+        let options = zip::write::SimpleFileOptions::default();
+
+        let manifest = serde_json::json!({
+            "schema_version": "1.0",
+            "name": "Evil",
+            "author": "hacker",
+            "version": "1.0.0",
+            "renderer": "sprite",
+            "size": { "width": 64, "height": 64 },
+            "state_map": {}
+        });
+        zip.start_file("skin.json", options).unwrap();
+        zip.write_all(serde_json::to_string(&manifest).unwrap().as_bytes())
+            .unwrap();
+
+        zip.start_file("../etc/passwd", options).unwrap();
+        zip.write_all(b"evil").unwrap();
+
+        zip.finish().unwrap();
+
+        let result = import_skin_zip(zip_path.to_str().unwrap(), &tmp_dir.path().join("dest"));
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("path traversal"));
     }
 }

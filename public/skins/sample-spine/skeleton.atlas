@@ -1,0 +1,5 @@
+texture.png
+size: 64,64
+filter: Nearest, Nearest
+body-region
+bounds: 0, 0, 32, 32

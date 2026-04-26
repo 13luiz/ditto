@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "name": "Sample Spine",
+  "author": "Ditto Team",
+  "version": "1.0.0",
+  "renderer": "spine",
+  "preview": "texture.png",
+  "preview_animation": "idle",
+  "size": { "width": 64, "height": 64 },
+  "state_map": {
+    "idle": "idle",
+    "walk_left": "walk_right",
+    "walk_right": "walk_right",
+    "run_left": "walk_right",
+    "run_right": "walk_right",
+    "sleep": "sleep",
+    "eat": "eat",
+    "talk": "talk",
+    "happy": "happy",
+    "sad": "sad",
+    "sit": "sit",
+    "drag": "idle",
+    "fall": "idle",
+    "play": "happy",
+    "curious": "idle",
+    "climb": "idle"
+  },
+  "spine": {
+    "skeleton": "skeleton.json",
+    "atlas": "skeleton.atlas"
+  },
+  "tags": ["sample", "spine"]
+}

@@ -1,0 +1,126 @@
+{
+  "bones": [
+    { "name": "root" },
+    { "name": "body", "parent": "root", "y": 32 }
+  ],
+  "slots": [
+    { "name": "body-slot", "bone": "body", "attachment": "body-region" }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "body-slot": {
+          "body-region": {
+            "type": "region",
+            "x": 0, "y": 0,
+            "width": 32, "height": 32,
+            "color": "ffffffff"
+          }
+        }
+      }
+    }
+  ],
+  "animations": {
+    "idle": {
+      "bones": {
+        "body": {
+          "translate": [
+            { "time": 0, "y": 0 },
+            { "time": 0.5, "y": 4 },
+            { "time": 1, "y": 0 }
+          ]
+        }
+      }
+    },
+    "walk_right": {
+      "bones": {
+        "body": {
+          "translate": [
+            { "time": 0, "x": 0, "y": 0 },
+            { "time": 0.25, "x": 2, "y": -2 },
+            { "time": 0.5, "x": 4, "y": 0 },
+            { "time": 0.75, "x": 2, "y": -2 },
+            { "time": 1, "x": 0, "y": 0 }
+          ]
+        }
+      }
+    },
+    "sleep": {
+      "bones": {
+        "body": {
+          "scale": [
+            { "time": 0, "x": 1, "y": 1 },
+            { "time": 1, "x": 0.95, "y": 1.05 },
+            { "time": 2, "x": 1, "y": 1 }
+          ]
+        }
+      }
+    },
+    "happy": {
+      "bones": {
+        "body": {
+          "translate": [
+            { "time": 0, "y": 0 },
+            { "time": 0.15, "y": -6 },
+            { "time": 0.3, "y": 0 },
+            { "time": 0.45, "y": -4 },
+            { "time": 0.6, "y": 0 }
+          ]
+        }
+      }
+    },
+    "sad": {
+      "bones": {
+        "body": {
+          "translate": [
+            { "time": 0, "y": 0 },
+            { "time": 0.5, "y": 2 },
+            { "time": 1, "y": 0 }
+          ],
+          "scale": [
+            { "time": 0, "x": 1, "y": 1 },
+            { "time": 0.5, "x": 0.95, "y": 0.95 },
+            { "time": 1, "x": 1, "y": 1 }
+          ]
+        }
+      }
+    },
+    "eat": {
+      "bones": {
+        "body": {
+          "scale": [
+            { "time": 0, "x": 1, "y": 1 },
+            { "time": 0.2, "x": 1.1, "y": 0.9 },
+            { "time": 0.4, "x": 1, "y": 1 },
+            { "time": 0.6, "x": 1.1, "y": 0.9 },
+            { "time": 0.8, "x": 1, "y": 1 }
+          ]
+        }
+      }
+    },
+    "talk": {
+      "bones": {
+        "body": {
+          "translate": [
+            { "time": 0, "x": 0 },
+            { "time": 0.12, "x": 1 },
+            { "time": 0.24, "x": -1 },
+            { "time": 0.36, "x": 1 },
+            { "time": 0.48, "x": 0 }
+          ]
+        }
+      }
+    },
+    "sit": {
+      "bones": {
+        "body": {
+          "translate": [
+            { "time": 0, "y": 0 },
+            { "time": 0.5, "y": -4 }
+          ]
+        }
+      }
+    }
+  }
+}

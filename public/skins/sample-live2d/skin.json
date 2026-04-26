@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "name": "Sample Live2D",
+  "author": "Live2D Inc. / Ditto Team",
+  "version": "1.0.0",
+  "renderer": "live2d",
+  "preview": "haru_greeter_t03.2048/texture_00.png",
+  "preview_animation": "Idle",
+  "size": { "width": 300, "height": 400 },
+  "state_map": {
+    "idle": "Idle",
+    "happy": "f00",
+    "sad": "f02",
+    "talk": "Tap",
+    "sleep": "Idle",
+    "eat": "f01",
+    "play": "f04",
+    "sit": "Idle",
+    "walk_left": "Idle",
+    "walk_right": "Idle",
+    "run_left": "Idle",
+    "run_right": "Idle",
+    "drag": "Idle",
+    "fall": "Idle",
+    "climb": "Idle",
+    "curious": "f03"
+  },
+  "live2d": {
+    "model": "haru_greeter_t03.model3.json"
+  },
+  "tags": ["sample", "live2d", "haru", "cubism4"],
+  "license": "MIT"
+}

@@ -476,7 +476,7 @@ mod tests {
                     |row| row.get(0),
                 )
                 .unwrap();
-            assert_eq!(count, 5);
+            assert_eq!(count, 8);
         }
     }
 }

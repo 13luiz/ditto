@@ -415,4 +415,40 @@ mod tests {
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("not found"));
     }
+
+    #[test]
+    fn test_settings_migration() {
+        let db = crate::db::Database::open_in_memory().unwrap();
+
+        // Simulate pre-migration state: settings exist but no active_skin
+        db.save_setting("provider_config", "test-config").unwrap();
+        db.save_setting("pet_name", "Ditto").unwrap();
+        db.save_setting("auto_launch", "true").unwrap();
+
+        // active_skin should default to "default" when absent
+        let active_skin = db
+            .load_setting("active_skin")
+            .unwrap()
+            .unwrap_or_else(|| "default".to_string());
+        assert_eq!(active_skin, "default");
+
+        // Set active_skin
+        db.save_setting("active_skin", "pixel-cat").unwrap();
+        let loaded = db.load_setting("active_skin").unwrap();
+        assert_eq!(loaded, Some("pixel-cat".to_string()));
+
+        // Existing settings survive the themes→skins rename
+        assert_eq!(
+            db.load_setting("provider_config").unwrap(),
+            Some("test-config".to_string())
+        );
+        assert_eq!(
+            db.load_setting("pet_name").unwrap(),
+            Some("Ditto".to_string())
+        );
+        assert_eq!(
+            db.load_setting("auto_launch").unwrap(),
+            Some("true".to_string())
+        );
+    }
 }

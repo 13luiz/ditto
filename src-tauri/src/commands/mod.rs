@@ -4,7 +4,7 @@ use crate::agent::personality::PersonalityTraits;
 use crate::agent::prompt::{PetContext, SystemPromptBuilder};
 use crate::behavior::scheduler::BehaviorScheduler;
 use crate::behavior::state_machine::{PetState, StateMachine, TransitionContext};
-use crate::care::{CareAction, CareSystem};
+use crate::care::{BondAction, BondEngine, CareAction, CareSystem};
 use crate::db::models::MessageRole;
 use crate::db::Database;
 use chrono::Timelike;
@@ -388,11 +388,80 @@ pub fn transition_pet_state(
         energy,
         mood,
         idle_time: std::time::Duration::from_secs_f64(idle_time_secs),
-        bond_level: 1,
+        bond_level: {
+            let db = state.db.lock().map_err(|e| e.to_string())?;
+            db.load_bond_state().map(|(l, _)| l).unwrap_or(1)
+        },
     };
 
     let mut sm = state.state_machine.lock().map_err(|e| e.to_string())?;
     sm.try_transition(target_state, &ctx)
         .map(|s| s.to_string())
         .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_bond_state(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let (level, total_points) = db.load_bond_state().map_err(|e| e.to_string())?;
+    let engine = BondEngine::with_state(level, total_points);
+    let bond_state = engine.state();
+    Ok(serde_json::json!({
+        "level": bond_state.level,
+        "total_points": bond_state.total_points,
+        "level_title": bond_state.level_title,
+        "points_to_next": bond_state.points_to_next,
+        "next_level": bond_state.next_level,
+    }))
+}
+
+#[tauri::command]
+pub fn award_bond_points(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+    action: String,
+) -> Result<serde_json::Value, String> {
+    let bond_action = match action.as_str() {
+        "chat_message" => BondAction::ChatMessage,
+        "chat_reply" => BondAction::ChatReply,
+        "feed" => BondAction::Feed,
+        "pet" => BondAction::Pet,
+        "play" => BondAction::Play,
+        "emote_exchange" => BondAction::EmoteExchange,
+        "daily_login" => BondAction::DailyLogin,
+        _ => return Err(format!("unknown bond action: {}", action)),
+    };
+
+    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+
+    let result = {
+        let db = state.db.lock().map_err(|e| e.to_string())?;
+        let (level, total_points) = db.load_bond_state().map_err(|e| e.to_string())?;
+        let mut engine = BondEngine::with_state(level, total_points);
+        let result = engine.award(bond_action, &today);
+        if result.points_awarded > 0 {
+            db.save_bond_state(engine.level(), engine.total_points())
+                .map_err(|e| e.to_string())?;
+        }
+        result
+    };
+
+    if result.leveled_up {
+        let _ = app.emit(
+            "bond-level-up",
+            serde_json::json!({
+                "old_level": result.old_level,
+                "new_level": result.new_level,
+            }),
+        );
+    }
+
+    Ok(serde_json::json!({
+        "points_awarded": result.points_awarded,
+        "daily_capped": result.daily_capped,
+        "total_points": result.total_points,
+        "old_level": result.old_level,
+        "new_level": result.new_level,
+        "leveled_up": result.leveled_up,
+    }))
 }

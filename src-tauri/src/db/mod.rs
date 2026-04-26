@@ -154,6 +154,32 @@ impl Database {
                 }
             })
     }
+
+    pub fn load_bond_state(&self) -> Result<(u32, i64)> {
+        self.conn
+            .query_row(
+                "SELECT level, total_points FROM bond_level WHERE id = 1",
+                [],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .or_else(|e| {
+                if matches!(e, rusqlite::Error::QueryReturnedNoRows) {
+                    Ok((1, 0))
+                } else {
+                    Err(e)
+                }
+            })
+    }
+
+    pub fn save_bond_state(&self, level: u32, total_points: i64) -> Result<()> {
+        self.conn.execute(
+            "INSERT INTO bond_level (id, level, total_points, daily_points, last_award_date) \
+             VALUES (1, ?1, ?2, '{}', '') \
+             ON CONFLICT(id) DO UPDATE SET level = ?1, total_points = ?2",
+            params![level, total_points],
+        )?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]

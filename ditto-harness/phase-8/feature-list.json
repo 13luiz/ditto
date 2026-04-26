@@ -64,9 +64,9 @@
       "test_target": "src-tauri/src/db/migrations.rs",
       "sprint_criterion": [12, 15, 17],
       "depends_on": [],
-      "passes": false,
-      "commit": null,
-      "notes": "Foundation feature — no backend code works without these tables."
+      "passes": true,
+      "commit": "32d3d3c",
+      "notes": "Simplified schema: dropped agent_id column from all three tables (single-agent in v0.3.0, multi-agent comes in v0.5.0). 7 migration tests passing."
     },
     {
       "id": "P8-007",
@@ -75,9 +75,9 @@
       "test_target": "src-tauri/src/db/mod.rs",
       "sprint_criterion": [12, 14, 15, 16, 17],
       "depends_on": ["P8-006"],
-      "passes": false,
-      "commit": null,
-      "notes": null
+      "passes": true,
+      "commit": "1eb2ef7",
+      "notes": "8 new DB CRUD tests. Letter, Journal, MiniGameResult models with all CRUD ops."
     },
     {
       "id": "P8-008",
@@ -86,9 +86,9 @@
       "test_target": "src-tauri/src/agent/core.rs",
       "sprint_criterion": [13, 15, 17],
       "depends_on": ["P8-007"],
-      "passes": false,
-      "commit": null,
-      "notes": null
+      "passes": true,
+      "commit": "614d54b",
+      "notes": "New agent/generation.rs module: inner_thought_prompt, letter_prompt, journal_prompt with LetterContext/JournalContext structs. Rule-based fallbacks for all three. 16 tests."
     },
     {
       "id": "P8-009",
@@ -97,9 +97,9 @@
       "test_target": "src-tauri/src/agent/tests/integration_tests.rs",
       "sprint_criterion": [15, 17],
       "depends_on": ["P8-008"],
-      "passes": false,
-      "commit": null,
-      "notes": null
+      "passes": true,
+      "commit": "50efe99",
+      "notes": "4 integration tests: letter→memory roundtrip, journal→memory roundtrip, multiple letters accumulate, prompt builder references letter memory."
     },
     {
       "id": "P8-010",
@@ -108,9 +108,9 @@
       "test_target": "src-tauri/src/commands/mod.rs",
       "sprint_criterion": [13, 14, 15, 16, 17],
       "depends_on": ["P8-007", "P8-008"],
-      "passes": false,
-      "commit": null,
-      "notes": null
+      "passes": true,
+      "commit": "41b1277",
+      "notes": "9 new IPC commands: get_pending_letters, mark_letter_read, send_letter_reply, get_letter_archive, get_journal_entries, generate_journal_entry, start_mini_game, submit_mini_game_result, generate_inner_thought. All registered and verified via source-file string reads. 30 total IPC commands."
     },
     {
       "id": "P8-011",

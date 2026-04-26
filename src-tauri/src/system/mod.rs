@@ -1,5 +1,5 @@
 pub mod screen;
-pub mod themes;
+pub mod skins;
 
 #[cfg(not(test))]
 pub mod autolaunch;

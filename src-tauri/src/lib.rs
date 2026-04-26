@@ -94,7 +94,7 @@ pub fn run() {
             commands::record_user_activity,
             commands::get_settings,
             commands::save_settings,
-            commands::list_themes,
+            commands::list_skins,
             commands::transition_pet_state
         ])
         .run(tauri::generate_context!())
@@ -227,7 +227,7 @@ mod tests {
             "record_user_activity",
             "get_settings",
             "save_settings",
-            "list_themes",
+            "list_skins",
             "transition_pet_state",
         ] {
             assert!(

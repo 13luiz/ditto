@@ -294,8 +294,8 @@ pub fn save_settings(
 }
 
 #[tauri::command]
-pub fn list_themes() -> Result<Vec<String>, String> {
-    Ok(crate::system::themes::list_themes())
+pub fn list_skins() -> Result<Vec<String>, String> {
+    Ok(crate::system::skins::list_skins())
 }
 
 #[tauri::command]

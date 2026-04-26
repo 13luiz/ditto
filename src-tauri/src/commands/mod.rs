@@ -548,14 +548,25 @@ pub fn start_mini_game(
     _state: tauri::State<'_, AppState>,
     game_type: String,
 ) -> Result<serde_json::Value, String> {
-    // Validate game type
-    if game_type != "rps" && game_type != "catch" {
-        return Err(format!("Unknown game type: {}", game_type));
+    match game_type.as_str() {
+        "rps" => {
+            let game = crate::care::minigame::RpsGame::new();
+            Ok(serde_json::json!({
+                "game_type": "rps",
+                "max_rounds": game.max_rounds,
+                "status": "started"
+            }))
+        }
+        "catch" => {
+            let game = crate::care::minigame::CatchGameState::new(800.0);
+            Ok(serde_json::json!({
+                "game_type": "catch",
+                "time_limit_secs": game.time_remaining_secs,
+                "status": "started"
+            }))
+        }
+        _ => Err(format!("Unknown game type: {}", game_type)),
     }
-    Ok(serde_json::json!({
-        "game_type": game_type,
-        "status": "started"
-    }))
 }
 
 #[tauri::command]
@@ -567,9 +578,14 @@ pub fn submit_mini_game_result(
     won: bool,
     care_effects_json: Option<String>,
 ) -> Result<serde_json::Value, String> {
+    // Compute care effects from game result
+    let effects = crate::care::mini_game_care_effects(&game_type, won, score);
+    let effects_json =
+        care_effects_json.unwrap_or_else(|| serde_json::to_string(&effects).unwrap());
+
     let db = state.db.lock().map_err(|e| e.to_string())?;
     let id = db
-        .insert_game_result(&game_type, score, won, care_effects_json.as_deref())
+        .insert_game_result(&game_type, score, won, Some(&effects_json))
         .map_err(|e| e.to_string())?;
     drop(db);
 
@@ -599,6 +615,7 @@ pub fn submit_mini_game_result(
         "id": id,
         "bond_points_awarded": result.points_awarded,
         "bond_leveled_up": result.leveled_up,
+        "care_effects": effects,
     }))
 }
 

@@ -24,6 +24,13 @@ const routes: RouteRecordRaw[] = [
       { path: '', component: () => import('../views/SettingsView.vue') },
     ],
   },
+  {
+    path: '/skins',
+    component: () => import('../views/PetManagerView.vue'),
+    children: [
+      { path: '', component: () => import('../views/SkinsView.vue') },
+    ],
+  },
   { path: '/rooms', component: () => import('../views/RoomListView.vue') },
   { path: '/room/:id', component: () => import('../views/RoomView.vue') },
   { path: '/agents', component: () => import('../views/AgentListView.vue') },

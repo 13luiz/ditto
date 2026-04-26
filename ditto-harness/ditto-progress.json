@@ -1,7 +1,7 @@
 {
   "schema_version": "2.0",
   "prd_version": "2.0",
-  "current_phase": 7,
+  "current_phase": 8,
   "phase_status": {
     "1": "completed",
     "2": "completed",
@@ -10,7 +10,7 @@
     "5": "completed",
     "6": "completed",
     "7": "completed",
-    "8": "pending",
+    "8": "in_progress",
     "9": "pending",
     "10": "pending",
     "11": "pending"
@@ -35,12 +35,12 @@
       "summary": "Phase 7 Interaction Foundation: InteractionRouter, 7 interaction modes, bond engine, interaction profiles. 253 Rust + 153 TS tests."
     }
   ],
-  "current_phase_target_version": "0.2.0",
-  "current_phase_theme": "Interaction Foundation",
+  "current_phase_target_version": "0.3.0",
+  "current_phase_theme": "Depth & Cozy Loop",
   "total_features_completed": 114,
-  "total_features_remaining": 0,
-  "last_session_summary": "Session 6: Released v0.1.2. Phase 7 complete — 14 features, 253 Rust + 153 TS tests. Code review passed, evaluation PASS.",
-  "last_commit": "pending",
-  "session_count": 6,
-  "notes": "Phase 7 shipped as v0.1.2. Next: Phase 8 (Depth & Cozy Loop)."
+  "total_features_remaining": 20,
+  "last_session_summary": "Initialized phase 8 (Depth & Cozy Loop). 20 features defined. Sprint contract written. Ready for Coder.",
+  "last_commit": "97553311f7f40ae8841dcbf604017e7bc8e79564",
+  "session_count": 8,
+  "notes": "Phase 8: Live2D renderer + Active/Review-tier modes + cozy loop (letters, journal, dream nail, mini-games). P8-001 (Live2D PoC) is the critical gate."
 }

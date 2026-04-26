@@ -1,0 +1,38 @@
+{
+  "phase": 8,
+  "target_version": "v0.3.0",
+  "init_command": "npx tauri dev",
+  "test_command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "lint_commands": [
+    "cargo fmt --manifest-path src-tauri/Cargo.toml -- --check",
+    "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings",
+    "npx tsc --noEmit"
+  ],
+  "build_command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "release_build_command": "cargo build --manifest-path src-tauri/Cargo.toml --release",
+  "playwright_required": true,
+  "phase_gate_criteria": [
+    "All features in feature-list.json have passes: true",
+    "Zero cargo test failures across full test suite",
+    "cargo clippy -D warnings clean",
+    "cargo fmt --check clean",
+    "npx tsc --noEmit clean",
+    "Live2D WebGL transparency PoC passed on Windows",
+    "Letter pipeline end-to-end: offline trigger → agent generation → storage → notification → user reading/reply",
+    "Journal pipeline end-to-end: day-end trigger → agent generation → storage → calendar view",
+    "Mini-games: both RPS and Catch-the-Food playable with care effects",
+    "Bond-level gating enforced on all new modes",
+    "Evaluator subagent verdict: PASS",
+    "User confirms phase advance"
+  ],
+  "dependencies": {
+    "frontend": [
+      "pixi.js@^6",
+      "pixi-live2d-display@^0.4"
+    ],
+    "bundled_assets": [
+      "live2dcubismcore.min.js"
+    ]
+  },
+  "notes": "PixiJS v6 is version-locked with pixi-live2d-display@0.4. Do NOT upgrade to PixiJS v7+. Live2D PoC (P8-001) is the critical gate — if it fails, pivot to offscreen WebGL + Canvas 2D copy fallback."
+}

@@ -1,0 +1,226 @@
+{
+  "phase": 8,
+  "schema_version": "2.0",
+  "features": [
+    {
+      "id": "P8-001",
+      "description": "Live2D PoC: validate WebGL transparency in Tauri on Windows. Minimal HTML page loading PixiJS v6 + pixi-live2d-display with a sample .moc3 model on a transparent canvas. Confirms: no flicker, no background color bleed, alpha compositing works with Tauri window transparency. If this fails, all subsequent Live2D features are blocked.",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p8-001-live2d-poc.mjs",
+      "sprint_criterion": 1,
+      "depends_on": [],
+      "passes": false,
+      "commit": null,
+      "notes": "Gate feature. Must pass before P8-002 through P8-005."
+    },
+    {
+      "id": "P8-002",
+      "description": "Live2DRenderer implements PetRenderer protocol: load(manifest) reads skin.json live2d block + model3.json, setState maps PetState to motion groups via state_map, hitTest uses model.hitTest('Body'), update(dt) ticks PIXI.Ticker, getCanvas returns the WebGL canvas, capabilities returns { lipSync: true, expressible: true }, destroy cleans up PIXI app and model resources.",
+      "test_type": "unit",
+      "test_target": "src/overlay/renderer/__tests__/live2d-renderer.test.ts",
+      "sprint_criterion": 2,
+      "depends_on": ["P8-001"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-003",
+      "description": "Live2D LipSyncable + Expressible capabilities: setMouthOpenness drives ParamMouthOpenY proportionally (text-length heuristic: 0.0 idle, 0.3-0.8 during streaming based on token rate). Expression system maps PetState emotion variants to Live2D expression assets. Renderer-factory creates Live2DRenderer when manifest.renderer === 'live2d'.",
+      "test_type": "unit",
+      "test_target": "src/overlay/renderer/__tests__/live2d-renderer.test.ts",
+      "sprint_criterion": [3, 4],
+      "depends_on": ["P8-002"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-004",
+      "description": "Live2D sample skin packaging: a minimal .moc3 model (or publicly available free model) bundled as public/skins/sample-live2d/ with skin.json declaring renderer: live2d, state_map, touch_zones, preview. Loads via existing skin import pipeline. Appears in Pet Manager /skins catalog.",
+      "test_type": "integration",
+      "test_target": "src-tauri/src/system/skins.rs",
+      "sprint_criterion": 5,
+      "depends_on": ["P8-002"],
+      "passes": false,
+      "commit": null,
+      "notes": "Sample model must be legally redistributable (CC-0 or free Live2D sample model)."
+    },
+    {
+      "id": "P8-005",
+      "description": "Live2D performance validation: measure RAM and CPU with Live2D model rendering at idle and during animation. Target: idle < 110MB RAM, < 8% CPU per PRD §12. Measurement script in scripts/profile-live2d.js.",
+      "test_type": "profiling",
+      "test_target": "scripts/profile-live2d.js",
+      "sprint_criterion": 20,
+      "depends_on": ["P8-002"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-006",
+      "description": "New SQLite migrations: letters table (id, agent_id, direction, content, attachment, read_at, created_at), journal_entries table (id, agent_id, entry_date, content, mood_summary, stats_json, milestone, created_at, UNIQUE agent_id+entry_date), mini_game_results table (id, agent_id, game_type, score, won, care_effects_json, played_at). All tables created via db/migrations.rs with idempotent up/down.",
+      "test_type": "unit",
+      "test_target": "src-tauri/src/db/migrations.rs",
+      "sprint_criterion": [12, 15, 17],
+      "depends_on": [],
+      "passes": false,
+      "commit": null,
+      "notes": "Foundation feature — no backend code works without these tables."
+    },
+    {
+      "id": "P8-007",
+      "description": "DB CRUD for letters, journal, mini-games: db/mod.rs gains letter operations (insert_letter, get_pending_letters, mark_letter_read, get_letter_archive), journal operations (insert_journal_entry, get_journal_entries_by_range, get_latest_entry), mini-game operations (insert_game_result, get_game_history). All tested with in-memory SQLite via tempfile.",
+      "test_type": "unit",
+      "test_target": "src-tauri/src/db/mod.rs",
+      "sprint_criterion": [12, 14, 15, 16, 17],
+      "depends_on": ["P8-006"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-008",
+      "description": "Agent generation extensions: agent/core.rs gains generate_inner_thought (Dream Nail prompt: unfiltered inner monologue, separate from public speech), generate_letter (LetterContext: offline_duration, last_care_state, last_conversation_topic, bond_level → 100-200 word content), generate_journal_entry (JournalContext: conversations summary, care actions, mood timeline → 3-5 bullet first-person diary). agent/prompt.rs adds corresponding prompt templates. All use the existing provider chain with rule-based fallback for offline.",
+      "test_type": "unit",
+      "test_target": "src-tauri/src/agent/core.rs",
+      "sprint_criterion": [13, 15, 17],
+      "depends_on": ["P8-007"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-009",
+      "description": "Letter/journal memory integration: after letter or journal generation, content is stored in long-term memory via agent/memory.rs remember() with structured keys (letter:YYYY-MM-DD, journal:YYYY-MM-DD). Agent can recall these during conversation. agent/prompt.rs injects relevant recent letter/journal context into system prompt when available.",
+      "test_type": "integration",
+      "test_target": "src-tauri/src/agent/tests/integration_tests.rs",
+      "sprint_criterion": [15, 17],
+      "depends_on": ["P8-008"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-010",
+      "description": "New IPC commands (9 total): get_pending_letters, mark_letter_read, send_letter_reply, get_letter_archive, get_journal_entries, generate_journal_entry, start_mini_game, submit_mini_game_result, generate_inner_thought. All registered in commands/mod.rs with #[cfg(not(test))] gating. Tests verify registration via source-file string reads.",
+      "test_type": "integration",
+      "test_target": "src-tauri/src/commands/mod.rs",
+      "sprint_criterion": [13, 14, 15, 16, 17],
+      "depends_on": ["P8-007", "P8-008"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-011",
+      "description": "MiniGameMode infrastructure: src/overlay/interaction/modes/mini-game-mode.ts implements InteractionMode. Launches mini-game in Pet Manager /play/:game route or small WebviewWindow. care/minigame.rs: RockPaperScissors logic (pet AI chooses, compare, score tracking, 5 rounds), CatchTheFood logic (falling items, hit detection, 30s timer, score accumulation). submit_mini_game_result IPC applies care effects (Happiness, Hunger, Energy).",
+      "test_type": "unit",
+      "test_target": "src-tauri/src/care/minigame.rs",
+      "sprint_criterion": [10, 11, 12],
+      "depends_on": ["P8-010"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-012",
+      "description": "Mini-game frontend: Pet Manager /play/rps route renders Rock-Paper-Scissors UI (3 clickable options, round counter, score display, pet reaction animation). /play/catch route renders Catch-the-Food (canvas with falling food items, arrow key control, timer, score). Both call start_mini_game and submit_mini_game_result IPC commands. Results display care effect summary.",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p8-012-mini-game.mjs",
+      "sprint_criterion": [10, 11],
+      "depends_on": ["P8-011"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-013",
+      "description": "DreamNailMode: src/overlay/interaction/modes/dream-nail-mode.ts. Alt+hover gesture triggers inner thought generation via generate_inner_thought IPC. Displays translucent dream overlay with italic text above pet. Rate-limited to 3/day (tracked in SQLite via dream_nail_uses date-keyed counter). Bond-gated at Lv.5+ — refuses with 'Reach Bond Lv.5 to unlock Dream Nail' message. Emits dream_nail_used InteractionEvent.",
+      "test_type": "unit",
+      "test_target": "src/overlay/interaction/modes/__tests__/dream-nail-mode.test.ts",
+      "sprint_criterion": 13,
+      "depends_on": ["P8-010"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-014",
+      "description": "LetterMode + Letter pipeline: src/overlay/interaction/modes/letter-mode.ts. On app launch, frontend checks pending letters via get_pending_letters IPC. If letters exist, shows envelope notification bark + pet holding envelope animation. Pet Manager /letters route: letter archive with reading view (date, content, reply textarea). send_letter_reply IPC sends reply + awards Social +15 care effect. Letter generation trigger: backend checks offline_duration > 4h && bond_level >= 6 on launch, generates via agent.",
+      "test_type": "integration",
+      "test_target": "src-tauri/src/agent/tests/integration_tests.rs",
+      "sprint_criterion": [14, 15],
+      "depends_on": ["P8-009", "P8-010"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-015",
+      "description": "Letter frontend: Pet Manager /letters route (src/views/LettersView.vue). Shows letter archive with pagination, reading view with reply form, unread indicator. Vue composable useLetters.ts wraps letter IPC commands. Envelope notification in overlay via LetterMode mounting.",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p8-015-letters.mjs",
+      "sprint_criterion": 14,
+      "depends_on": ["P8-014"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-016",
+      "description": "JournalMode + Journal pipeline: src/overlay/interaction/modes/journal-mode.ts. End-of-day trigger (scheduler detects day boundary) calls generate_journal_entry IPC. JournalContext assembled from today's messages, care actions, mood snapshots. Agent generates 3-5 bullet first-person entry. Stored in journal_entries table. Bond-gated at Lv.7+. Entry content fed to long-term memory.",
+      "test_type": "integration",
+      "test_target": "src-tauri/src/agent/tests/integration_tests.rs",
+      "sprint_criterion": [16, 17],
+      "depends_on": ["P8-009", "P8-010"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-017",
+      "description": "Journal frontend: Pet Manager /journal route (src/views/JournalView.vue). Calendar view with mood emoji per day, entry detail view with bullet points, milestone highlights. Vue composable useJournal.ts wraps journal IPC commands. Month navigation.",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p8-017-journal.mjs",
+      "sprint_criterion": 16,
+      "depends_on": ["P8-016"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-018",
+      "description": "CommandInputMode: src/overlay/interaction/modes/command-input-mode.ts. Terminal-style inline input bar appears near pet. Parses commands: care (feed/play/pet/sleep → care_action InteractionEvent), chat (say/ask/free text → chat_message), movement (move/come here/go away → move_to tool), state (dance/sit/wake up → change_state), info (status/mood → query care state), memory (remember/recall → agent tools), system (settings/help/clear). Autocomplete dropdown shows matching commands. Keyboard shortcut (e.g., / or Ctrl+Enter) activates input.",
+      "test_type": "unit",
+      "test_target": "src/overlay/interaction/modes/__tests__/command-input-mode.test.ts",
+      "sprint_criterion": [6, 7],
+      "depends_on": ["P8-010"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-019",
+      "description": "ChatLogMode: src/overlay/interaction/modes/chat-log-mode.ts + Pet Manager /chat-log route (src/views/ChatLogView.vue). Multi-tab persistent log (Chat/System/Memory/All). Entries: timestamp, type icon, color-coded content. Chat tab: conversation messages. System tab: FSM transitions, care state changes. Memory tab: remember/recall events. All tab: merged chronological. Bottom input for quick chat. Entries loaded from existing SQLite message/event tables + new care_event log.",
+      "test_type": "unit",
+      "test_target": "src/overlay/interaction/modes/__tests__/chat-log-mode.test.ts",
+      "sprint_criterion": [8, 9],
+      "depends_on": ["P8-010"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P8-020",
+      "description": "Bond-level gating enforcement + profile updates: InteractionRouter checks bond level before enabling DreamNail (Lv.5+), Letter (Lv.6+), Journal (Lv.7+), MiniGame (Lv.7+) modes. Modes below threshold show 'Reach Bond Lv.N to unlock [mode]' message. Profile manager updated: Nurture profile includes Letter+Journal+MiniGame; RPG profile includes all new modes. New modes registered in types.ts SystemOutput/InteractionEvent discriminated unions.",
+      "test_type": "unit",
+      "test_target": "src/overlay/interaction/__tests__/interaction-router.test.ts",
+      "sprint_criterion": [18, 19],
+      "depends_on": ["P8-013", "P8-014", "P8-016", "P8-018", "P8-019"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    }
+  ]
+}

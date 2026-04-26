@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-04-26
+
+### Added
+
+- **Phase 6 — Skin Foundation**: Multi-renderer architecture, skin distribution system, unified Pet Manager UI
+- `PetRenderer` TypeScript interface with capability reporting and type guards (`LipSyncable`, `Expressible`, `ParameterDrivable`)
+- `SpriteRenderer` wrapping existing `SpriteEngine` logic as a `PetRenderer` implementation
+- `SpineRenderer` using `@esotericsoftware/spine-canvas` for skeletal animation support
+- `RendererFactory` dispatching correct renderer from skin manifest (`sprite`, `spine`, with extensible types)
+- `SkinManifest` TypeScript type and validation matching visual-rendering-spec v1.0 schema
+- `system/skins.rs` replacing `system/themes.rs` — full skin discovery, import, and management in Rust
+- Skin catalog merging bundled skins (`public/skins/`) and user-installed skins (`$APPDATA/Ditto/skins/`) with deduplication
+- `import_skin_zip` IPC with manifest validation and path-traversal security protection
+- `import_skin_url` IPC for downloading and installing skins from URL
+- `delete_skin` IPC with bundled-skin deletion protection via path canonicalization
+- `get_active_skin` / `set_active_skin` IPC persisting selection in settings DB
+- Unified Pet Manager window replacing standalone chat-bubble, care-panel, and settings windows
+- `/skins` route in Pet Manager with grid gallery, renderer-type filter tabs, and active-skin selection
+- Sample Spine skin (`public/skins/sample-spine/`) with 8 animations and valid skeleton, atlas, texture
+- Default skin manifest (`public/skins/default/`) for catalog visibility
+- `AgentBackend` trait scaffold in Rust for forward-compat external agent support (Phase 9)
+- Vitest + jsdom test infrastructure for TypeScript unit tests
+- 233 Rust tests (11 new in skins.rs), 40+ TypeScript tests across 5 test suites
+
+### Changed
+
+- Renamed `system/themes.rs` → `system/skins.rs`, `list_themes` IPC → `list_skins`
+- Unified Pet Manager window with tabbed layout (Chat/Care/Skins/Settings) via Vue Router
+- Tray menu "Settings" replaced with "Pet Manager" opening unified window
+- Old standalone window launchers (`chat-bubble.ts`, `care-panel.ts`, `settings.ts`) now delegate to `openPetManager()`
+
 ## [0.1.0] - 2026-04-26
 
 ### Changed
@@ -152,6 +183,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI workflow (Rust checks: fmt, clippy, test)
 - `.gitignore` for `.repos/` and `.claude/`
 
+[0.1.1]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.1.1
 [0.1.0]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.1.0
 [0.0.6]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.6
 [0.0.5]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.5

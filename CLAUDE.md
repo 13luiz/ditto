@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ditto is an agent-driven desktop pet built with **Rust + Tauri v2**. An animated creature lives on a transparent overlay window, with behavior governed by an AI agent (rig-core) rather than scripts. All five phases are complete: skeleton rendering, physics/interaction, AI agent/chat/memory, care system/mood, and system tray/settings/packaging.
+Ditto is an agent-driven desktop pet built with **Rust + Tauri v2**. An animated creature lives on a transparent overlay window, with behavior governed by an AI agent (rig-core) rather than scripts. Six phases are complete: skeleton rendering, physics/interaction, AI agent/chat/memory, care system/mood, system tray/settings/packaging, and skin foundation (multi-renderer architecture, skin distribution, unified Pet Manager UI).
 
 ## Build & Development Commands
 
@@ -56,7 +56,7 @@ Tauri v2 app with Rust backend and web frontend communicating via Tauri IPC comm
 
 - `main.rs` — Entry point, delegates to `ditto_lib::run()`
 - `lib.rs` — Tauri builder with command registration, env loading, and DB initialization
-- `commands/mod.rs` — 13 IPC commands (see below)
+- `commands/mod.rs` — 19 IPC commands (see below)
 - `agent/core.rs` — LLM provider config (OpenAI, Anthropic, Ollama), agent construction, rate limiting, rule-based fallback. 19 tests.
 - `agent/memory.rs` — Short-term (sliding window) and long-term (key-value) memory with DB persistence. 6 tests.
 - `agent/personality.rs` — Personality traits (cheerfulness, curiosity, mischievousness, clinginess) with shift mechanics and persistence. 12 tests.
@@ -69,14 +69,14 @@ Tauri v2 app with Rust backend and web frontend communicating via Tauri IPC comm
 - `care/needs.rs` — Pet needs (hunger, happiness, energy, social) with decay rates, mood scoring, care actions. 21 tests.
 - `db/mod.rs` — SQLite operations for conversations, messages, memory, settings. 10 tests.
 - `db/migrations.rs` — Schema migrations. 2 tests.
-- `system/tray.rs` — System tray icon with show/hide, settings, quit menu
+- `system/tray.rs` — System tray icon with show/hide, Pet Manager, quit menu
 - `system/autolaunch.rs` — Auto-launch registration
-- `system/themes.rs` — Theme discovery from data directory. 2 tests.
+- `system/skins.rs` — Skin discovery, import (zip/url), deletion, catalog. 11 tests.
 - `system/screen.rs` — Primary monitor screen capture. 2 tests.
 
 The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime dependencies (WebView2) crash the test harness. Tests verify command registration by reading source files as strings.
 
-### IPC Commands (13 total)
+### IPC Commands (19 total)
 
 | Command | Purpose |
 |---------|---------|
@@ -91,7 +91,12 @@ The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime de
 | `record_user_activity` | Record activity for idle detection |
 | `get_settings` / `save_settings` | Load/save application settings |
 | `transition_pet_state` | Request FSM state transition with context |
-| `list_themes` | List available pet themes |
+| `list_skins` | List available skin IDs |
+| `list_skins_catalog` | Full catalog with metadata (name, renderer, source, path) |
+| `import_skin_zip` | Validate and install skin from local zip |
+| `import_skin_url` | Download and install skin from URL |
+| `delete_skin` | Remove user-installed skin |
+| `get_active_skin` / `set_active_skin` | Load/save active skin selection |
 
 ### Frontend (TypeScript, `src/`)
 
@@ -102,6 +107,11 @@ The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime de
 - `behavior/pet-controller.ts` — State management, physics, FSM integration via `transitionPetState` IPC, cursor distance tracking
 - `renderer/sprite-engine.ts` — Canvas 2D sprite loader and render loop
 - `renderer/animation.ts` — `AnimationPlayer` with FPS-controlled frame sequencing
+- `renderer/pet-renderer.ts` — `PetRenderer` interface, `SkinManifest` type, capability type guards
+- `renderer/sprite-renderer.ts` — `SpriteRenderer` implementing `PetRenderer`
+- `renderer/spine-renderer.ts` — `SpineRenderer` implementing `PetRenderer` (via `@esotericsoftware/spine-canvas`)
+- `renderer/renderer-factory.ts` — Creates correct renderer from skin manifest type
+- `renderer/skin-manifest.ts` — `validateSkinManifest()` for required field checks
 - `input/click-through.ts` — Pixel-alpha click-through detection, cursor distance for FSM context
 - `input/drag-handler.ts` — Per-pixel mousedown, mousemove drag, gravity release
 
@@ -111,9 +121,10 @@ The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime de
 - `composables/useChat.ts` — Chat with streaming token display
 - `composables/useCare.ts` — Care panel with need bars, mood display, action buttons
 - `composables/useTauriEvents.ts` — Tauri event listener composable
-- `windows/chat-bubble.ts` — Chat window management
-- `windows/care-panel.ts` — Care panel window
-- `windows/settings.ts` — Settings window (LLM config, pet name, auto-launch)
+- `windows/pet-manager.ts` — Unified Pet Manager window launcher
+- `windows/chat-bubble.ts` — Delegates to Pet Manager (/chat route)
+- `windows/care-panel.ts` — Delegates to Pet Manager (/care route)
+- `windows/settings.ts` — Delegates to Pet Manager (/settings route)
 - `windows/onboarding.ts` — First-run setup wizard
 - `sound.ts` — Procedural Web Audio API synthesis for pet sounds
 
@@ -144,11 +155,13 @@ The Rust FSM is wired to the frontend via `transition_pet_state` IPC. The fronte
 - `tauri 2.x` (app framework, with tray-icon, image-png features), `serde` + `serde_json` (serialization)
 - `rig-core 0.35` (AI agent — OpenAI, Anthropic, Ollama), `rusqlite 0.32` (SQLite, bundled), `tokio 1` (async runtime)
 - `xcap 0.6` (screen capture), `auto-launch 0.6` (startup registration), `chrono 0.4` (time)
-- Dev: `rstest 0.18` (parameterized tests)
+- `zip 2` (skin archive extraction), `reqwest 0.12` (skin download, blocking feature)
+- `@esotericsoftware/spine-canvas 4.2` (Spine skeletal animation runtime)
+- Dev: `rstest 0.18` (parameterized tests), `tempfile 3` (integration test dirs), `vitest` + `jsdom` (TS unit tests)
 
 ## Test Suite
 
-222 tests total, all must pass:
+233 Rust tests + 40+ TypeScript tests, all must pass:
 - 16 config/tray/animation/db tests in `lib.rs`
 - 28 FSM transition tests in `behavior/state_machine.rs`
 - 15 scheduler tests in `behavior/scheduler.rs`
@@ -158,11 +171,12 @@ The Rust FSM is wired to the frontend via `transition_pet_state` IPC. The fronte
 - 6 memory + 12 personality + 9 prompt + 12 tools tests
 - 21 care needs tests in `care/needs.rs`
 - 12 database tests (db/mod.rs + migrations.rs)
-- 4 system tests (screen + themes)
+- 11 system tests (screen + skins, including import/export/catalog/deletion)
+- 5 TypeScript test suites (pet-renderer, sprite-renderer, spine-renderer, renderer-factory, skin-manifest)
 
 ## Implementation Harness
 
-The project uses a long-running TDD harness driven by the `/ditto-implement` Claude Code skill. The harness manages phased implementation (5 phases, 58 features total) with state persisted in `ditto-harness/`.
+The project uses a long-running TDD harness driven by the `/ditto-implement` Claude Code skill. The harness manages phased implementation (6 phases, 72 features total) with state persisted in `ditto-harness/`.
 
 **Phases:**
 1. **Skeleton** ✅ — Transparent window, sprite rendering, pet on screen
@@ -170,6 +184,7 @@ The project uses a long-running TDD harness driven by the `/ditto-implement` Cla
 3. **Mind** ✅ — AI agent, chat, memory, multi-provider LLM (Ollama/OpenAI/Anthropic)
 4. **Soul** ✅ — Care system, screen awareness, mood-driven behavior
 5. **Polish** ✅ — System tray, settings, packaging, performance
+6. **Skin Foundation** ✅ — Multi-renderer architecture, skin distribution, unified Pet Manager
 
 **Harness invariants:**
 - All tests must pass before starting new work

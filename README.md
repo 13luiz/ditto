@@ -18,12 +18,14 @@ Ditto is an agent-driven desktop pet built with [Rust](https://www.rust-lang.org
 - **Behavior Scheduler** — Morning greetings, idle comments, break reminders
 - **System Tray** — Show/hide, settings, quit from tray icon
 - **Settings UI** — LLM config, pet name, behavior preferences, auto-launch
-- **Custom Themes** — Load pet themes from data directory
+- **Multi-Renderer Architecture** — Pluggable `PetRenderer` interface supporting sprite, spine, and future renderers
+- **Skin System** — Install, manage, and switch pet skins from bundled or user-installed catalogs
+- **Pet Manager** — Unified window with tabbed layout for chat, care, skins, and settings
 - **Onboarding Wizard** — First-run setup for pet name and LLM provider
 
 ## Status
 
-Ditto is in **active development**. All five phases are complete — the pet renders on a transparent window, walks autonomously, reacts to your cursor, chats via LLM, has needs and moods, and is packaged for distribution. See [CHANGELOG.md](CHANGELOG.md) for details.
+Ditto is in **active development**. Six phases are complete — the pet renders on a transparent window, walks autonomously, reacts to your cursor, chats via LLM, has needs and moods, supports multiple renderers via a skin system, and is packaged for distribution. See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ## Tech Stack
 
@@ -31,7 +33,7 @@ Ditto is in **active development**. All five phases are complete — the pet ren
 |-------|-----------|
 | App framework | Tauri v2 |
 | Backend | Rust |
-| Frontend | Canvas 2D + TypeScript |
+| Frontend | Canvas 2D + TypeScript + Vue 3 |
 | AI Agent | rig-core (OpenAI, Anthropic, Ollama) |
 | Database | SQLite via rusqlite |
 
@@ -45,21 +47,22 @@ ditto/
 │   │   ├── behavior/      # FSM, physics, cursor, scheduler
 │   │   ├── care/          # Needs, mood, care actions
 │   │   ├── db/            # SQLite migrations and queries
-│   │   ├── system/        # Screen capture, themes, tray, autolaunch
+│   │   ├── system/        # Screen capture, skins, tray, autolaunch
 │   │   └── commands/      # Tauri IPC commands
 │   └── capabilities/      # Tauri v2 permissions
 ├── src/
 │   ├── overlay/           # Transparent overlay window (vanilla TS)
 │   │   ├── behavior/      # PetController (state, movement)
-│   │   ├── renderer/      # SpriteEngine, AnimationPlayer
+│   │   ├── renderer/      # SpriteEngine, AnimationPlayer, PetRenderer, SpineRenderer
 │   │   ├── input/         # Click-through, drag handler
-│   │   └── windows/       # Chat, care, settings, onboarding windows
+│   │   └── windows/       # Pet Manager unified window
 │   ├── composables/       # Vue composables (UI windows)
 │   ├── views/             # Vue page components
 │   ├── stores/            # Pinia stores
 │   ├── ipc/               # Tauri command wrappers
 │   └── types/             # Shared type definitions
-├── public/pets/default/   # Spritesheet + animation definitions
+├── public/pets/default/   # Default spritesheet + animation definitions
+├── public/skins/          # Bundled skins (default sprite, sample spine)
 ├── docs/                  # PRD, specs
 └── ditto-harness/         # TDD implementation harness state
 ```
@@ -99,6 +102,7 @@ cargo fmt --manifest-path src-tauri/Cargo.toml
 | 3 — Mind | AI agent, chat, memory | Done |
 | 4 — Soul | Care system, screen awareness | Done |
 | 5 — Polish | System tray, settings, packaging | Done |
+| 6 — Skin Foundation | Multi-renderer architecture, skin distribution | Done |
 
 ## Implementation Harness
 

@@ -53,8 +53,8 @@
       "test_target": "src-tauri/src/system/skins.rs::tests::test_default_theme_always_listed",
       "sprint_criterion": 5,
       "depends_on": [],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "14a59cc1075ecfa26bc59a39feef7f3f3b6426fe",
       "notes": null
     },
     {
@@ -64,8 +64,8 @@
       "test_target": "src-tauri/src/system/skins.rs::tests::test_list_skins_merged_catalog",
       "sprint_criterion": 6,
       "depends_on": ["P6-003", "P6-005"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "6b7a10998a6c6c2e4ef9370923a8c968f177bb66",
       "notes": null
     },
     {
@@ -75,8 +75,8 @@
       "test_target": "src-tauri/src/system/skins.rs::tests::test_import_skin_zip_roundtrip",
       "sprint_criterion": 7,
       "depends_on": ["P6-005", "P6-006"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "526dff0e559dfe539e902c3b36e58fd39c662c6e",
       "notes": null
     },
     {
@@ -86,8 +86,8 @@
       "test_target": "src-tauri/src/system/skins.rs::tests::test_skin_management_commands",
       "sprint_criterion": [8, 9, 10],
       "depends_on": ["P6-007"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "51712255c8ed2d2a27b138343baa588e780fed17",
       "notes": null
     },
     {
@@ -97,8 +97,8 @@
       "test_target": "src/overlay/renderer/__tests__/spine-renderer.test.ts::SpineRenderer_implements_PetRenderer",
       "sprint_criterion": 11,
       "depends_on": ["P6-001"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "ad393cd2dae0283b72c099d8389ba2488503befb",
       "notes": null
     },
     {
@@ -108,8 +108,8 @@
       "test_target": "tests/playwright/p6-010-spine-sample.mjs",
       "sprint_criterion": 12,
       "depends_on": ["P6-009"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "4c6808ed8d2c5a58925c52b5de1f70b3cc89a3af",
       "notes": "Requires a valid Spine-exported asset. May need to hand-craft a minimal valid skeleton if no Spine Editor license available."
     },
     {
@@ -119,8 +119,8 @@
       "test_target": "src-tauri/src/lib.rs::tests::test_command_registered_in_run",
       "sprint_criterion": 14,
       "depends_on": ["P6-005"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "3df786126895eb57ecffd173b2414c1360300e07",
       "notes": null
     },
     {
@@ -130,8 +130,8 @@
       "test_target": "tests/playwright/p6-012-skins-gallery.mjs",
       "sprint_criterion": 13,
       "depends_on": ["P6-006", "P6-010", "P6-011"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "8bd25791f60512ef3c0905ee645e6e25f57ddd1c",
       "notes": null
     },
     {
@@ -141,8 +141,8 @@
       "test_target": "src-tauri/src/system/skins.rs::tests::test_settings_migration",
       "sprint_criterion": 15,
       "depends_on": ["P6-005", "P6-008"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "8459ff2d172f2f42c650ee547eb12d9c294bfe1a",
       "notes": null
     },
     {
@@ -152,8 +152,8 @@
       "test_target": "src-tauri/src/agent/core.rs::tests::test_builtin_agent_implements_trait",
       "sprint_criterion": 17,
       "depends_on": [],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "fac0eaa632ac8ad0037b9f28683e0d3bb56c56fe",
       "notes": "Forward-compat scaffold only. ExternalAgentChannel implementation is Phase 9."
     }
   ]

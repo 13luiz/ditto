@@ -103,7 +103,16 @@ pub fn run() {
             commands::set_active_skin,
             commands::transition_pet_state,
             commands::get_bond_state,
-            commands::award_bond_points
+            commands::award_bond_points,
+            commands::get_pending_letters,
+            commands::mark_letter_read,
+            commands::send_letter_reply,
+            commands::get_letter_archive,
+            commands::get_journal_entries,
+            commands::generate_journal_entry,
+            commands::start_mini_game,
+            commands::submit_mini_game_result,
+            commands::generate_inner_thought
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -245,6 +254,15 @@ mod tests {
             "transition_pet_state",
             "get_bond_state",
             "award_bond_points",
+            "get_pending_letters",
+            "mark_letter_read",
+            "send_letter_reply",
+            "get_letter_archive",
+            "get_journal_entries",
+            "generate_journal_entry",
+            "start_mini_game",
+            "submit_mini_game_result",
+            "generate_inner_thought",
         ] {
             assert!(
                 content.contains(cmd),

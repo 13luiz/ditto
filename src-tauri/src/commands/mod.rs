@@ -465,3 +465,169 @@ pub fn award_bond_points(
         "leveled_up": result.leveled_up,
     }))
 }
+
+// --- Phase 8: Letter, Journal, Mini-Game, Dream Nail IPC commands ---
+
+#[tauri::command]
+pub fn get_pending_letters(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let letters = db.get_pending_letters().map_err(|e| e.to_string())?;
+    Ok(serde_json::json!({ "letters": letters }))
+}
+
+#[tauri::command]
+pub fn mark_letter_read(state: tauri::State<'_, AppState>, letter_id: i64) -> Result<(), String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.mark_letter_read(letter_id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn send_letter_reply(
+    state: tauri::State<'_, AppState>,
+    letter_id: i64,
+    content: String,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let reply_id = db
+        .insert_letter_reply(letter_id, &content)
+        .map_err(|e| e.to_string())?;
+    Ok(serde_json::json!({ "reply_id": reply_id }))
+}
+
+#[tauri::command]
+pub fn get_letter_archive(
+    state: tauri::State<'_, AppState>,
+    page: i32,
+    limit: i32,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let offset = page * limit;
+    let letters = db
+        .get_letter_archive(limit as i64, offset as i64)
+        .map_err(|e| e.to_string())?;
+    Ok(serde_json::json!({ "letters": letters }))
+}
+
+#[tauri::command]
+pub fn get_journal_entries(
+    state: tauri::State<'_, AppState>,
+    start_date: String,
+    end_date: String,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let entries = db
+        .get_journal_entries(&start_date, &end_date)
+        .map_err(|e| e.to_string())?;
+    Ok(serde_json::json!({ "entries": entries }))
+}
+
+#[tauri::command]
+pub fn generate_journal_entry(
+    state: tauri::State<'_, AppState>,
+    entry_date: String,
+    content: String,
+    mood_summary: Option<String>,
+    stats_json: Option<String>,
+    milestone: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let id = db
+        .insert_journal_entry(
+            &entry_date,
+            &content,
+            mood_summary.as_deref(),
+            stats_json.as_deref(),
+            milestone.as_deref(),
+        )
+        .map_err(|e| e.to_string())?;
+    Ok(serde_json::json!({ "id": id }))
+}
+
+#[tauri::command]
+pub fn start_mini_game(
+    _state: tauri::State<'_, AppState>,
+    game_type: String,
+) -> Result<serde_json::Value, String> {
+    // Validate game type
+    if game_type != "rps" && game_type != "catch" {
+        return Err(format!("Unknown game type: {}", game_type));
+    }
+    Ok(serde_json::json!({
+        "game_type": game_type,
+        "status": "started"
+    }))
+}
+
+#[tauri::command]
+pub fn submit_mini_game_result(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+    game_type: String,
+    score: i32,
+    won: bool,
+    care_effects_json: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let id = db
+        .insert_game_result(&game_type, score, won, care_effects_json.as_deref())
+        .map_err(|e| e.to_string())?;
+    drop(db);
+
+    // Award bond points for playing
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let (level, total_points) = db.load_bond_state().map_err(|e| e.to_string())?;
+    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+    let mut engine = crate::care::BondEngine::with_state(level, total_points);
+    let result = engine.award(crate::care::BondAction::Play, &today);
+    if result.points_awarded > 0 {
+        db.save_bond_state(engine.level(), engine.total_points())
+            .map_err(|e| e.to_string())?;
+    }
+    drop(db);
+
+    if result.leveled_up {
+        let _ = app.emit(
+            "bond-level-up",
+            serde_json::json!({
+                "old_level": result.old_level,
+                "new_level": result.new_level,
+            }),
+        );
+    }
+
+    Ok(serde_json::json!({
+        "id": id,
+        "bond_points_awarded": result.points_awarded,
+        "bond_leveled_up": result.leveled_up,
+    }))
+}
+
+#[tauri::command]
+pub fn generate_inner_thought(
+    state: tauri::State<'_, AppState>,
+    mood: String,
+    hunger: f64,
+    energy: f64,
+    social: f64,
+    _recent_context: String,
+) -> Result<serde_json::Value, String> {
+    // Rule-based fallback; LLM generation requires async agent call (future work)
+    let pet_name = {
+        let db = state.db.lock().map_err(|e| e.to_string())?;
+        db.load_setting("pet_name")
+            .map_err(|e| e.to_string())?
+            .unwrap_or_else(|| "Ditto".to_string())
+    };
+
+    let thought = crate::agent::generation::rule_based_inner_thought(&mood, hunger, energy, social);
+
+    // Store in memory for future recall
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+    let _ = db.save_memory(&format!("dream_nail:{}", today), &thought, "inner_thought");
+
+    Ok(serde_json::json!({
+        "thought": thought,
+        "pet_name": pet_name,
+    }))
+}

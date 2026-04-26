@@ -388,6 +388,7 @@ pub fn transition_pet_state(
         energy,
         mood,
         idle_time: std::time::Duration::from_secs_f64(idle_time_secs),
+        bond_level: 1,
     };
 
     let mut sm = state.state_machine.lock().map_err(|e| e.to_string())?;

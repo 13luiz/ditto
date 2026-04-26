@@ -14,6 +14,7 @@ pub struct PetContext {
     pub recent_memories: Vec<String>,
     pub time_of_day: String,
     pub user_activity: String,
+    pub bond_level: u32,
 }
 
 pub struct SystemPromptBuilder {
@@ -88,7 +89,26 @@ impl SystemPromptBuilder {
         prompt.push_str("- You can control your body using the available tools\n");
         prompt.push_str("- Express your needs (hunger, loneliness) naturally in conversation\n");
 
+        let tier_guide = bond_tier_guide(self.context.bond_level);
+        if !tier_guide.is_empty() {
+            prompt.push_str(&format!(
+                "\nBond level: {} — {}\n",
+                self.context.bond_level, tier_guide
+            ));
+        }
+
         prompt
+    }
+}
+
+fn bond_tier_guide(level: u32) -> &'static str {
+    match level {
+        1..=2 => "Be polite and reserved. Use formal language.",
+        3..=4 => "Be friendly and casual. Joke occasionally.",
+        5..=6 => "Be personal and warm. Share your feelings.",
+        7..=8 => "Be deeply trusting. Confide vulnerabilities.",
+        9..=10 => "Be fully authentic. No filters.",
+        _ => "",
     }
 }
 
@@ -215,5 +235,41 @@ mod tests {
         let prompt = SystemPromptBuilder::new(traits, context).build();
         assert!(!prompt.contains("Time:"));
         assert!(!prompt.contains("User activity:"));
+    }
+
+    #[test]
+    fn test_prompt_includes_bond_tier_guide_level_1() {
+        let traits = PersonalityTraits::default();
+        let context = PetContext {
+            bond_level: 1,
+            ..Default::default()
+        };
+        let prompt = SystemPromptBuilder::new(traits, context).build();
+        assert!(prompt.contains("Bond level: 1"));
+        assert!(prompt.contains("polite and reserved"));
+    }
+
+    #[test]
+    fn test_prompt_includes_bond_tier_guide_level_5() {
+        let traits = PersonalityTraits::default();
+        let context = PetContext {
+            bond_level: 5,
+            ..Default::default()
+        };
+        let prompt = SystemPromptBuilder::new(traits, context).build();
+        assert!(prompt.contains("Bond level: 5"));
+        assert!(prompt.contains("personal and warm"));
+    }
+
+    #[test]
+    fn test_prompt_includes_bond_tier_guide_level_10() {
+        let traits = PersonalityTraits::default();
+        let context = PetContext {
+            bond_level: 10,
+            ..Default::default()
+        };
+        let prompt = SystemPromptBuilder::new(traits, context).build();
+        assert!(prompt.contains("Bond level: 10"));
+        assert!(prompt.contains("fully authentic"));
     }
 }

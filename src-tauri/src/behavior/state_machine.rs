@@ -74,6 +74,8 @@ pub struct TransitionContext {
     pub energy: f64,
     pub mood: f64,
     pub idle_time: Duration,
+    #[allow(dead_code)]
+    pub bond_level: u32,
 }
 
 impl Default for TransitionContext {
@@ -83,7 +85,35 @@ impl Default for TransitionContext {
             energy: 100.0,
             mood: 50.0,
             idle_time: Duration::ZERO,
+            bond_level: 1,
         }
+    }
+}
+
+/// Given a base state name and the current bond level, select the best available
+/// animation variant. Variants are strings like "idle.cuddle" where the suffix
+/// indicates a bond-gated variant. The caller provides the list of available
+/// variants from the skin manifest; this function picks the one with the highest
+/// bond requirement that is still accessible.
+#[allow(dead_code)]
+pub fn resolve_animation_variant(
+    base_state: &str,
+    bond_level: u32,
+    available_variants: &[(&str, u32)],
+) -> String {
+    let mut best: Option<(&str, u32)> = None;
+    for (variant, min_level) in available_variants {
+        let is_better = match best {
+            Some((_, bl)) => *min_level > bl,
+            None => true,
+        };
+        if variant.starts_with(base_state) && *min_level <= bond_level && is_better {
+            best = Some((variant, *min_level));
+        }
+    }
+    match best {
+        Some((v, _)) => v.to_string(),
+        None => base_state.to_string(),
     }
 }
 
@@ -540,5 +570,44 @@ mod tests {
         assert!(sm
             .try_transition(PetState::RunLeft, &default_ctx())
             .is_err());
+    }
+
+    #[test]
+    fn test_resolve_variant_returns_base_when_no_variants() {
+        let result = resolve_animation_variant("idle", 5, &[]);
+        assert_eq!(result, "idle");
+    }
+
+    #[test]
+    fn test_resolve_variant_picks_highest_accessible() {
+        let variants: Vec<(&str, u32)> = vec![
+            ("idle.standard", 1),
+            ("idle.cuddle", 5),
+            ("idle.affectionate", 8),
+        ];
+        assert_eq!(
+            resolve_animation_variant("idle", 7, &variants),
+            "idle.cuddle"
+        );
+        assert_eq!(
+            resolve_animation_variant("idle", 10, &variants),
+            "idle.affectionate"
+        );
+        assert_eq!(
+            resolve_animation_variant("idle", 1, &variants),
+            "idle.standard"
+        );
+    }
+
+    #[test]
+    fn test_resolve_variant_skips_unrelated_states() {
+        let variants: Vec<(&str, u32)> = vec![("happy.standard", 1), ("happy.exuberant", 10)];
+        assert_eq!(resolve_animation_variant("idle", 10, &variants), "idle");
+    }
+
+    #[test]
+    fn test_transition_context_default_bond_level() {
+        let ctx = TransitionContext::default();
+        assert_eq!(ctx.bond_level, 1);
     }
 }

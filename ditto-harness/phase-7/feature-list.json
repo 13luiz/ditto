@@ -1,0 +1,160 @@
+{
+  "phase": 7,
+  "schema_version": "2.0",
+  "features": [
+    {
+      "id": "P7-001",
+      "description": "InteractionRouter core protocol: TypeScript types (SystemOutput, InteractionEvent, InteractionMode interface, ModeCapabilities), InteractionRouter class with mode registry, outbound bus, inbound bus, gesture dispatch, and mode lifecycle (enable/disable). Compatibility group enforcement for mutually-exclusive modes.",
+      "test_type": "unit",
+      "test_target": "src/overlay/interaction/__tests__/interaction-router.test.ts",
+      "sprint_criterion": 1,
+      "depends_on": [],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-002",
+      "description": "Vue overlay micro-app: add #overlay-dom div to index.html, mount a Vue app instance on the overlay for DOM-overlay modes (Bark, SpeechBubble, RadialMenu, EmoteWheel, BondIndicator). Provides overlayContainer in ModeContext. Must not interfere with existing Canvas 2D RAF loop.",
+      "test_type": "integration",
+      "test_target": "src/overlay/interaction/__tests__/overlay-mount.test.ts",
+      "sprint_criterion": 2,
+      "depends_on": ["P7-001"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-003",
+      "description": "Gesture dispatch refactor: replace hardcoded dblclick→openPetManager('/chat') and contextmenu→openPetManager('/care') in main.ts with InteractionRouter.handleGesture() calls. Wire InteractionRouter into overlay bootstrap. Setup-events.ts routes agent/care events through router's handleOutput().",
+      "test_type": "unit",
+      "test_target": "src/overlay/interaction/__tests__/gesture-dispatch.test.ts",
+      "sprint_criterion": 1,
+      "depends_on": ["P7-001"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-004",
+      "description": "BarkMode: implements InteractionMode. Typewriter effect (50ms/char), auto-fade (2.5s hold + 0.5s fade), queue max 3 barks. Positions above pet. Responds to agent_text and care_need_critical SystemOutput types. DOM overlay rendering.",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p7-004-bark-mode.mjs",
+      "sprint_criterion": 3,
+      "depends_on": ["P7-001", "P7-002"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-005",
+      "description": "ThoughtBubbleMode: implements InteractionMode. Icon rendering (emoji mapping per need), bounce animation, critical pulse (red border), icon rotation when multiple needs active. Responds to care_need_critical and care_state SystemOutput types. Canvas or DOM overlay.",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p7-005-thought-bubble.mjs",
+      "sprint_criterion": 4,
+      "depends_on": ["P7-001", "P7-002"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-006",
+      "description": "SpeechBubbleMode: implements InteractionMode. Comic-style DOM overlay bubble with typewriter, quick-reply chips, position-flip below pet when near top of screen. Responds to agent_text with streaming support. Dispatches chat_message InteractionEvent on chip click.",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p7-006-speech-bubble.mjs",
+      "sprint_criterion": 5,
+      "depends_on": ["P7-001", "P7-002"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-007",
+      "description": "RadialMenuMode: implements InteractionMode. SVG ring with 4 segments (Feed/Play/Sleep/Chat), angle calculation via atan2, segment highlight on mouse-over, care action dispatch on release. Opens on context_menu gesture. Dims pet canvas during display.",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p7-007-radial-menu.mjs",
+      "sprint_criterion": 6,
+      "depends_on": ["P7-001", "P7-002"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-008",
+      "description": "EmoteWheelMode: implements InteractionMode. Radial-derived wheel with Wave/Cheer/Scold/Dance slots, emote-to-FSM-state mapping, emote-to-bark mapping, care effect dispatch. Opens on emote_key gesture (E key). Selecting emote triggers pet animation + bark + care effect.",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p7-008-emote-wheel.mjs",
+      "sprint_criterion": 7,
+      "depends_on": ["P7-001", "P7-002"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-009",
+      "description": "TouchZoneMode: implements InteractionMode. Zone rectangles from skin.json (head/body/belly/limbs/tail), hitTest delegation to PetRenderer or fallback to skin.json rects, hover detection (>500ms shows zone highlight), click dispatches touch InteractionEvent with zone name. Different bark reactions per zone.",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p7-009-touch-zone.mjs",
+      "sprint_criterion": 8,
+      "depends_on": ["P7-001"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-010",
+      "description": "DialogPanelMode: integrates existing Pet Manager /chat route with InteractionRouter. When DialogPanel is the primary chat mode in the profile, handleGesture('double_click') opens Pet Manager at /chat instead of hardcoding. No new WebviewWindow; reuses existing Pet Manager.",
+      "test_type": "integration",
+      "test_target": "src/overlay/interaction/__tests__/dialog-panel-mode.test.ts",
+      "sprint_criterion": 15,
+      "depends_on": ["P7-001", "P7-003"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-011",
+      "description": "BondLevel engine (Rust backend): new care/bond.rs module. Bond points accumulation with threshold table (10 levels, 0/50/150/300/500/800/1200/1800/2500/3500), daily caps per action type, SQLite persistence via new bond_level table migration, Tauri event emission on level-up. IPC commands: get_bond_state, award_bond_points.",
+      "test_type": "unit",
+      "test_target": "src-tauri/src/care/bond.rs",
+      "sprint_criterion": 9,
+      "depends_on": [],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-012",
+      "description": "BondIndicator + level-up ceremony: Vue overlay component showing Lv.N + heart-bar near pet, always visible when bond_level mode enabled. Level-up ceremony: full-screen overlay animation (sparkles + BOND UP text) + unlock notification listing newly available modes. Responds to bond_level_up SystemOutput.",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p7-012-bond-indicator.mjs",
+      "sprint_criterion": 10,
+      "depends_on": ["P7-011", "P7-002"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-013",
+      "description": "Bond → FSM animation gating + system prompt tier modifier. FSM gains min_bond_level annotation per state variant; skin manifests can declare animation variants (e.g., idle.standard, idle.cuddle at Lv.5+). agent/prompt.rs appends bond tier guide string to system prompt (Lv.1-2: formal, Lv.3-4: casual, Lv.5-6: warm, Lv.7-8: trusting, Lv.9-10: authentic).",
+      "test_type": "unit",
+      "test_target": "src-tauri/src/behavior/state_machine.rs",
+      "sprint_criterion": 11,
+      "depends_on": ["P7-011"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P7-014",
+      "description": "Interaction profiles + Settings UI extension: Minimal/Nurture/RPG profile presets with per-mode enabled flags and gesture maps. Profile switching correctly mounts/unmounts modes and updates gesture mapping. Mode compatibility enforcement (Group A: speech_bubble|dialog_panel|command_input|chat_log mutually exclusive; Group B: radial_menu|emote_wheel mutually exclusive). Settings UI with profile selector + mode toggle list + bond-gated mode visibility. IPC commands: get_interaction_config, save_interaction_config.",
+      "test_type": "integration",
+      "test_target": "src/overlay/interaction/__tests__/profiles.test.ts",
+      "sprint_criterion": [12, 13],
+      "depends_on": ["P7-001", "P7-003"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    }
+  ]
+}

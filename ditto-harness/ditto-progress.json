@@ -1,7 +1,7 @@
 {
   "schema_version": "2.0",
   "prd_version": "2.0",
-  "current_phase": 6,
+  "current_phase": 7,
   "phase_status": {
     "1": "completed",
     "2": "completed",
@@ -9,7 +9,7 @@
     "4": "completed",
     "5": "completed",
     "6": "completed",
-    "7": "pending",
+    "7": "in_progress",
     "8": "pending",
     "9": "pending",
     "10": "pending",
@@ -21,14 +21,20 @@
       "date": "2026-04-26",
       "phases": [1, 2, 3, 4, 5],
       "summary": "Original v1.0 PRD complete: skeleton, life, mind, soul, polish. Vue 3 migration. 222 tests passing."
+    },
+    {
+      "version": "0.1.1",
+      "date": "2026-04-26",
+      "phases": [6],
+      "summary": "Phase 6 Skin Foundation: multi-renderer architecture, Spine renderer, skin distribution, unified Pet Manager."
     }
   ],
-  "current_phase_target_version": "0.1.5",
-  "current_phase_theme": "Skin Foundation",
-  "total_features_completed": 72,
-  "total_features_remaining": 0,
-  "last_session_summary": "Phase 6 complete, eval gaps fixed. Released v0.1.1.",
-  "last_commit": "3fca7566d2c5a58925c52b5de1f70b3cc89a3af",
-  "session_count": 3,
-  "notes": "All Phase 6 features pass. Awaiting evaluator gate before phase advance."
+  "current_phase_target_version": "0.2.0",
+  "current_phase_theme": "Interaction Foundation",
+  "total_features_completed": 86,
+  "total_features_remaining": 14,
+  "last_session_summary": "Initialized phase 7 (Interaction Foundation). 14 features defined. Sprint contract written.",
+  "last_commit": "9c84c7a",
+  "session_count": 4,
+  "notes": "Phase 7 covers InteractionRouter, 7 Light/Passive-tier modes, BondLevel engine, BondIndicator, FSM gating, and interaction profiles."
 }

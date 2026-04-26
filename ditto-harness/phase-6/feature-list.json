@@ -9,8 +9,8 @@
       "test_target": "src/overlay/renderer/__tests__/pet-renderer.test.ts::PetRenderer_interface_compliance",
       "sprint_criterion": 1,
       "depends_on": [],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "a76220034203c959fe02db5d9a71d9a0ee18850b",
       "notes": null
     },
     {
@@ -20,8 +20,8 @@
       "test_target": "src/overlay/renderer/__tests__/sprite-renderer.test.ts::SpriteRenderer_implements_PetRenderer",
       "sprint_criterion": 2,
       "depends_on": ["P6-001"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "c628636f78877d3ae333c76e235004300b07ab85",
       "notes": null
     },
     {
@@ -31,8 +31,8 @@
       "test_target": "src/overlay/renderer/__tests__/skin-manifest.test.ts::SkinManifest_validation",
       "sprint_criterion": 4,
       "depends_on": [],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "8196a34c8037e7e055cb35029d3a4d0e84f59d8a",
       "notes": null
     },
     {
@@ -42,8 +42,8 @@
       "test_target": "src/overlay/renderer/__tests__/renderer-factory.test.ts::RendererFactory_dispatch",
       "sprint_criterion": 3,
       "depends_on": ["P6-001", "P6-002"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "fcc69328fac35e00436dd78444c6a1a8e2342e21",
       "notes": null
     },
     {

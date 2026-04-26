@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "name": "Default",
+  "author": "Ditto Team",
+  "version": "1.0.0",
+  "renderer": "sprite",
+  "preview": "/pets/default/spritesheet.png",
+  "preview_animation": "idle",
+  "size": { "width": 64, "height": 64 },
+  "state_map": {
+    "idle": "idle",
+    "walk_left": "walk_left",
+    "walk_right": "walk_right",
+    "run_left": "run_left",
+    "run_right": "run_right",
+    "climb": "climb",
+    "fall": "fall",
+    "drag": "drag",
+    "sleep": "sleep",
+    "eat": "eat",
+    "play": "play",
+    "talk": "talk",
+    "happy": "happy",
+    "sad": "sad",
+    "curious": "curious",
+    "sit": "sit"
+  },
+  "sprite": {
+    "spritesheet": "/pets/default/spritesheet.png",
+    "config": "/pets/default/animations.json"
+  },
+  "tags": ["default", "pixel", "sprite"]
+}

@@ -81,7 +81,15 @@ async function selectSkin(id: string) {
               {{ skin.renderer }}
             </span>
           </div>
-          <div class="mt-0.5 text-1.5 text-gray-500">{{ skin.source }}</div>
+          <div class="mt-0.5 flex items-center justify-between">
+            <span class="text-1.5 text-gray-500">{{ skin.source }}</span>
+            <span
+              class="flex items-center gap-0.5 rounded px-1 py-0.5 text-1.5 bg-emerald-500/15 text-emerald-400"
+              title="Unlocked"
+            >
+              &#x2713; free
+            </span>
+          </div>
         </div>
       </div>
 

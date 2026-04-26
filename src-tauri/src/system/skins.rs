@@ -417,6 +417,55 @@ mod tests {
     }
 
     #[test]
+    fn test_delete_skin_rejects_bundled() {
+        let tmp_dir = tempfile::tempdir().unwrap();
+        let user_dir = tmp_dir.path().join("user-skins");
+        let bundled_dir = tmp_dir.path().join("bundled");
+        fs::create_dir_all(&user_dir).unwrap();
+        fs::create_dir_all(&bundled_dir).unwrap();
+
+        // Create a skin in the bundled dir (outside user dir)
+        create_temp_skin_dir(&bundled_dir.to_path_buf(), "bundled-skin", "sprite");
+
+        // Create a reparse point (junction on Windows, symlink on Unix)
+        // in user dir pointing to the bundled skin
+        let link_path = user_dir.join("bundled-skin");
+        let target = bundled_dir.join("bundled-skin");
+        #[cfg(windows)]
+        {
+            let output = std::process::Command::new("cmd")
+                .args([
+                    "/c",
+                    "mklink",
+                    "/J",
+                    &link_path.to_string_lossy(),
+                    &target.to_string_lossy(),
+                ])
+                .output()
+                .expect("failed to run mklink");
+            assert!(
+                output.status.success(),
+                "junction creation failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+        #[cfg(not(windows))]
+        std::os::unix::fs::symlink(&target, &link_path).unwrap();
+
+        // Attempt to delete via user_dir — should reject because canonical
+        // path resolves to bundled dir, not user dir
+        let result = delete_skin("bundled-skin", &user_dir);
+        assert!(result.is_err());
+        assert!(
+            result.unwrap_err().contains("cannot delete bundled skins"),
+            "should reject deleting skin whose canonical path is outside user dir"
+        );
+
+        // Original bundled skin should still exist
+        assert!(bundled_dir.join("bundled-skin").exists());
+    }
+
+    #[test]
     fn test_settings_migration() {
         let db = crate::db::Database::open_in_memory().unwrap();
 

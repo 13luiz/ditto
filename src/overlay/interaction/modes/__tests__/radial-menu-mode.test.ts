@@ -100,4 +100,26 @@ describe('RadialMenuMode', () => {
     const menu = ctx.overlayContainer!.querySelector('.radial-menu') as HTMLElement;
     expect(menu.style.display).toBe('none');
   });
+
+  it('closes on outside click', () => {
+    mode.mount(ctx);
+    mode.handleOutput({ kind: 'gesture', type: 'context_menu' });
+
+    const menu = ctx.overlayContainer!.querySelector('.radial-menu') as HTMLElement;
+    expect(menu.style.display).not.toBe('none');
+
+    document.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+
+    expect(menu.style.display).toBe('none');
+  });
+
+  it('closes on Escape key', () => {
+    mode.mount(ctx);
+    mode.handleOutput({ kind: 'gesture', type: 'context_menu' });
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    const menu = ctx.overlayContainer!.querySelector('.radial-menu') as HTMLElement;
+    expect(menu.style.display).toBe('none');
+  });
 });

@@ -20,6 +20,9 @@ export class RadialMenuMode implements InteractionMode {
 
   private ctx: ModeContext | null = null;
   private el: HTMLDivElement | null = null;
+  private boundOutsideClick: ((e: MouseEvent) => void) | null = null;
+  private boundKeyDown: ((e: KeyboardEvent) => void) | null = null;
+  private isOpen = false;
 
   mount(context: ModeContext): void {
     this.ctx = context;
@@ -79,9 +82,22 @@ export class RadialMenuMode implements InteractionMode {
 
     this.el.appendChild(svg);
     context.overlayContainer.appendChild(this.el);
+
+    this.boundOutsideClick = (e: MouseEvent) => {
+      if (!this.isOpen) return;
+      if (this.el && !this.el.contains(e.target as Node)) this.close();
+    };
+    this.boundKeyDown = (e: KeyboardEvent) => {
+      if (!this.isOpen) return;
+      if (e.key === 'Escape') this.close();
+    };
+    document.addEventListener('mousedown', this.boundOutsideClick);
+    document.addEventListener('keydown', this.boundKeyDown);
   }
 
   unmount(): void {
+    if (this.boundOutsideClick) document.removeEventListener('mousedown', this.boundOutsideClick);
+    if (this.boundKeyDown) document.removeEventListener('keydown', this.boundKeyDown);
     this.el?.remove();
     this.el = null;
     this.ctx = null;
@@ -91,11 +107,6 @@ export class RadialMenuMode implements InteractionMode {
     if (output.kind === 'gesture' && output.type === 'context_menu') {
       this.open();
     }
-  }
-
-  // Handle gesture events routed through the router
-  handleGestureEvent(gesture: string): void {
-    if (gesture === 'context_menu') this.open();
   }
 
   capabilities(): ModeCapabilities {
@@ -113,6 +124,7 @@ export class RadialMenuMode implements InteractionMode {
   private open(): void {
     if (!this.el || !this.ctx) return;
     this.el.style.display = 'block';
+    this.isOpen = true;
     const pos = this.ctx.getPetPosition();
     this.el.style.left = `${pos.x + pos.width / 2 - 80}px`;
     this.el.style.top = `${pos.y + pos.height / 2 - 80}px`;
@@ -120,6 +132,7 @@ export class RadialMenuMode implements InteractionMode {
 
   private close(): void {
     if (this.el) this.el.style.display = 'none';
+    this.isOpen = false;
   }
 
   private selectAction(action: 'feed' | 'play' | 'chat' | 'sleep'): void {

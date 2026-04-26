@@ -19,6 +19,7 @@ export class BondIndicatorMode implements InteractionMode {
   private progressFill: HTMLDivElement | null = null;
   private currentLevel = 1;
   private ceremonyTimer: ReturnType<typeof setTimeout> | null = null;
+  private ceremonyEl: HTMLDivElement | null = null;
 
   mount(context: ModeContext): void {
     this.ctx = context;
@@ -76,6 +77,8 @@ export class BondIndicatorMode implements InteractionMode {
 
   unmount(): void {
     this.clearCeremonyTimer();
+    this.ceremonyEl?.remove();
+    this.ceremonyEl = null;
     this.el?.remove();
     this.el = null;
     this.ctx = null;
@@ -164,9 +167,11 @@ export class BondIndicatorMode implements InteractionMode {
     ceremony.appendChild(text);
     ceremony.appendChild(level);
     this.ctx.overlayContainer!.appendChild(ceremony);
+    this.ceremonyEl = ceremony;
 
     this.ceremonyTimer = setTimeout(() => {
       ceremony.remove();
+      this.ceremonyEl = null;
     }, CEREMONY_DURATION_MS);
   }
 

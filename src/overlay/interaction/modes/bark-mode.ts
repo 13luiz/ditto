@@ -12,6 +12,7 @@ const FADE_MS = 500;
 interface QueuedBark {
   text: string;
   timer: ReturnType<typeof setTimeout>;
+  fadeTimer: ReturnType<typeof setTimeout> | null;
   el: HTMLDivElement;
 }
 
@@ -43,7 +44,10 @@ export class BarkMode implements InteractionMode {
   }
 
   unmount(): void {
-    for (const bark of this.queue) clearTimeout(bark.timer);
+    for (const bark of this.queue) {
+      clearTimeout(bark.timer);
+      if (bark.fadeTimer) clearTimeout(bark.fadeTimer);
+    }
     this.queue = [];
     this.wrapper?.remove();
     this.wrapper = null;
@@ -122,7 +126,7 @@ export class BarkMode implements InteractionMode {
 
     this.wrapper.appendChild(el);
 
-    const bark: QueuedBark = { text, timer: 0 as unknown as ReturnType<typeof setTimeout>, el };
+    const bark: QueuedBark = { text, timer: 0 as unknown as ReturnType<typeof setTimeout>, fadeTimer: null, el };
     bark.timer = setTimeout(() => this.fadeOut(bark), HOLD_MS);
     this.queue.push(bark);
 
@@ -131,7 +135,8 @@ export class BarkMode implements InteractionMode {
 
   private fadeOut(bark: QueuedBark): void {
     bark.el.style.opacity = '0';
-    setTimeout(() => {
+    bark.fadeTimer = setTimeout(() => {
+      bark.fadeTimer = null;
       bark.el.remove();
       const idx = this.queue.indexOf(bark);
       if (idx !== -1) this.queue.splice(idx, 1);

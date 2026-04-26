@@ -1,5 +1,5 @@
 import type { InteractionRouter } from './interaction-router';
-import type { ModeContext, GestureMap } from './types';
+import type { ModeContext, GestureMap, InteractionMode } from './types';
 import { BarkMode } from './modes/bark-mode';
 import { ThoughtBubbleMode } from './modes/thought-bubble-mode';
 import { SpeechBubbleMode } from './modes/speech-bubble-mode';
@@ -54,7 +54,7 @@ function resolveModes(modes: string[]): string[] {
   return result;
 }
 
-const MODE_FACTORIES: Record<string, () => any> = {
+const MODE_FACTORIES: Record<string, () => InteractionMode> = {
   bark: () => new BarkMode(),
   thought_bubble: () => new ThoughtBubbleMode(),
   speech_bubble: () => new SpeechBubbleMode(),

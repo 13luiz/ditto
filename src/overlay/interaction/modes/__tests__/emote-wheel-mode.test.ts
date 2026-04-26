@@ -114,4 +114,26 @@ describe('EmoteWheelMode', () => {
     const wheel = ctx.overlayContainer!.querySelector('.emote-wheel') as HTMLElement;
     expect(wheel.style.display).toBe('none');
   });
+
+  it('closes on outside click', () => {
+    mode.mount(ctx);
+    mode.handleOutput({ kind: 'gesture', type: 'emote_key' });
+
+    const wheel = ctx.overlayContainer!.querySelector('.emote-wheel') as HTMLElement;
+    expect(wheel.style.display).not.toBe('none');
+
+    document.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+
+    expect(wheel.style.display).toBe('none');
+  });
+
+  it('closes on Escape key', () => {
+    mode.mount(ctx);
+    mode.handleOutput({ kind: 'gesture', type: 'emote_key' });
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    const wheel = ctx.overlayContainer!.querySelector('.emote-wheel') as HTMLElement;
+    expect(wheel.style.display).toBe('none');
+  });
 });

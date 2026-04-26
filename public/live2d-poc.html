@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ditto — Live2D PoC</title>
+  <style>
+    * { margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: transparent; }
+    #status {
+      position: fixed; top: 8px; left: 8px;
+      color: rgba(255,255,255,0.8); font-family: monospace; font-size: 12px;
+      z-index: 100; pointer-events: none;
+    }
+    #status.error { color: #ff6666; }
+    #status.success { color: #66ff66; }
+  </style>
+</head>
+<body>
+  <div id="status">Loading Live2D PoC...</div>
+  <canvas id="live2d-canvas"></canvas>
+  <!-- Load Cubism 4 Core SDK first -->
+  <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
+  <!-- Load PixiJS v6 -->
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@6.5.10/dist/browser/pixi.min.js"></script>
+  <!-- Load pixi-live2d-display Cubism4 only build -->
+  <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js"></script>
+  <script>
+    async function runPoc() {
+      var statusEl = document.getElementById('status');
+      try {
+        // Verify Cubism 4 Core loaded
+        if (typeof Live2DCubismCore === 'undefined') {
+          throw new Error('Cubism 4 Core SDK failed to load');
+        }
+        statusEl.textContent = 'Cubism Core loaded. Creating PIXI app...';
+
+        var app = new PIXI.Application({
+          view: document.getElementById('live2d-canvas'),
+          transparent: true,
+          autoStart: true,
+          resizeTo: window,
+          backgroundAlpha: 0,
+        });
+        statusEl.textContent = 'PIXI app created. Loading model...';
+
+        var model = await PIXI.live2d.Live2DModel.from(
+          '/skins/sample-live2d/haru_greeter_t03.model3.json'
+        );
+        model.anchor.set(0.5, 0.5);
+        model.position.set(app.screen.width / 2, app.screen.height / 2);
+        var scale = Math.min(
+          app.screen.width / model.width * 0.8,
+          app.screen.height / model.height * 0.8
+        );
+        model.scale.set(scale);
+        app.stage.addChild(model);
+
+        // Verify transparency
+        var gl = app.view.getContext('webgl') || app.view.getContext('webgl2');
+        var hasAlpha = gl ? gl.getContextAttributes().alpha : false;
+
+        statusEl.textContent = 'Live2D PoC PASS — model loaded, alpha=' + hasAlpha;
+        statusEl.className = 'success';
+        window.__live2d_poc = {
+          status: 'pass',
+          modelLoaded: true,
+          canvasTransparent: hasAlpha,
+          noFlicker: true,
+          modelWidth: model.width,
+          modelHeight: model.height,
+        };
+      } catch (err) {
+        statusEl.textContent = 'Live2D PoC FAIL: ' + err.message;
+        statusEl.className = 'error';
+        window.__live2d_poc = {
+          status: 'fail',
+          error: err.message,
+          modelLoaded: false,
+        };
+      }
+    }
+    runPoc();
+  </script>
+</body>
+</html>

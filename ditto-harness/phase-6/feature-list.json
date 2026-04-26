@@ -1,0 +1,160 @@
+{
+  "phase": 6,
+  "schema_version": "2.0",
+  "features": [
+    {
+      "id": "P6-001",
+      "description": "PetRenderer TypeScript interface with RendererCapabilities, LipSyncable, Expressible type guards. Compiles and is importable from src/overlay/renderer/.",
+      "test_type": "unit",
+      "test_target": "src/overlay/renderer/__tests__/pet-renderer.test.ts::PetRenderer_interface_compliance",
+      "sprint_criterion": 1,
+      "depends_on": [],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P6-002",
+      "description": "SpriteRenderer wraps current SpriteEngine logic implementing PetRenderer. Overlay renders identically to v0.1.0 — same spritesheet, same animation states, same canvas output.",
+      "test_type": "unit",
+      "test_target": "src/overlay/renderer/__tests__/sprite-renderer.test.ts::SpriteRenderer_implements_PetRenderer",
+      "sprint_criterion": 2,
+      "depends_on": ["P6-001"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P6-003",
+      "description": "SkinManifest TypeScript type matching visual-rendering-spec v1.0 schema. Validation function rejects missing required fields (name, renderer, version).",
+      "test_type": "unit",
+      "test_target": "src/overlay/renderer/__tests__/skin-manifest.test.ts::SkinManifest_validation",
+      "sprint_criterion": 4,
+      "depends_on": [],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P6-004",
+      "description": "RendererFactory creates correct renderer from skin.json renderer field: 'sprite' → SpriteRenderer, 'spine' → SpineRenderer. Unknown type throws descriptive error.",
+      "test_type": "unit",
+      "test_target": "src/overlay/renderer/__tests__/renderer-factory.test.ts::RendererFactory_dispatch",
+      "sprint_criterion": 3,
+      "depends_on": ["P6-001", "P6-002"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P6-005",
+      "description": "Rename system/themes.rs to system/skins.rs. Update mod.rs, lib.rs, and IPC handler registration. All 222 v0.1.0 tests still pass.",
+      "test_type": "unit",
+      "test_target": "src-tauri/src/system/skins.rs::tests::test_default_theme_always_listed",
+      "sprint_criterion": 5,
+      "depends_on": [],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P6-006",
+      "description": "Skin discovery: list_skins IPC returns merged catalog from bundled skins (public/skins/) and user-installed skins ($APPDATA/Ditto/skins/). Each entry includes name, renderer, preview path, source tag.",
+      "test_type": "integration",
+      "test_target": "src-tauri/src/system/skins.rs::tests::test_list_skins_merged_catalog",
+      "sprint_criterion": 6,
+      "depends_on": ["P6-003", "P6-005"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P6-007",
+      "description": "import_skin_zip IPC: validates skin.json presence + required fields, extracts to user data dir with path-traversal protection. New skin appears in list_skins output.",
+      "test_type": "integration",
+      "test_target": "src-tauri/src/system/skins.rs::tests::test_import_skin_zip_roundtrip",
+      "sprint_criterion": 7,
+      "depends_on": ["P6-005", "P6-006"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P6-008",
+      "description": "import_skin_url IPC: downloads zip from URL, validates, installs. delete_skin removes user-installed skin; bundled skins cannot be deleted. get/set_active_skin persist in settings DB.",
+      "test_type": "integration",
+      "test_target": "src-tauri/src/system/skins.rs::tests::test_skin_management_commands",
+      "sprint_criterion": [8, 9, 10],
+      "depends_on": ["P6-007"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P6-009",
+      "description": "SpineRenderer loads .skel/.json + .atlas + textures via @esotericsoftware/spine-canvas. Plays animations mapped via state_map. hitTest uses skeleton bounds. Implements PetRenderer interface.",
+      "test_type": "unit",
+      "test_target": "src/overlay/renderer/__tests__/spine-renderer.test.ts::SpineRenderer_implements_PetRenderer",
+      "sprint_criterion": 11,
+      "depends_on": ["P6-001"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P6-010",
+      "description": "Sample Spine skin in public/skins/sample-spine/ with valid skeleton.json, atlas, textures, and skin.json. Loads in SpineRenderer and plays idle animation without flicker.",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p6-010-spine-sample.mjs",
+      "sprint_criterion": 12,
+      "depends_on": ["P6-009"],
+      "passes": false,
+      "commit": null,
+      "notes": "Requires a valid Spine-exported asset. May need to hand-craft a minimal valid skeleton if no Spine Editor license available."
+    },
+    {
+      "id": "P6-011",
+      "description": "Pet Manager unified window: tray menu opens Pet Manager instead of individual windows. Old standalone chat-bubble.ts, care-panel.ts, settings.ts launchers removed. All UI accessible via Vue routes.",
+      "test_type": "integration",
+      "test_target": "src-tauri/src/lib.rs::tests::test_command_registered_in_run",
+      "sprint_criterion": 14,
+      "depends_on": ["P6-005"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P6-012",
+      "description": "/skins route in Pet Manager: grid layout with live preview animations per skin, renderer-type filter tabs (Sprite/Spine), bond-lock badges (all unlocked in v0.1.5).",
+      "test_type": "visual",
+      "test_target": "tests/playwright/p6-012-skins-gallery.mjs",
+      "sprint_criterion": 13,
+      "depends_on": ["P6-006", "P6-010", "P6-011"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P6-013",
+      "description": "Settings migration: active_skin setting added with default 'default'. Existing settings load correctly. No data loss from themes→skins rename.",
+      "test_type": "integration",
+      "test_target": "src-tauri/src/system/skins.rs::tests::test_settings_migration",
+      "sprint_criterion": 15,
+      "depends_on": ["P6-005", "P6-008"],
+      "passes": false,
+      "commit": null,
+      "notes": null
+    },
+    {
+      "id": "P6-014",
+      "description": "AgentBackend trait scaffold in Rust: trait definition with send_message method. BuiltinAgent marked as implementor. No behavior change — existing code compiles and all 222+ tests pass.",
+      "test_type": "unit",
+      "test_target": "src-tauri/src/agent/core.rs::tests::test_builtin_agent_implements_trait",
+      "sprint_criterion": 17,
+      "depends_on": [],
+      "passes": false,
+      "commit": null,
+      "notes": "Forward-compat scaffold only. ExternalAgentChannel implementation is Phase 9."
+    }
+  ]
+}

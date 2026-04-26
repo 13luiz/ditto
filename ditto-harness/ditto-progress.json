@@ -8,7 +8,7 @@
     "3": "completed",
     "4": "completed",
     "5": "completed",
-    "6": "pending",
+    "6": "in_progress",
     "7": "pending",
     "8": "pending",
     "9": "pending",
@@ -26,9 +26,9 @@
   "current_phase_target_version": "0.1.5",
   "current_phase_theme": "Skin Foundation",
   "total_features_completed": 58,
-  "total_features_remaining": 0,
-  "last_session_summary": "PRD v2.0 published; harness skill rewritten per Anthropic harness-design articles. Phase 6 (Skin Foundation, target v0.1.5) is pending — next /ditto-implement run will enter Branch A (Initializer) and produce the sprint contract + feature list.",
+  "total_features_remaining": 14,
+  "last_session_summary": "Initialized phase 6 (Skin Foundation). 14 features defined. Sprint contract written.",
   "last_commit": null,
-  "session_count": 0,
+  "session_count": 1,
   "notes": "Phases 1-5 directories were removed during PRD v2.0 migration. Their record lives in git history (commits up to v0.1.0 release a7736b1) and in CHANGELOG.md."
 }

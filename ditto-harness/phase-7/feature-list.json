@@ -9,8 +9,8 @@
       "test_target": "src/overlay/interaction/__tests__/interaction-router.test.ts",
       "sprint_criterion": 1,
       "depends_on": [],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "cf077ea",
       "notes": null
     },
     {
@@ -119,8 +119,8 @@
       "test_target": "src-tauri/src/care/bond.rs",
       "sprint_criterion": 9,
       "depends_on": [],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "5b450db",
       "notes": null
     },
     {
@@ -141,8 +141,8 @@
       "test_target": "src-tauri/src/behavior/state_machine.rs",
       "sprint_criterion": 11,
       "depends_on": ["P7-011"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "3c2d4b0",
       "notes": null
     },
     {

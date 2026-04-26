@@ -10,14 +10,26 @@ import { MUTUALLY_EXCLUSIVE_GROUPS, ALWAYS_CONCURRENT } from './types';
 
 type EventHandler = (event: InteractionEvent) => void;
 
+const BOND_GATES: Partial<Record<InteractionModeType, number>> = {
+  dream_nail: 5,
+  letter: 6,
+  journal: 7,
+  mini_game: 7,
+};
+
 export class InteractionRouter {
   private modes = new Map<InteractionModeType, InteractionMode>();
   private gestureMap: GestureMap = {};
   private eventHandlers: EventHandler[] = [];
   private overlayContainer: HTMLDivElement | null = null;
+  private bondLevel = 0;
 
   setOverlayContainer(container: HTMLDivElement): void {
     this.overlayContainer = container;
+  }
+
+  setBondLevel(level: number): void {
+    this.bondLevel = level;
   }
 
   activeModes(): InteractionModeType[] {
@@ -25,6 +37,13 @@ export class InteractionRouter {
   }
 
   enableMode(mode: InteractionMode): void {
+    const requiredLevel = BOND_GATES[mode.type];
+    if (requiredLevel !== undefined && this.bondLevel < requiredLevel) {
+      throw new Error(
+        `Cannot enable ${mode.type}: requires Bond Lv.${requiredLevel}, current is ${this.bondLevel}`,
+      );
+    }
+
     const existing = this.modes.get(mode.type);
     if (existing) {
       existing.unmount();

@@ -7,6 +7,11 @@ import { RadialMenuMode } from './modes/radial-menu-mode';
 import { EmoteWheelMode } from './modes/emote-wheel-mode';
 import { BondIndicatorMode } from './modes/bond-indicator-mode';
 import { DialogPanelMode } from './modes/dialog-panel-mode';
+import { DreamNailMode } from './modes/dream-nail-mode';
+import { LetterMode } from './modes/letter-mode';
+import { JournalMode } from './modes/journal-mode';
+import { CommandInputMode } from './modes/command-input-mode';
+import { ChatLogMode } from './modes/chat-log-mode';
 
 export type InteractionProfile = 'minimal' | 'nurture' | 'rpg';
 
@@ -21,17 +26,18 @@ const PROFILES: Record<InteractionProfile, ProfileConfig> = {
     gestureMap: {},
   },
   nurture: {
-    modes: ['bark', 'thought_bubble', 'radial_menu', 'bond_level'],
+    modes: ['bark', 'thought_bubble', 'radial_menu', 'bond_level', 'letter', 'journal', 'mini_game'],
     gestureMap: {
       context_menu: 'radial_menu',
     },
   },
   rpg: {
-    modes: ['bark', 'thought_bubble', 'speech_bubble', 'radial_menu', 'emote_wheel', 'bond_level'],
+    modes: ['bark', 'thought_bubble', 'speech_bubble', 'radial_menu', 'emote_wheel', 'bond_level', 'dream_nail', 'letter', 'journal', 'mini_game', 'command_input', 'chat_log'],
     gestureMap: {
       double_click: 'speech_bubble',
       context_menu: 'radial_menu',
       emote_key: 'emote_wheel',
+      alt_hover: 'dream_nail',
     },
   },
 };
@@ -62,6 +68,11 @@ const MODE_FACTORIES: Record<string, () => InteractionMode> = {
   emote_wheel: () => new EmoteWheelMode(),
   bond_level: () => new BondIndicatorMode(),
   dialog_panel: () => new DialogPanelMode(),
+  dream_nail: () => new DreamNailMode(),
+  letter: () => new LetterMode(),
+  journal: () => new JournalMode(),
+  command_input: () => new CommandInputMode(),
+  chat_log: () => new ChatLogMode(),
 };
 
 export class InteractionProfileManager {

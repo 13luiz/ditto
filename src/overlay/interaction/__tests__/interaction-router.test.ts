@@ -178,4 +178,62 @@ describe('InteractionRouter', () => {
       expect(() => router.enableMode(speech)).not.toThrow();
     });
   });
+
+  describe('bond-level gating', () => {
+    it('rejects dream_nail when bond level < 5', () => {
+      router.setBondLevel(4);
+      const dreamNail = createMockMode('dream_nail');
+      expect(() => router.enableMode(dreamNail)).toThrow(/bond/i);
+      expect(router.activeModes()).not.toContain('dream_nail');
+    });
+
+    it('allows dream_nail when bond level >= 5', () => {
+      router.setBondLevel(5);
+      const dreamNail = createMockMode('dream_nail');
+      expect(() => router.enableMode(dreamNail)).not.toThrow();
+      expect(router.activeModes()).toContain('dream_nail');
+    });
+
+    it('rejects letter when bond level < 6', () => {
+      router.setBondLevel(5);
+      const letter = createMockMode('letter');
+      expect(() => router.enableMode(letter)).toThrow(/bond/i);
+    });
+
+    it('allows letter when bond level >= 6', () => {
+      router.setBondLevel(6);
+      const letter = createMockMode('letter');
+      expect(() => router.enableMode(letter)).not.toThrow();
+    });
+
+    it('rejects journal when bond level < 7', () => {
+      router.setBondLevel(6);
+      const journal = createMockMode('journal');
+      expect(() => router.enableMode(journal)).toThrow(/bond/i);
+    });
+
+    it('allows journal when bond level >= 7', () => {
+      router.setBondLevel(7);
+      const journal = createMockMode('journal');
+      expect(() => router.enableMode(journal)).not.toThrow();
+    });
+
+    it('rejects mini_game when bond level < 7', () => {
+      router.setBondLevel(6);
+      const miniGame = createMockMode('mini_game');
+      expect(() => router.enableMode(miniGame)).toThrow(/bond/i);
+    });
+
+    it('allows mini_game when bond level >= 7', () => {
+      router.setBondLevel(7);
+      const miniGame = createMockMode('mini_game');
+      expect(() => router.enableMode(miniGame)).not.toThrow();
+    });
+
+    it('allows ungated modes at any bond level', () => {
+      router.setBondLevel(0);
+      const bark = createMockMode('bark');
+      expect(() => router.enableMode(bark)).not.toThrow();
+    });
+  });
 });

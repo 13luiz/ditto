@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen, emit } from '@tauri-apps/api/event';
 import { SpriteEngine } from './renderer/sprite-engine';
-import { openSettingsWindow } from '../windows/settings';
+import { openPetManager } from '../windows/pet-manager';
 import { checkScheduledTriggers, recordUserActivity } from '../ipc/commands';
 
 export function setupPetActions(engine: SpriteEngine): void {
@@ -24,8 +24,8 @@ export function setupPetActions(engine: SpriteEngine): void {
 }
 
 export function setupSettingsListener(): void {
-  listen('open_settings', () => {
-    openSettingsWindow().catch(console.error);
+  listen('open_pet_manager', () => {
+    openPetManager('/settings').catch(console.error);
   });
 }
 

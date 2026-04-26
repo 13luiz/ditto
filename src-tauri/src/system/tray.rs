@@ -7,12 +7,13 @@ use tauri::{
 
 pub fn setup_tray(app: &App) {
     let show = MenuItem::with_id(app, "show", "Show", true, None::<&str>).unwrap();
-    let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>).unwrap();
+    let pet_manager =
+        MenuItem::with_id(app, "pet_manager", "Pet Manager", true, None::<&str>).unwrap();
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>).unwrap();
 
     let menu = MenuBuilder::new(app)
         .item(&show)
-        .item(&settings)
+        .item(&pet_manager)
         .separator()
         .item(&quit)
         .build()
@@ -31,8 +32,8 @@ pub fn setup_tray(app: &App) {
                     let _ = window.show();
                 }
             }
-            "settings" => {
-                let _ = app.emit("open_settings", ());
+            "pet_manager" => {
+                let _ = app.emit("open_pet_manager", ());
             }
             "quit" => app.exit(0),
             _ => {}

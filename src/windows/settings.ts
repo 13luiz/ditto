@@ -1,23 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
-import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { openPetManager } from './pet-manager';
 
 export async function openSettingsWindow(): Promise<void> {
-  const existing = await WebviewWindow.getByLabel('settings');
-  if (existing) {
-    await existing.setFocus();
-    return;
-  }
-
-  new WebviewWindow('settings', {
-    url: '/ui.html#/settings',
-    width: 420,
-    height: 500,
-    decorations: false,
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    resizable: false,
-    focus: true,
-  });
+  await openPetManager('/settings');
 }
 
 export async function loadSettings(): Promise<Record<string, unknown>> {

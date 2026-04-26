@@ -4,8 +4,7 @@ import { SpriteEngine } from './renderer/sprite-engine';
 import { ClickThroughHandler } from './input/click-through';
 import { DragHandler } from './input/drag-handler';
 import { PetController } from './behavior/pet-controller';
-import { toggleChatWindow } from '../windows/chat-bubble';
-import { openCarePanel } from '../windows/care-panel';
+import { openPetManager } from '../windows/pet-manager';
 import { showOnboardingIfNeeded } from '../windows/onboarding';
 import { setupPetActions, setupSettingsListener, setupActivityTracking, setupScheduler } from './setup-events';
 
@@ -29,18 +28,18 @@ async function main() {
 
   canvas.addEventListener('dblclick', async () => {
     try {
-      await toggleChatWindow();
+      await openPetManager('/chat');
     } catch (e) {
-      console.error('[ditto] toggle_chat_window error:', e);
+      console.error('[ditto] open_pet_manager error:', e);
     }
   });
 
   canvas.addEventListener('contextmenu', async (e) => {
     e.preventDefault();
     try {
-      await openCarePanel();
+      await openPetManager('/care');
     } catch (e) {
-      console.error('[ditto] open_care_panel error:', e);
+      console.error('[ditto] open_pet_manager error:', e);
     }
   });
 

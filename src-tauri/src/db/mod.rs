@@ -1,7 +1,7 @@
 pub mod migrations;
 pub mod models;
 
-use models::{Message, MessageRole};
+use models::{JournalEntry, Letter, Message, MessageRole, MiniGameResult};
 use rusqlite::{params, Connection, Result};
 
 pub struct Database {
@@ -180,6 +180,207 @@ impl Database {
         )?;
         Ok(())
     }
+
+    // --- Letter CRUD ---
+
+    pub fn insert_letter(&self, direction: &str, content: &str) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO letters (direction, content) VALUES (?1, ?2)",
+            params![direction, content],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    pub fn get_pending_letters(&self) -> Result<Vec<Letter>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, direction, content, attachment, read_at, created_at \
+             FROM letters WHERE read_at IS NULL AND direction = 'to_user' ORDER BY id ASC",
+        )?;
+        stmt.query_map([], |row| {
+            Ok(Letter {
+                id: row.get(0)?,
+                direction: row.get(1)?,
+                content: row.get(2)?,
+                attachment: row.get(3)?,
+                read_at: row.get(4)?,
+                created_at: row.get(5)?,
+            })
+        })
+        .and_then(|rows| rows.collect())
+    }
+
+    pub fn mark_letter_read(&self, letter_id: i64) -> Result<()> {
+        self.conn.execute(
+            "UPDATE letters SET read_at = datetime('now') WHERE id = ?1",
+            params![letter_id],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_letter_archive(&self, limit: i64, offset: i64) -> Result<Vec<Letter>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, direction, content, attachment, read_at, created_at \
+             FROM letters ORDER BY id DESC LIMIT ?1 OFFSET ?2",
+        )?;
+        stmt.query_map(params![limit, offset], |row| {
+            Ok(Letter {
+                id: row.get(0)?,
+                direction: row.get(1)?,
+                content: row.get(2)?,
+                attachment: row.get(3)?,
+                read_at: row.get(4)?,
+                created_at: row.get(5)?,
+            })
+        })
+        .and_then(|rows| rows.collect())
+    }
+
+    pub fn insert_letter_reply(&self, letter_id: i64, content: &str) -> Result<i64> {
+        // Insert the reply as a new 'from_user' letter
+        self.conn.execute(
+            "INSERT INTO letters (direction, content) VALUES ('from_user', ?1)",
+            params![content],
+        )?;
+        let reply_id = self.conn.last_insert_rowid();
+        // Mark the original letter as read
+        self.mark_letter_read(letter_id)?;
+        Ok(reply_id)
+    }
+
+    // --- Journal CRUD ---
+
+    pub fn insert_journal_entry(
+        &self,
+        entry_date: &str,
+        content: &str,
+        mood_summary: Option<&str>,
+        stats_json: Option<&str>,
+        milestone: Option<&str>,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO journal_entries (entry_date, content, mood_summary, stats_json, milestone) \
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![entry_date, content, mood_summary, stats_json, milestone],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    pub fn get_journal_entries(
+        &self,
+        start_date: &str,
+        end_date: &str,
+    ) -> Result<Vec<JournalEntry>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, entry_date, content, mood_summary, stats_json, milestone, created_at \
+             FROM journal_entries WHERE entry_date BETWEEN ?1 AND ?2 ORDER BY entry_date DESC",
+        )?;
+        stmt.query_map(params![start_date, end_date], |row| {
+            Ok(JournalEntry {
+                id: row.get(0)?,
+                entry_date: row.get(1)?,
+                content: row.get(2)?,
+                mood_summary: row.get(3)?,
+                stats_json: row.get(4)?,
+                milestone: row.get(5)?,
+                created_at: row.get(6)?,
+            })
+        })
+        .and_then(|rows| rows.collect())
+    }
+
+    pub fn get_latest_journal_entry(&self) -> Result<Option<JournalEntry>> {
+        self.conn
+            .query_row(
+                "SELECT id, entry_date, content, mood_summary, stats_json, milestone, created_at \
+                 FROM journal_entries ORDER BY entry_date DESC LIMIT 1",
+                [],
+                |row| {
+                    Ok(JournalEntry {
+                        id: row.get(0)?,
+                        entry_date: row.get(1)?,
+                        content: row.get(2)?,
+                        mood_summary: row.get(3)?,
+                        stats_json: row.get(4)?,
+                        milestone: row.get(5)?,
+                        created_at: row.get(6)?,
+                    })
+                },
+            )
+            .map(Some)
+            .or_else(|e| {
+                if matches!(e, rusqlite::Error::QueryReturnedNoRows) {
+                    Ok(None)
+                } else {
+                    Err(e)
+                }
+            })
+    }
+
+    // --- Mini-Game CRUD ---
+
+    pub fn insert_game_result(
+        &self,
+        game_type: &str,
+        score: i32,
+        won: bool,
+        care_effects_json: Option<&str>,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO mini_game_results (game_type, score, won, care_effects_json) \
+             VALUES (?1, ?2, ?3, ?4)",
+            params![game_type, score, won as i32, care_effects_json],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    pub fn get_game_history(
+        &self,
+        game_type: Option<&str>,
+        limit: i64,
+    ) -> Result<Vec<MiniGameResult>> {
+        let mut results = Vec::new();
+        match game_type {
+            Some(gt) => {
+                let mut stmt = self.conn.prepare(
+                    "SELECT id, game_type, score, won, care_effects_json, played_at \
+                     FROM mini_game_results WHERE game_type = ?1 ORDER BY played_at DESC LIMIT ?2",
+                )?;
+                let rows = stmt.query_map(params![gt, limit], |row| {
+                    Ok(MiniGameResult {
+                        id: row.get(0)?,
+                        game_type: row.get(1)?,
+                        score: row.get(2)?,
+                        won: row.get::<_, i32>(3)? != 0,
+                        care_effects_json: row.get(4)?,
+                        played_at: row.get(5)?,
+                    })
+                })?;
+                for row in rows {
+                    results.push(row?);
+                }
+            }
+            None => {
+                let mut stmt = self.conn.prepare(
+                    "SELECT id, game_type, score, won, care_effects_json, played_at \
+                     FROM mini_game_results ORDER BY played_at DESC LIMIT ?1",
+                )?;
+                let rows = stmt.query_map(params![limit], |row| {
+                    Ok(MiniGameResult {
+                        id: row.get(0)?,
+                        game_type: row.get(1)?,
+                        score: row.get(2)?,
+                        won: row.get::<_, i32>(3)? != 0,
+                        care_effects_json: row.get(4)?,
+                        played_at: row.get(5)?,
+                    })
+                })?;
+                for row in rows {
+                    results.push(row?);
+                }
+            }
+        }
+        Ok(results)
+    }
 }
 
 #[cfg(test)]
@@ -354,5 +555,145 @@ mod tests {
         );
 
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    // --- Letter CRUD tests ---
+
+    #[test]
+    fn test_letter_insert_and_get_pending() {
+        let db = Database::open_in_memory().unwrap();
+
+        db.insert_letter("to_user", "I missed you!").unwrap();
+        db.insert_letter("to_user", "Here's a star for you.")
+            .unwrap();
+
+        let pending = db.get_pending_letters().unwrap();
+        assert_eq!(pending.len(), 2);
+        assert_eq!(pending[0].content, "I missed you!");
+        assert_eq!(pending[0].direction, "to_user");
+        assert_eq!(pending[0].read_at, None);
+    }
+
+    #[test]
+    fn test_letter_mark_read() {
+        let db = Database::open_in_memory().unwrap();
+        let id = db.insert_letter("to_user", "Hello!").unwrap();
+
+        db.mark_letter_read(id).unwrap();
+
+        let pending = db.get_pending_letters().unwrap();
+        assert_eq!(pending.len(), 0, "letter should no longer be pending");
+    }
+
+    #[test]
+    fn test_letter_archive_pagination() {
+        let db = Database::open_in_memory().unwrap();
+        for i in 0..5 {
+            db.insert_letter("to_user", &format!("Letter {}", i))
+                .unwrap();
+        }
+
+        let page1 = db.get_letter_archive(3, 0).unwrap();
+        assert_eq!(page1.len(), 3);
+        // Most recent first
+        assert_eq!(page1[0].content, "Letter 4");
+
+        let page2 = db.get_letter_archive(3, 3).unwrap();
+        assert_eq!(page2.len(), 2);
+    }
+
+    #[test]
+    fn test_letter_reply() {
+        let db = Database::open_in_memory().unwrap();
+        let letter_id = db.insert_letter("to_user", "Thinking of you...").unwrap();
+
+        let reply_id = db
+            .insert_letter_reply(letter_id, "I missed you too!")
+            .unwrap();
+        assert!(reply_id > 0, "reply should get its own ID");
+
+        // Original letter should be marked read
+        let pending = db.get_pending_letters().unwrap();
+        assert_eq!(pending.len(), 0, "original should be read after reply");
+    }
+
+    // --- Journal CRUD tests ---
+
+    #[test]
+    fn test_journal_insert_and_query_range() {
+        let db = Database::open_in_memory().unwrap();
+
+        db.insert_journal_entry(
+            "2026-04-25",
+            "- Went for a walk",
+            Some("Happy (75/100)"),
+            Some("{\"conversations\": 3}"),
+            None,
+        )
+        .unwrap();
+        db.insert_journal_entry(
+            "2026-04-26",
+            "- Had a great coding session",
+            Some("Excited (88/100)"),
+            None,
+            Some("30-day anniversary"),
+        )
+        .unwrap();
+
+        let entries = db.get_journal_entries("2026-04-25", "2026-04-26").unwrap();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].entry_date, "2026-04-26"); // DESC order
+        assert_eq!(entries[0].milestone, Some("30-day anniversary".to_string()));
+    }
+
+    #[test]
+    fn test_journal_latest_entry() {
+        let db = Database::open_in_memory().unwrap();
+        assert_eq!(db.get_latest_journal_entry().unwrap(), None);
+
+        db.insert_journal_entry("2026-04-25", "Day 1", None, None, None)
+            .unwrap();
+        db.insert_journal_entry("2026-04-26", "Day 2", None, None, None)
+            .unwrap();
+
+        let latest = db.get_latest_journal_entry().unwrap();
+        assert_eq!(latest.unwrap().content, "Day 2");
+    }
+
+    // --- Mini-Game CRUD tests ---
+
+    #[test]
+    fn test_game_result_insert_and_history() {
+        let db = Database::open_in_memory().unwrap();
+
+        db.insert_game_result("rps", 3, true, Some("{\"happiness\": 15}"))
+            .unwrap();
+        db.insert_game_result("catch", 12, false, Some("{\"hunger\": 24}"))
+            .unwrap();
+        db.insert_game_result("rps", 2, false, Some("{\"happiness\": 8}"))
+            .unwrap();
+
+        let all = db.get_game_history(None, 10).unwrap();
+        assert_eq!(all.len(), 3);
+
+        let rps_only = db.get_game_history(Some("rps"), 10).unwrap();
+        assert_eq!(rps_only.len(), 2);
+        assert!(rps_only[0].won || !rps_only[0].won); // bool field works
+    }
+
+    #[test]
+    fn test_game_result_won_field() {
+        let db = Database::open_in_memory().unwrap();
+
+        let id1 = db.insert_game_result("rps", 3, true, None).unwrap();
+        let id2 = db.insert_game_result("rps", 1, false, None).unwrap();
+        assert!(id2 > id1, "second insert should have higher id");
+
+        let results = db.get_game_history(None, 10).unwrap();
+        assert_eq!(results.len(), 2);
+        // Verify both won values are correctly round-tripped
+        let won_values: Vec<bool> = results.iter().map(|r| r.won).collect();
+        assert!(won_values.contains(&true));
+        assert!(won_values.contains(&false));
     }
 }

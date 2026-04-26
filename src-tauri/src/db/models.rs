@@ -54,3 +54,34 @@ pub struct Memory {
     pub created_at: String,
     pub updated_at: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Letter {
+    pub id: i64,
+    pub direction: String,
+    pub content: String,
+    pub attachment: Option<String>,
+    pub read_at: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct JournalEntry {
+    pub id: i64,
+    pub entry_date: String,
+    pub content: String,
+    pub mood_summary: Option<String>,
+    pub stats_json: Option<String>,
+    pub milestone: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MiniGameResult {
+    pub id: i64,
+    pub game_type: String,
+    pub score: i32,
+    pub won: bool,
+    pub care_effects_json: Option<String>,
+    pub played_at: String,
+}

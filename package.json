@@ -15,6 +15,7 @@
     "@tauri-apps/cli": "^2.10.1",
     "@unocss/preset-icons": "^66",
     "@vitejs/plugin-vue": "^5",
+    "jsdom": "^29.0.2",
     "typescript": "^5.7.0",
     "unocss": "^66",
     "vite": "^6.3.0",

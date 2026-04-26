@@ -1,13 +1,25 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { PetRenderer, RendererCapabilities } from '../pet-renderer';
 import { SpriteRenderer } from '../sprite-renderer';
+
+function createMockCanvas(): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+  const mockCtx = {
+    clearRect: vi.fn(),
+    drawImage: vi.fn(),
+    getImageData: vi.fn(() => ({ data: new Uint8ClampedArray([0, 0, 0, 0]) })),
+  };
+  vi.spyOn(canvas, 'getContext').mockReturnValue(mockCtx as unknown as CanvasRenderingContext2D);
+  return canvas;
+}
 
 describe('SpriteRenderer', () => {
   let renderer: PetRenderer;
 
   beforeEach(() => {
-    const canvas = document.createElement('canvas');
-    renderer = new SpriteRenderer(canvas);
+    renderer = new SpriteRenderer(createMockCanvas());
   });
 
   it('implements PetRenderer interface — all methods exist', () => {

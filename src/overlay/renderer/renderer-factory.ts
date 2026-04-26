@@ -1,5 +1,6 @@
 import type { RendererType, PetRenderer } from './pet-renderer';
 import { SpriteRenderer } from './sprite-renderer';
+import { SpineRenderer } from './spine-renderer';
 
 export class RendererFactory {
   static create(type: RendererType, canvas: HTMLCanvasElement): PetRenderer {
@@ -7,7 +8,7 @@ export class RendererFactory {
       case 'sprite':
         return new SpriteRenderer(canvas);
       case 'spine':
-        throw new Error('SpineRenderer not yet implemented');
+        return new SpineRenderer(canvas);
       case 'live2d':
         throw new Error('Live2DRenderer not yet implemented');
       case 'lottie':

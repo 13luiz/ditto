@@ -95,6 +95,12 @@ pub fn run() {
             commands::get_settings,
             commands::save_settings,
             commands::list_skins,
+            commands::list_skins_catalog,
+            commands::import_skin_zip,
+            commands::import_skin_url,
+            commands::delete_skin,
+            commands::get_active_skin,
+            commands::set_active_skin,
             commands::transition_pet_state
         ])
         .run(tauri::generate_context!())
@@ -228,6 +234,12 @@ mod tests {
             "get_settings",
             "save_settings",
             "list_skins",
+            "list_skins_catalog",
+            "import_skin_zip",
+            "import_skin_url",
+            "delete_skin",
+            "get_active_skin",
+            "set_active_skin",
             "transition_pet_state",
         ] {
             assert!(

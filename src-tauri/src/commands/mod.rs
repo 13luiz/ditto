@@ -299,6 +299,63 @@ pub fn list_skins() -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
+pub fn list_skins_catalog() -> Result<Vec<serde_json::Value>, String> {
+    let catalog = crate::system::skins::list_skins_catalog();
+    Ok(catalog
+        .into_iter()
+        .map(|e| {
+            serde_json::json!({
+                "id": e.id,
+                "name": e.name,
+                "renderer": e.renderer,
+                "source": format!("{:?}", e.source).to_lowercase(),
+                "path": e.path,
+            })
+        })
+        .collect())
+}
+
+#[tauri::command]
+pub fn import_skin_zip(path: String) -> Result<serde_json::Value, String> {
+    let dest = crate::system::skins::skins_dir();
+    let result = crate::system::skins::import_skin_zip(&path, &dest)?;
+    Ok(serde_json::json!({
+        "id": result.id,
+        "path": result.path.to_string_lossy(),
+    }))
+}
+
+#[tauri::command]
+pub fn import_skin_url(url: String) -> Result<serde_json::Value, String> {
+    let dest = crate::system::skins::skins_dir();
+    let result = crate::system::skins::import_skin_url(&url, &dest)?;
+    Ok(serde_json::json!({
+        "id": result.id,
+        "path": result.path.to_string_lossy(),
+    }))
+}
+
+#[tauri::command]
+pub fn delete_skin(skin_id: String) -> Result<(), String> {
+    let user_dir = crate::system::skins::skins_dir();
+    crate::system::skins::delete_skin(&skin_id, &user_dir)
+}
+
+#[tauri::command]
+pub fn get_active_skin(state: tauri::State<'_, AppState>) -> Result<String, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let skin = db.load_setting("active_skin").map_err(|e| e.to_string())?;
+    Ok(skin.unwrap_or_else(|| "default".to_string()))
+}
+
+#[tauri::command]
+pub fn set_active_skin(state: tauri::State<'_, AppState>, skin_id: String) -> Result<(), String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.save_setting("active_skin", &skin_id)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub fn transition_pet_state(
     state: tauri::State<'_, AppState>,
     target: String,

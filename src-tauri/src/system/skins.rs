@@ -163,6 +163,42 @@ pub fn import_skin_zip(zip_path: &str, dest_dir: &std::path::Path) -> Result<Imp
     })
 }
 
+pub fn import_skin_url(url: &str, dest_dir: &std::path::Path) -> Result<ImportResult, String> {
+    let response = reqwest::blocking::get(url).map_err(|e| format!("download failed: {}", e))?;
+    if !response.status().is_success() {
+        return Err(format!(
+            "download failed with status: {}",
+            response.status()
+        ));
+    }
+    let bytes = response
+        .bytes()
+        .map_err(|e| format!("download read failed: {}", e))?;
+    let tmp_path = dest_dir.join("_download.zip");
+    fs::write(&tmp_path, &bytes).map_err(|e| format!("write failed: {}", e))?;
+    let result = import_skin_zip(tmp_path.to_str().unwrap_or(""), dest_dir);
+    let _ = fs::remove_file(&tmp_path);
+    result
+}
+
+pub fn delete_skin(skin_id: &str, user_skins_dir: &std::path::Path) -> Result<(), String> {
+    let skin_dir = user_skins_dir.join(skin_id);
+    if !skin_dir.exists() {
+        return Err(format!("skin '{}' not found", skin_id));
+    }
+    // Check it's not a bundled skin (must be under user data dir)
+    let canonical_user = user_skins_dir
+        .canonicalize()
+        .map_err(|e| format!("cannot resolve user dir: {}", e))?;
+    let canonical_skin = skin_dir
+        .canonicalize()
+        .map_err(|e| format!("cannot resolve skin dir: {}", e))?;
+    if !canonical_skin.starts_with(&canonical_user) {
+        return Err("cannot delete bundled skins".to_string());
+    }
+    fs::remove_dir_all(&skin_dir).map_err(|e| format!("delete failed: {}", e))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -357,5 +393,26 @@ mod tests {
         let result = import_skin_zip(zip_path.to_str().unwrap(), &tmp_dir.path().join("dest"));
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("path traversal"));
+    }
+
+    #[test]
+    fn test_delete_skin_removes_user_skin() {
+        let tmp_dir = tempfile::tempdir().unwrap();
+        let user_dir = tmp_dir.path().join("user-skins");
+        fs::create_dir_all(&user_dir).unwrap();
+
+        create_temp_skin_dir(&user_dir, "my-custom", "sprite");
+        assert!(user_dir.join("my-custom").exists());
+
+        delete_skin("my-custom", &user_dir).unwrap();
+        assert!(!user_dir.join("my-custom").exists());
+    }
+
+    #[test]
+    fn test_delete_skin_rejects_nonexistent() {
+        let tmp_dir = tempfile::tempdir().unwrap();
+        let result = delete_skin("nope", &tmp_dir.path().to_path_buf());
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
     }
 }

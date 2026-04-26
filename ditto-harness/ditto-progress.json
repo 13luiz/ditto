@@ -1,14 +1,34 @@
 {
-  "current_phase": 5,
+  "schema_version": "2.0",
+  "prd_version": "2.0",
+  "current_phase": 6,
   "phase_status": {
     "1": "completed",
     "2": "completed",
     "3": "completed",
     "4": "completed",
-    "5": "completed"
+    "5": "completed",
+    "6": "pending",
+    "7": "pending",
+    "8": "pending",
+    "9": "pending",
+    "10": "pending",
+    "11": "pending"
   },
+  "shipped_versions": [
+    {
+      "version": "0.1.0",
+      "date": "2026-04-26",
+      "phases": [1, 2, 3, 4, 5],
+      "summary": "Original v1.0 PRD complete: skeleton, life, mind, soul, polish. Vue 3 migration. 222 tests passing."
+    }
+  ],
+  "current_phase_target_version": "0.1.5",
+  "current_phase_theme": "Skin Foundation",
   "total_features_completed": 58,
   "total_features_remaining": 0,
-  "last_session_summary": "Phase 5 COMPLETE — evaluator approved (8/10, 9/10, 8/10, 8/10). All 17 features pass. 196 tests pass, clippy clean, fmt clean. Fixed eval issues: clippy cast, fmt, personality loading, feature-list integrity.",
-  "last_commit": "86e51112bf5f66c3a0e4f39d36713c90a493e880"
+  "last_session_summary": "PRD v2.0 published; harness skill rewritten per Anthropic harness-design articles. Phase 6 (Skin Foundation, target v0.1.5) is pending — next /ditto-implement run will enter Branch A (Initializer) and produce the sprint contract + feature list.",
+  "last_commit": null,
+  "session_count": 0,
+  "notes": "Phases 1-5 directories were removed during PRD v2.0 migration. Their record lives in git history (commits up to v0.1.0 release a7736b1) and in CHANGELOG.md."
 }

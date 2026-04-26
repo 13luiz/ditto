@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-04-26
+
+### Added
+
+- **Phase 7 — Interaction Foundation**: InteractionRouter, 7 interaction modes, bond engine, interaction profiles
+- `InteractionRouter` TypeScript class with mode registry, outbound bus, inbound bus, gesture dispatch, and mode lifecycle management
+- `InteractionMode` interface with capabilities reporting, rendering surface, and tier classification
+- `SystemOutput` and `InteractionEvent` discriminated union types for router→mode and mode→router communication
+- `#overlay-dom` div in `index.html` for DOM-overlay interaction modes, separate from Canvas 2D RAF loop
+- `BarkMode` — DOM overlay bark bubbles above pet: typewriter effect, auto-fade (2.5s hold + 0.5s fade), queue cap 3
+- `ThoughtBubbleMode` — Emoji icons for critical care needs (🍖 hunger, 😢 happiness, 💤 energy, 💬 social), red border pulse
+- `SpeechBubbleMode` — Comic-style DOM bubble with streaming text, quick-reply chips, position-flip near screen top
+- `RadialMenuMode` — SVG ring with 4 segments (Feed/Play/Sleep/Chat), hover highlight, care action dispatch, Escape/outside-click dismiss
+- `EmoteWheelMode` — Grid wheel with 4 emotes (Wave/Cheer/Scold/Dance), emote-to-FSM-state mapping, emote-to-bark mapping
+- `TouchZoneMode` — Zone-based touch detection from skin.json rects, 500ms hover highlight, click dispatches touch events
+- `DialogPanelMode` — Integrates Pet Manager /chat route with InteractionRouter gesture dispatch
+- `BondIndicatorMode` — Lv.N + heart progress bar near pet, level-up ceremony overlay (sparkles + BOND UP text)
+- `InteractionProfileManager` — Minimal/Nurture/RPG profile presets with mode enable/disable and gesture mapping
+- `BondEngine` Rust module — 10-level threshold table, daily caps per action type, SQLite persistence
+- `get_bond_state` / `award_bond_points` IPC commands for bond state query and point awarding
+- `bond_level_up` Tauri event emission on level-up
+- Bond-level animation gating in FSM (`resolve_animation_variant`)
+- Bond tier guide in system prompt (formal→casual→warm→trusting→authentic at levels 1-10)
+- Gesture dispatch refactor in `main.ts` — hardcoded dblclick/contextmenu replaced with `router.handleGesture()` with fallback
+- `MUTUALLY_EXCLUSIVE_GROUPS` and `ALWAYS_CONCURRENT` compatibility enforcement
+- 253 Rust tests (13 new bond engine tests), 153 TypeScript tests (113 new interaction mode tests)
+
+### Changed
+
+- `transition_pet_state` IPC now reads actual bond_level from database instead of hardcoding 1
+- `setup-events.ts` accepts optional InteractionRouter to route agent text through `handleOutput()`
+- `care/mod.rs` exports `BondAction` and `BondEngine` without `#[allow(unused_imports)]`
+- 21 IPC commands registered (up from 19)
+
 ## [0.1.1] - 2026-04-26
 
 ### Added
@@ -183,6 +217,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI workflow (Rust checks: fmt, clippy, test)
 - `.gitignore` for `.repos/` and `.claude/`
 
+[0.1.2]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.1.2
 [0.1.1]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.1.1
 [0.1.0]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.1.0
 [0.0.6]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.6

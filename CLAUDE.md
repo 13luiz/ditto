@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ditto is an agent-driven desktop pet built with **Rust + Tauri v2**. An animated creature lives on a transparent overlay window, with behavior governed by an AI agent (rig-core) rather than scripts. Six phases are complete: skeleton rendering, physics/interaction, AI agent/chat/memory, care system/mood, system tray/settings/packaging, and skin foundation (multi-renderer architecture, skin distribution, unified Pet Manager UI).
+Ditto is an agent-driven desktop pet built with **Rust + Tauri v2**. An animated creature lives on a transparent overlay window, with behavior governed by an AI agent (rig-core) rather than scripts. Seven phases are complete: skeleton rendering, physics/interaction, AI agent/chat/memory, care system/mood, system tray/settings/packaging, skin foundation (multi-renderer architecture, skin distribution, unified Pet Manager UI), and interaction foundation (InteractionRouter, 7 interaction modes, bond engine, interaction profiles).
 
 ## Build & Development Commands
 
@@ -56,7 +56,7 @@ Tauri v2 app with Rust backend and web frontend communicating via Tauri IPC comm
 
 - `main.rs` — Entry point, delegates to `ditto_lib::run()`
 - `lib.rs` — Tauri builder with command registration, env loading, and DB initialization
-- `commands/mod.rs` — 19 IPC commands (see below)
+- `commands/mod.rs` — 21 IPC commands (see below)
 - `agent/core.rs` — LLM provider config (OpenAI, Anthropic, Ollama), agent construction, rate limiting, rule-based fallback. 19 tests.
 - `agent/memory.rs` — Short-term (sliding window) and long-term (key-value) memory with DB persistence. 6 tests.
 - `agent/personality.rs` — Personality traits (cheerfulness, curiosity, mischievousness, clinginess) with shift mechanics and persistence. 12 tests.
@@ -67,6 +67,7 @@ Tauri v2 app with Rust backend and web frontend communicating via Tauri IPC comm
 - `behavior/cursor.rs` — Euclidean distance calculation for proximity detection. 7 tests.
 - `behavior/scheduler.rs` — Activity detection, scheduled triggers (morning greeting, break reminder, idle comments). 15 tests.
 - `care/needs.rs` — Pet needs (hunger, happiness, energy, social) with decay rates, mood scoring, care actions. 21 tests.
+- `care/bond.rs` — 10-level bond engine with threshold table, daily caps per action type, SQLite persistence. 13 tests.
 - `db/mod.rs` — SQLite operations for conversations, messages, memory, settings. 10 tests.
 - `db/migrations.rs` — Schema migrations. 2 tests.
 - `system/tray.rs` — System tray icon with show/hide, Pet Manager, quit menu
@@ -76,7 +77,7 @@ Tauri v2 app with Rust backend and web frontend communicating via Tauri IPC comm
 
 The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime dependencies (WebView2) crash the test harness. Tests verify command registration by reading source files as strings.
 
-### IPC Commands (19 total)
+### IPC Commands (21 total)
 
 | Command | Purpose |
 |---------|---------|
@@ -97,13 +98,15 @@ The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime de
 | `import_skin_url` | Download and install skin from URL |
 | `delete_skin` | Remove user-installed skin |
 | `get_active_skin` / `set_active_skin` | Load/save active skin selection |
+| `get_bond_state` | Get current bond level and total points |
+| `award_bond_points` | Award bond points for an action, emit level-up event |
 
 ### Frontend (TypeScript, `src/`)
 
 #### Overlay Window (`src/overlay/`, vanilla TS, entry: `index.html`)
 
-- `main.ts` — Bootstraps SpriteEngine, PetController, ClickThroughHandler, DragHandler
-- `setup-events.ts` — Pet action listener, settings listener, activity tracking, scheduler tick
+- `main.ts` — Bootstraps SpriteEngine, PetController, ClickThroughHandler, DragHandler, InteractionRouter
+- `setup-events.ts` — Pet action listener, settings listener, activity tracking, scheduler tick with InteractionRouter wiring
 - `behavior/pet-controller.ts` — State management, physics, FSM integration via `transitionPetState` IPC, cursor distance tracking
 - `renderer/sprite-engine.ts` — Canvas 2D sprite loader and render loop
 - `renderer/animation.ts` — `AnimationPlayer` with FPS-controlled frame sequencing
@@ -114,6 +117,20 @@ The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime de
 - `renderer/skin-manifest.ts` — `validateSkinManifest()` for required field checks
 - `input/click-through.ts` — Pixel-alpha click-through detection, cursor distance for FSM context
 - `input/drag-handler.ts` — Per-pixel mousedown, mousemove drag, gravity release
+
+#### Interaction System (`src/overlay/interaction/`)
+
+- `interaction-router.ts` — Central dispatch with mode registry, gesture mapping, outbound/inbound buses, compatibility enforcement (MUTUALLY_EXCLUSIVE_GROUPS, ALWAYS_CONCURRENT)
+- `types.ts` — SystemOutput and InteractionEvent discriminated unions, InteractionMode interface, GestureType
+- `profile-manager.ts` — Minimal/Nurture/RPG profile presets with mode enable/disable and gesture mapping
+- `modes/bark-mode.ts` — DOM overlay bark bubbles: typewriter effect, auto-fade, queue cap 3
+- `modes/thought-bubble-mode.ts` — Emoji icons for critical care needs with red border pulse
+- `modes/speech-bubble-mode.ts` — Comic-style DOM bubble with streaming text and quick-reply chips
+- `modes/radial-menu-mode.ts` — SVG ring with 4 segments (Feed/Play/Sleep/Chat), hover highlight
+- `modes/emote-wheel-mode.ts` — Grid wheel with 4 emotes, emote-to-FSM-state mapping
+- `modes/touch-zone-mode.ts` — Zone-based touch detection from skin.json rects
+- `modes/dialog-panel-mode.ts` — Delegates to Pet Manager /chat route
+- `modes/bond-indicator-mode.ts` — Lv.N + heart progress bar, level-up ceremony overlay
 
 #### UI Windows (`src/`, Vue 3, entry: `ui.html`)
 
@@ -161,7 +178,7 @@ The Rust FSM is wired to the frontend via `transition_pet_state` IPC. The fronte
 
 ## Test Suite
 
-233 Rust tests + 40+ TypeScript tests, all must pass:
+253 Rust tests + 153 TypeScript tests, all must pass:
 - 16 config/tray/animation/db tests in `lib.rs`
 - 28 FSM transition tests in `behavior/state_machine.rs`
 - 15 scheduler tests in `behavior/scheduler.rs`
@@ -170,13 +187,15 @@ The Rust FSM is wired to the frontend via `transition_pet_state` IPC. The fronte
 - 19 agent core tests + 18 agent integration/error/tool tests
 - 6 memory + 12 personality + 9 prompt + 12 tools tests
 - 21 care needs tests in `care/needs.rs`
+- 13 bond engine tests in `care/bond.rs`
 - 12 database tests (db/mod.rs + migrations.rs)
 - 11 system tests (screen + skins, including import/export/catalog/deletion)
-- 5 TypeScript test suites (pet-renderer, sprite-renderer, spine-renderer, renderer-factory, skin-manifest)
+- 5 renderer TypeScript test suites (pet-renderer, sprite-renderer, spine-renderer, renderer-factory, skin-manifest)
+- 8 interaction TypeScript test suites (interaction-router, profile-manager, bark-mode, thought-bubble, speech-bubble, radial-menu, emote-wheel, bond-indicator)
 
 ## Implementation Harness
 
-The project uses a long-running TDD harness driven by the `/ditto-implement` Claude Code skill. The harness manages phased implementation (6 phases, 72 features total) with state persisted in `ditto-harness/`.
+The project uses a long-running TDD harness driven by the `/ditto-implement` Claude Code skill. The harness manages phased implementation (7 phases complete) with state persisted in `ditto-harness/`.
 
 **Phases:**
 1. **Skeleton** ✅ — Transparent window, sprite rendering, pet on screen
@@ -185,6 +204,7 @@ The project uses a long-running TDD harness driven by the `/ditto-implement` Cla
 4. **Soul** ✅ — Care system, screen awareness, mood-driven behavior
 5. **Polish** ✅ — System tray, settings, packaging, performance
 6. **Skin Foundation** ✅ — Multi-renderer architecture, skin distribution, unified Pet Manager
+7. **Interaction Foundation** ✅ — InteractionRouter, 7 interaction modes, bond engine, interaction profiles
 
 **Harness invariants:**
 - All tests must pass before starting new work

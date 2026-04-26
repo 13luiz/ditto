@@ -21,11 +21,14 @@ Ditto is an agent-driven desktop pet built with [Rust](https://www.rust-lang.org
 - **Multi-Renderer Architecture** — Pluggable `PetRenderer` interface supporting sprite, spine, and future renderers
 - **Skin System** — Install, manage, and switch pet skins from bundled or user-installed catalogs
 - **Pet Manager** — Unified window with tabbed layout for chat, care, skins, and settings
+- **Interaction Modes** — Bark, ThoughtBubble, SpeechBubble, RadialMenu, EmoteWheel, TouchZone, DialogPanel
+- **Bond Engine** — 10-level bond system with daily caps, SQLite persistence, and level-up ceremonies
+- **Interaction Profiles** — Minimal/Nurture/RPG presets with gesture mapping and mode compatibility
 - **Onboarding Wizard** — First-run setup for pet name and LLM provider
 
 ## Status
 
-Ditto is in **active development**. Six phases are complete — the pet renders on a transparent window, walks autonomously, reacts to your cursor, chats via LLM, has needs and moods, supports multiple renderers via a skin system, and is packaged for distribution. See [CHANGELOG.md](CHANGELOG.md) for details.
+Ditto is in **active development**. Seven phases are complete — the pet renders on a transparent window, walks autonomously, reacts to your cursor, chats via LLM, has needs and moods, supports multiple renderers via a skin system, features 7 interaction modes with a bond engine, and is packaged for distribution. See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ## Tech Stack
 
@@ -53,6 +56,7 @@ ditto/
 ├── src/
 │   ├── overlay/           # Transparent overlay window (vanilla TS)
 │   │   ├── behavior/      # PetController (state, movement)
+│   │   ├── interaction/   # InteractionRouter, modes, profiles, types
 │   │   ├── renderer/      # SpriteEngine, AnimationPlayer, PetRenderer, SpineRenderer
 │   │   ├── input/         # Click-through, drag handler
 │   │   └── windows/       # Pet Manager unified window
@@ -103,6 +107,7 @@ cargo fmt --manifest-path src-tauri/Cargo.toml
 | 4 — Soul | Care system, screen awareness | Done |
 | 5 — Polish | System tray, settings, packaging | Done |
 | 6 — Skin Foundation | Multi-renderer architecture, skin distribution | Done |
+| 7 — Interaction Foundation | InteractionRouter, 7 modes, bond engine, profiles | Done |
 
 ## Implementation Harness
 

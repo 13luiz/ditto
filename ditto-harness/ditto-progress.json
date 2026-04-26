@@ -25,10 +25,10 @@
   ],
   "current_phase_target_version": "0.1.5",
   "current_phase_theme": "Skin Foundation",
-  "total_features_completed": 58,
-  "total_features_remaining": 14,
-  "last_session_summary": "Initialized phase 6 (Skin Foundation). 14 features defined. Sprint contract written.",
-  "last_commit": null,
+  "total_features_completed": 62,
+  "total_features_remaining": 10,
+  "last_session_summary": "Phase 6 session 1: shipped P6-001 (PetRenderer interface), P6-002 (SpriteRenderer), P6-003 (SkinManifest validation), P6-004 (RendererFactory). 4/14 features done. All 222 Rust tests + 30 TS tests pass. Next: P6-005 (rename themes→skins).",
+  "last_commit": "7523d634c6f3cde4ae5ed59bca60c6e2479adec5",
   "session_count": 1,
-  "notes": "Phases 1-5 directories were removed during PRD v2.0 migration. Their record lives in git history (commits up to v0.1.0 release a7736b1) and in CHANGELOG.md."
+  "notes": "Phases 1-5 directories were removed during PRD v2.0 migration. Their record lives in git history (commits up to v0.1.0 release a7736b1) and in CHANGELOG.md. Vitest + jsdom added as test infrastructure for frontend TS tests."
 }

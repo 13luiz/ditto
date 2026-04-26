@@ -10,12 +10,13 @@ const { close } = useWindow()
 const tabs = [
   { path: '/chat', label: 'Chat' },
   { path: '/care', label: 'Care' },
+  { path: '/play', label: 'Play' },
   { path: '/skins', label: 'Skins' },
   { path: '/settings', label: 'Settings' },
 ] as const
 
 const activeTab = computed(() => {
-  const current = tabs.find((t) => route.path === t.path)
+  const current = tabs.find((t) => route.path === t.path || route.path.startsWith(t.path + '/'))
   return current?.path ?? '/chat'
 })
 

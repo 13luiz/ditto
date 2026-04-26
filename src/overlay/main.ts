@@ -7,6 +7,7 @@ import { PetController } from './behavior/pet-controller';
 import { openPetManager } from '../windows/pet-manager';
 import { showOnboardingIfNeeded } from '../windows/onboarding';
 import { setupPetActions, setupSettingsListener, setupActivityTracking, setupScheduler } from './setup-events';
+import { InteractionRouter } from './interaction/interaction-router';
 
 async function main() {
   try {
@@ -26,20 +27,21 @@ async function main() {
     engine.playAnimation(state);
   });
 
-  canvas.addEventListener('dblclick', async () => {
-    try {
-      await openPetManager('/chat');
-    } catch (e) {
-      console.error('[ditto] open_pet_manager error:', e);
+  const router = new InteractionRouter();
+
+  const overlayContainer = document.getElementById('overlay-dom') as HTMLDivElement | null;
+  if (overlayContainer) router.setOverlayContainer(overlayContainer);
+
+  canvas.addEventListener('dblclick', () => {
+    if (!router.handleGesture('double_click')) {
+      openPetManager('/chat').catch((e) => console.error('[ditto] open_pet_manager error:', e));
     }
   });
 
-  canvas.addEventListener('contextmenu', async (e) => {
+  canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    try {
-      await openPetManager('/care');
-    } catch (e) {
-      console.error('[ditto] open_pet_manager error:', e);
+    if (!router.handleGesture('context_menu')) {
+      openPetManager('/care').catch((e) => console.error('[ditto] open_pet_manager error:', e));
     }
   });
 
@@ -60,7 +62,7 @@ async function main() {
   setupPetActions(engine);
   setupSettingsListener();
   setupActivityTracking();
-  setupScheduler();
+  setupScheduler(router);
 }
 
 main().catch(console.error);

@@ -3,6 +3,7 @@ import { listen, emit } from '@tauri-apps/api/event';
 import { SpriteEngine } from './renderer/sprite-engine';
 import { openPetManager } from '../windows/pet-manager';
 import { checkScheduledTriggers, recordUserActivity } from '../ipc/commands';
+import type { InteractionRouter } from './interaction/interaction-router';
 
 export function setupPetActions(engine: SpriteEngine): void {
   listen<{ type: string; x?: number; y?: number; state?: string; emotion?: string }>('pet-action', (event) => {
@@ -42,13 +43,14 @@ const TRIGGER_MESSAGES: Record<string, string> = {
   IdleComment: 'Hey, are you still there?',
 };
 
-export function setupScheduler(): void {
+export function setupScheduler(router?: InteractionRouter): void {
   setInterval(async () => {
     try {
       const triggers = await checkScheduledTriggers();
       for (const t of triggers) {
         const msg = TRIGGER_MESSAGES[t];
         if (msg) {
+          if (router) router.handleOutput({ kind: 'agent_text', text: msg, streaming: false });
           await emit('chat-stream-token', { token: msg });
           await emit('chat-stream-done', { full_response: msg });
         }

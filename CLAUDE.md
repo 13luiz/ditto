@@ -95,18 +95,33 @@ The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime de
 
 ### Frontend (TypeScript, `src/`)
 
+#### Overlay Window (`src/overlay/`, vanilla TS, entry: `index.html`)
+
 - `main.ts` — Bootstraps SpriteEngine, PetController, ClickThroughHandler, DragHandler
+- `setup-events.ts` — Pet action listener, settings listener, activity tracking, scheduler tick
 - `behavior/pet-controller.ts` — State management, physics, FSM integration via `transitionPetState` IPC, cursor distance tracking
 - `renderer/sprite-engine.ts` — Canvas 2D sprite loader and render loop
 - `renderer/animation.ts` — `AnimationPlayer` with FPS-controlled frame sequencing
 - `input/click-through.ts` — Pixel-alpha click-through detection, cursor distance for FSM context
 - `input/drag-handler.ts` — Per-pixel mousedown, mousemove drag, gravity release
+
+#### UI Windows (`src/`, Vue 3, entry: `ui.html`)
+
+- `main.ts` — Vue app bootstrap
+- `composables/useChat.ts` — Chat with streaming token display
+- `composables/useCare.ts` — Care panel with need bars, mood display, action buttons
+- `composables/useTauriEvents.ts` — Tauri event listener composable
+- `windows/chat-bubble.ts` — Chat window management
+- `windows/care-panel.ts` — Care panel window
+- `windows/settings.ts` — Settings window (LLM config, pet name, auto-launch)
+- `windows/onboarding.ts` — First-run setup wizard
+- `sound.ts` — Procedural Web Audio API synthesis for pet sounds
+
+#### Shared
+
 - `ipc/commands.ts` — Tauri IPC command wrappers
-- `ui/chat-bubble.ts` — Chat window with streaming token display
-- `ui/care-panel.ts` — Care panel with need bars, mood display, action buttons
-- `ui/settings.ts` — Settings window (LLM config, pet name, auto-launch)
-- `ui/onboarding.ts` — First-run setup wizard
-- `ui/sound.ts` — Procedural Web Audio API synthesis for pet sounds
+- `types/pet-state.ts` — PetState type (16 states)
+- `types/care.ts` — CareState, CareNeeds, CareAction types
 
 ### Frontend-Backend State Management
 
@@ -114,12 +129,12 @@ The Rust FSM is wired to the frontend via `transition_pet_state` IPC. The fronte
 
 ### Sound System
 
-- Sound effects use procedural Web Audio API synthesis (`src/ui/sound.ts`) — no audio files needed
+- Sound effects use procedural Web Audio API synthesis (`src/sound.ts`) — no audio files needed
 - For future sampled audio (voice lines, richer effects), switch to `rodio` crate in the Rust backend
 
 ### Asset Pipeline
 
-- `assets/` is Vite's `publicDir` — files are served at root (e.g., `/pets/default/spritesheet.png` not `/assets/...`)
+- `public/` is Vite's `publicDir` — files are served at root (e.g., `/pets/default/spritesheet.png`)
 - Sprite format: PNG atlas + `animations.json` defining frame sequences, FPS, and transitions
 - Current spritesheet: 512x64px, 8 columns, 64x64 frames
 - All 16 PetState animations defined: idle, walk_left, walk_right, run_left, run_right, climb, fall, drag, sleep, eat, play, talk, happy, sad, curious, sit

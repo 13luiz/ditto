@@ -9,7 +9,7 @@ export async function showOnboardingIfNeeded(): Promise<void> {
   if (existing) return;
 
   new WebviewWindow('onboarding', {
-    url: '/onboarding.html',
+    url: '/ui.html#/onboarding',
     width: 420,
     height: 400,
     decorations: false,

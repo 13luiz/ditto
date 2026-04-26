@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2026-04-26
+
+### Changed
+
+- Renamed `src/pet/` to `src/overlay/` — clearer name for the transparent overlay window app
+- Renamed `assets/` to `public/` — follows Vite's default `publicDir` convention
+- Consolidated `PetState` type to single definition in `src/types/pet-state.ts` (was duplicated in pet-controller.ts and PetRenderer.ts)
+- Extracted event setup from `overlay/main.ts` into `overlay/setup-events.ts` (setupPetActions, setupSettingsListener, setupActivityTracking, setupScheduler)
+- Replaced 9 empty `catch {}` blocks with dev-mode logging via `import.meta.env.DEV`
+- Deleted unused `src/pet/renderers/` directory (7 files: PetRenderer interface, RendererFactory, SpriteRenderer, SpineRenderer, Live2DRenderer, LottieRenderer, VRMRenderer — none were imported)
+- Deleted dead `src/types/renderer.ts` barrel file (nothing imported from it)
+
 ## [0.0.6] - 2026-04-25
 
 ### Added
@@ -140,6 +152,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI workflow (Rust checks: fmt, clippy, test)
 - `.gitignore` for `.repos/` and `.claude/`
 
+[0.1.0]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.1.0
 [0.0.6]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.6
 [0.0.5]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.5
 [0.0.4]: https://github.com/luiz-tb16p/ditto/releases/tag/v0.0.4

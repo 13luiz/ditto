@@ -49,12 +49,17 @@ ditto/
 │   │   └── commands/      # Tauri IPC 命令
 │   └── capabilities/      # Tauri v2 权限配置
 ├── src/
-│   ├── behavior/          # PetController（状态、运动）
-│   ├── renderer/          # SpriteEngine、AnimationPlayer
-│   ├── input/             # 点击穿透、拖拽处理
+│   ├── overlay/           # 透明覆盖窗口（原生 TypeScript）
+│   │   ├── behavior/      # PetController（状态、运动）
+│   │   ├── renderer/      # SpriteEngine、AnimationPlayer
+│   │   ├── input/         # 点击穿透、拖拽处理
+│   │   └── windows/       # 对话、照料、设置、引导向导窗口
+│   ├── composables/       # Vue 组合式函数（UI 窗口）
+│   ├── views/             # Vue 页面组件
+│   ├── stores/            # Pinia 状态管理
 │   ├── ipc/               # Tauri 命令封装
-│   └── ui/                # 对话、照料、设置、引导向导窗口
-├── assets/pets/default/   # 精灵图 + 动画定义
+│   └── types/             # 共享类型定义
+├── public/pets/default/   # 精灵图 + 动画定义
 ├── docs/                  # PRD、规格文档
 └── ditto-harness/         # TDD 实现脚手架状态
 ```

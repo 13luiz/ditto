@@ -9,7 +9,7 @@ export async function openSettingsWindow(): Promise<void> {
   }
 
   new WebviewWindow('settings', {
-    url: '/settings.html',
+    url: '/ui.html#/settings',
     width: 420,
     height: 500,
     decorations: false,

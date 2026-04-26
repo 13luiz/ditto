@@ -1,11 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { currentMonitor, availableMonitors, getCurrentWindow } from '@tauri-apps/api/window';
-import { transitionPetState } from '../ipc/commands';
-
-export type PetState =
-  | 'idle' | 'walk_left' | 'walk_right' | 'run_left' | 'run_right'
-  | 'climb' | 'fall' | 'drag' | 'curious' | 'sit' | 'sleep'
-  | 'talk' | 'happy' | 'sad' | 'eat' | 'play';
+import { transitionPetState } from '../../ipc/commands';
+import type { PetState } from '../../types/pet-state';
 
 const WALK_SPEED = 100;
 const RUN_SPEED = 200;
@@ -20,18 +16,18 @@ export class PetController {
   private windowY = 0;
   private velocityX = 0;
   private velocityY = 0;
-  private groundY = 0;       // physical, from currentMonitor
+  private groundY = 0;
   private monitorRanges: MonitorXRange[] = [];
   private petWidth = 64;
   private petHeight = 64;
-  private scaleFactor = 1;   // current monitor's DPI scale
+  private scaleFactor = 1;
   private wanderTimer: number | null = null;
   private onStateChange: ((s: PetState) => void) | null = null;
   private lastTimestamp = 0;
   private facingRight = true;
   private monitorFrameCounter = 0;
-  private userPlaced = false;  // true when user dragged to non-ground position
-  private idleStartTime = 0;   // timestamp when pet last entered idle
+  private userPlaced = false;
+  private idleStartTime = 0;
   private lastCursorDistance = Infinity;
 
   constructor(onStateChange: (s: PetState) => void) {
@@ -44,9 +40,7 @@ export class PetController {
     this.init();
   }
 
-  /** Physical window height in screen pixels */
   private physH(): number { return Math.round(this.petHeight * this.scaleFactor); }
-  /** Physical window width in screen pixels */
   private physW(): number { return Math.round(this.petWidth * this.scaleFactor); }
 
   private async init() {
@@ -64,7 +58,9 @@ export class PetController {
         this.groundY = mon.workArea.position.y + mon.workArea.size.height;
       }
       this.scaleFactor = await getCurrentWindow().scaleFactor();
-    } catch { /* */ }
+    } catch (e) {
+      if (import.meta.env.DEV) console.warn('[ditto] refreshGround failed:', e);
+    }
   }
 
   private async loadRanges() {
@@ -76,7 +72,9 @@ export class PetController {
           xEnd: m.position.x + m.size.width,
         }));
       }
-    } catch { /* */ }
+    } catch (e) {
+      if (import.meta.env.DEV) console.warn('[ditto] loadRanges failed:', e);
+    }
   }
 
   private currentRange(): MonitorXRange {
@@ -90,7 +88,6 @@ export class PetController {
   getState() { return this.state; }
   getFacingRight() { return this.facingRight; }
 
-  /** Physical states that bypass FSM validation for zero-latency response */
   private static readonly PHYSICAL_STATES: ReadonlySet<PetState> = new Set([
     'drag', 'fall', 'idle',
   ]);
@@ -131,7 +128,6 @@ export class PetController {
     }
   }
 
-  /** Update cursor distance for FSM context (called from click-through handler) */
   updateCursorDistance(distance: number) {
     this.lastCursorDistance = distance;
   }
@@ -142,7 +138,6 @@ export class PetController {
     this.lastTimestamp = ts;
     if (dt <= 0 || dt > 0.1) return;
 
-    // Refresh ground from currentMonitor every ~1s
     this.monitorFrameCounter++;
     if (this.monitorFrameCounter >= 60) {
       this.monitorFrameCounter = 0;
@@ -163,12 +158,10 @@ export class PetController {
     } else if (this.state === 'walk_left' || this.state === 'walk_right' ||
                this.state === 'run_left' || this.state === 'run_right') {
       if (this.userPlaced) {
-        // Don't move when user has placed the pet at a custom position
         this.setState('idle');
       } else {
         this.windowX += this.velocityX * dt;
         this.windowY = ground;
-        // Clamp to current monitor's edges
         if (this.windowX < range.xStart) {
           this.windowX = range.xStart;
           this.setState('idle');
@@ -225,6 +218,8 @@ export class PetController {
   private async updateWindowPosition() {
     try {
       await invoke('set_window_position', { x: Math.round(this.windowX), y: Math.round(this.windowY) });
-    } catch { /* */ }
+    } catch (e) {
+      if (import.meta.env.DEV) console.warn('[ditto] updateWindowPosition failed:', e);
+    }
   }
 }

@@ -71,6 +71,12 @@ pub fn run() {
     };
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            use tauri::Manager;
+            let _ = app
+                .get_webview_window("main")
+                .and_then(|w| w.set_focus().ok());
+        }))
         .manage(state)
         .setup(|app| {
             system::tray::setup_tray(app);
@@ -235,7 +241,7 @@ mod tests {
     fn load_animations_config() -> Value {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("..")
-            .join("assets")
+            .join("public")
             .join("pets")
             .join("default")
             .join("animations.json");

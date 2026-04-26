@@ -22,7 +22,7 @@ export async function openCarePanel(): Promise<void> {
   const careY = petLogY - careH / 2;
 
   new WebviewWindow('care', {
-    url: '/care.html',
+    url: '/ui.html#/care',
     width: careW,
     height: careH,
     x: careX,

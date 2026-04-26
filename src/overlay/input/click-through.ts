@@ -25,7 +25,6 @@ export class ClickThroughHandler {
     });
   }
 
-  /** Call when drag/click starts — pauses click-through polling */
   setInteracting(active: boolean) {
     this.interactionActive = active;
     if (active) {
@@ -33,7 +32,6 @@ export class ClickThroughHandler {
     }
   }
 
-  /** Set callback to receive cursor distance from pet center */
   setCursorDistanceCallback(cb: (distance: number) => void) {
     this.onCursorDistance = cb;
   }
@@ -55,7 +53,6 @@ export class ClickThroughHandler {
       const alpha = this.getPixelAlpha(Math.floor(canvasX), Math.floor(canvasY));
       await this.setCursorIgnore(alpha < ALPHA_THRESHOLD);
 
-      // Report cursor distance from pet center for FSM context
       if (this.onCursorDistance) {
         const centerX = this.canvas.width / 2;
         const centerY = this.canvas.height / 2;
@@ -64,7 +61,9 @@ export class ClickThroughHandler {
         const dist = Math.sqrt(dx * dx + dy * dy) * this.cachedScale;
         this.onCursorDistance(dist);
       }
-    } catch { /* */ }
+    } catch (e) {
+      if (import.meta.env.DEV) console.warn('[ditto] checkAndToggle failed:', e);
+    }
   }
 
   getPixelAlpha(x: number, y: number): number {
@@ -77,7 +76,9 @@ export class ClickThroughHandler {
     this.lastIgnoreState = ignore;
     try {
       await invoke('set_ignore_cursor_events', { ignore });
-    } catch { /* */ }
+    } catch (e) {
+      if (import.meta.env.DEV) console.warn('[ditto] setCursorIgnore failed:', e);
+    }
   }
 
   attach(): void {

@@ -10,7 +10,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "lib": ["ES2021", "DOM", "DOM.Iterable"]
   },
-  "include": ["src"]
+  "include": ["src", "src/env.d.ts"]
 }

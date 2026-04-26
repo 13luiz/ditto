@@ -29,7 +29,7 @@ export async function toggleChatWindow(): Promise<void> {
   console.log(`[ditto] creating chat JS window at (${chatX}, ${chatY})`);
 
   chatWindow = new WebviewWindow('chat', {
-    url: '/chat.html',
+    url: '/ui.html#/chat',
     width: chatW,
     height: chatH,
     x: chatX,

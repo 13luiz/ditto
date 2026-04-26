@@ -49,12 +49,17 @@ ditto/
 │   │   └── commands/      # Tauri IPC commands
 │   └── capabilities/      # Tauri v2 permissions
 ├── src/
-│   ├── behavior/          # PetController (state, movement)
-│   ├── renderer/          # SpriteEngine, AnimationPlayer
-│   ├── input/             # Click-through, drag handler
+│   ├── overlay/           # Transparent overlay window (vanilla TS)
+│   │   ├── behavior/      # PetController (state, movement)
+│   │   ├── renderer/      # SpriteEngine, AnimationPlayer
+│   │   ├── input/         # Click-through, drag handler
+│   │   └── windows/       # Chat, care, settings, onboarding windows
+│   ├── composables/       # Vue composables (UI windows)
+│   ├── views/             # Vue page components
+│   ├── stores/            # Pinia stores
 │   ├── ipc/               # Tauri command wrappers
-│   └── ui/                # Chat, care, settings, onboarding windows
-├── assets/pets/default/   # Spritesheet + animation definitions
+│   └── types/             # Shared type definitions
+├── public/pets/default/   # Spritesheet + animation definitions
 ├── docs/                  # PRD, specs
 └── ditto-harness/         # TDD implementation harness state
 ```

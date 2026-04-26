@@ -20,8 +20,8 @@
       "test_target": "src/overlay/interaction/__tests__/overlay-mount.test.ts",
       "sprint_criterion": 2,
       "depends_on": ["P7-001"],
-      "passes": false,
-      "commit": null,
+      "passes": true,
+      "commit": "9f5304f",
       "notes": null
     },
     {

@@ -31,10 +31,10 @@
   ],
   "current_phase_target_version": "0.2.0",
   "current_phase_theme": "Interaction Foundation",
-  "total_features_completed": 89,
-  "total_features_remaining": 11,
-  "last_session_summary": "Session 4: P7-001 (InteractionRouter core), P7-011 (BondLevel engine), P7-013 (bond FSM gating + prompt tier). 3/14 features done. 253 Rust + 16 TS tests passing.",
-  "last_commit": "3c2d4b0",
-  "session_count": 4,
-  "notes": "Next: P7-002 (Vue overlay micro-app), then P7-003 (gesture dispatch refactor), then frontend modes P7-004 through P7-010."
+  "total_features_completed": 90,
+  "total_features_remaining": 10,
+  "last_session_summary": "Session 5: P7-002 (Vue overlay micro-app). 4/14 features done. #overlay-dom container wired to InteractionRouter.",
+  "last_commit": "9f5304f",
+  "session_count": 5,
+  "notes": "Next: P7-003 (gesture dispatch refactor), then frontend modes P7-004 through P7-010."
 }

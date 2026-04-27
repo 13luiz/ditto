@@ -4,8 +4,15 @@ import type {
   SystemOutput,
   ModeCapabilities,
 } from '../types';
+import { invoke } from '@tauri-apps/api/core';
 
 const BOND_GATE_LEVEL = 6;
+
+interface PendingLetter {
+  id: number;
+  direction: string;
+  content: string;
+}
 
 export class LetterMode implements InteractionMode {
   readonly type = 'letter' as const;
@@ -15,10 +22,25 @@ export class LetterMode implements InteractionMode {
 
   private ctx: ModeContext | null = null;
   private envelopeEl: HTMLDivElement | null = null;
-  private pendingLetters: Set<string> = new Set();
+  private pendingLetters: Map<string, string> = new Map();
 
   mount(context: ModeContext): void {
     this.ctx = context;
+    this.fetchPendingLetters();
+  }
+
+  private async fetchPendingLetters(): Promise<void> {
+    try {
+      const res = await invoke<{ letters: PendingLetter[] }>('get_pending_letters');
+      for (const letter of res.letters) {
+        this.pendingLetters.set(String(letter.id), letter.content);
+      }
+      if (this.pendingLetters.size > 0) {
+        this.showEnvelope();
+      }
+    } catch {
+      // IPC not available (e.g., browser context during testing)
+    }
   }
 
   unmount(): void {
@@ -39,7 +61,7 @@ export class LetterMode implements InteractionMode {
       return;
     }
 
-    this.pendingLetters.add(output.letterId);
+    this.pendingLetters.set(output.letterId, '');
     this.showEnvelope();
   }
 
@@ -59,8 +81,17 @@ export class LetterMode implements InteractionMode {
     return this.pendingLetters.size;
   }
 
-  sendReply(letterId: string, content: string): void {
+  async sendReply(letterId: string, content: string): Promise<void> {
     if (!this.ctx) return;
+    try {
+      await invoke('send_letter_reply', {
+        letterId: Number(letterId),
+        content,
+      });
+      this.markRead(letterId);
+    } catch {
+      // Fallback: dispatch event only
+    }
     this.ctx.dispatch({
       kind: 'letter_send',
       content,

@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { LetterMode } from '../letter-mode';
-import type { ModeContext, InteractionEvent } from '../../types';
+import type { ModeContext } from '../../types';
+
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: vi.fn(),
+}));
+
+import { invoke } from '@tauri-apps/api/core';
+const mockedInvoke = invoke as ReturnType<typeof vi.fn>;
 
 function createMockContext(config?: Record<string, unknown>): ModeContext {
   return {
@@ -18,8 +25,10 @@ describe('LetterMode', () => {
   let ctx: ModeContext;
 
   beforeEach(() => {
+    vi.clearAllMocks();
     mode = new LetterMode();
     ctx = createMockContext({ bondLevel: 7 });
+    mockedInvoke.mockResolvedValue({ letters: [] });
   });
 
   afterEach(() => {
@@ -40,6 +49,26 @@ describe('LetterMode', () => {
     expect(caps.allowsConcurrent).toBe(false);
   });
 
+  it('fetches pending letters on mount via IPC', async () => {
+    mockedInvoke.mockResolvedValue({
+      letters: [
+        { id: 1, direction: 'to_user', content: 'I missed you!' },
+        { id: 2, direction: 'to_user', content: 'Hello!' },
+      ],
+    });
+
+    mode.mount(ctx);
+    // Wait for async fetchPendingLetters
+    await vi.waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith('get_pending_letters');
+    });
+
+    expect(mode.getPendingCount()).toBe(2);
+    const envelope = ctx.overlayContainer!.querySelector('.letter-envelope');
+    expect(envelope).toBeTruthy();
+    expect(envelope!.textContent).toContain('2 letters');
+  });
+
   it('creates envelope notification on letter_received output', () => {
     mode.mount(ctx);
     mode.handleOutput({ kind: 'letter_received', letterId: 'letter-1' });
@@ -48,16 +77,20 @@ describe('LetterMode', () => {
     expect(envelope).toBeTruthy();
   });
 
-  it('dispatches letter_send event on reply', () => {
+  it('calls send_letter_reply IPC on sendReply', async () => {
+    mockedInvoke.mockResolvedValue(undefined);
     mode.mount(ctx);
-    mode.handleOutput({ kind: 'letter_received', letterId: 'letter-1' });
+    mode.handleOutput({ kind: 'letter_received', letterId: '42' });
 
-    mode.sendReply('letter-1', 'I miss you too!');
+    await mode.sendReply('42', 'I miss you too!');
 
+    expect(mockedInvoke).toHaveBeenCalledWith('send_letter_reply', {
+      letterId: 42,
+      content: 'I miss you too!',
+    });
     expect(ctx.dispatch).toHaveBeenCalledWith({
       kind: 'letter_send',
       content: 'I miss you too!',
-      attachment: undefined,
     });
   });
 
@@ -67,7 +100,6 @@ describe('LetterMode', () => {
     mode.handleOutput({ kind: 'letter_received', letterId: 'letter-2' });
 
     const envelope = lowBondCtx.overlayContainer!.querySelector('.letter-envelope');
-    // Should show locked message, not actual letter
     expect(envelope).toBeTruthy();
     expect(envelope!.textContent).toContain('Bond Lv.6');
   });

@@ -37,10 +37,10 @@
   ],
   "current_phase_target_version": "0.3.0",
   "current_phase_theme": "Depth & Cozy Loop",
-  "total_features_completed": 131,
-  "total_features_remaining": 8,
-  "last_session_summary": "Session 10: 7 Phase 8 features completed (P8-011, P8-013, P8-014, P8-016, P8-018, P8-019, P8-020). MiniGame backend (RPS + CatchTheFood), 5 new interaction modes (DreamNail, Letter, Journal, CommandInput, ChatLog), bond-level gating in InteractionRouter, profile manager updates. 315 Rust + ~200 TS tests passing.",
-  "last_commit": "19d1862",
-  "session_count": 10,
-  "notes": "Phase 8 backend + interaction modes done. Remaining: P8-001 Live2D PoC (critical gate for P8-002 through P8-005), P8-012/P8-015/P8-017 visual frontend tests. Next session: P8-001 requires PixiJS v6 + live app."
+  "total_features_completed": 139,
+  "total_features_remaining": 0,
+  "last_session_summary": "Session 11: ALL 20/20 Phase 8 features complete. P8-001 Live2D PoC validated (PixiJS v6 + Haru model on transparent WebGL). Live2DRenderer with LipSyncable+Expressible. Mini-game frontend (RPS + Catch views, Play tab). Letter frontend (archive, reading view, reply form). Journal frontend (calendar grid, month nav, mood emoji, milestones). 315 Rust + ~200 TS tests passing. Phase 8 ready for evaluator.",
+  "last_commit": "852d868",
+  "session_count": 11,
+  "notes": "Phase 8 complete. All 20 features pass. Ready for evaluator subagent (Branch C). Then Phase 9: Pluggable Agent + Linux."
 }

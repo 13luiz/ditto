@@ -32,13 +32,19 @@ export function useJournal() {
     }
   }
 
-  async function generateEntry() {
+  async function generateEntry(entryDate?: string) {
     loading.value = true
     error.value = null
     try {
-      await invoke('generate_journal_entry')
+      const date = entryDate ?? new Date().toISOString().slice(0, 10)
+      const res = await invoke<{ id: number; content: string }>('generate_journal_entry', {
+        entryDate: date,
+        content: '',
+      })
+      return res
     } catch (e) {
       error.value = String(e)
+      return null
     } finally {
       loading.value = false
     }

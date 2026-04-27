@@ -74,9 +74,37 @@ describe('JournalMode', () => {
     mode.handleOutput({ kind: 'agent_text', text: 'Hello!', streaming: false });
     mode.handleOutput({ kind: 'agent_emotion', emotion: 'happy' });
 
-    // No special behavior for these outputs
-    const indicator = ctx.overlayContainer!.querySelector('.journal-indicator');
-    expect(indicator).toBeTruthy();
+    expect(mode.getEntryCount()).toBe(0);
+  });
+
+  it('handles journal_entry_generated output', () => {
+    mode.mount(ctx);
+    mode.handleOutput({
+      kind: 'journal_entry_generated',
+      date: '2026-04-26',
+      content: 'Had 3 conversations today. Feeling good.',
+    });
+
+    expect(mode.getEntryCount()).toBe(1);
+    expect(mode.getEntries()[0].date).toBe('2026-04-26');
+    expect(mode.getEntries()[0].content).toContain('conversations');
+  });
+
+  it('shows notification overlay on journal_entry_generated', () => {
+    vi.useFakeTimers();
+    mode.mount(ctx);
+    mode.handleOutput({
+      kind: 'journal_entry_generated',
+      date: '2026-04-26',
+      content: 'Today was peaceful.',
+    });
+
+    const notification = ctx.overlayContainer!.querySelector('.journal-notification');
+    expect(notification).toBeTruthy();
+    expect(notification!.textContent).toContain('peaceful');
+
+    vi.advanceTimersByTime(4500);
+    vi.useRealTimers();
   });
 
   it('tracks journal entry count', () => {

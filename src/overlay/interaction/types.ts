@@ -47,6 +47,7 @@ export type SystemOutput =
   | { kind: 'bond_level_up'; oldLevel: number; newLevel: number }
   | { kind: 'letter_received'; letterId: string }
   | { kind: 'care_action_play' }
+  | { kind: 'journal_entry_generated'; date: string; content: string }
   | { kind: 'skit_start'; participants: string[]; dialogue: SkitLine[] }
   | { kind: 'gesture'; type: GestureType };
 

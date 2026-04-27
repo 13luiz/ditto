@@ -101,6 +101,15 @@ impl Database {
             })
     }
 
+    pub fn count_messages_by_date(&self, date: &str) -> Result<usize> {
+        let count: i64 = self.conn.query_row(
+            "SELECT COUNT(*) FROM messages WHERE DATE(created_at) = ?1",
+            rusqlite::params![date],
+            |row| row.get(0),
+        )?;
+        Ok(count as usize)
+    }
+
     pub fn save_memory(&self, key: &str, value: &str, category: &str) -> Result<()> {
         self.conn.execute(
             "INSERT INTO memory (key, value, category) VALUES (?1, ?2, ?3) ON CONFLICT(key) DO UPDATE SET value = ?2, category = ?3, updated_at = datetime('now')",

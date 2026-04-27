@@ -525,12 +525,33 @@ pub fn get_journal_entries(
 pub fn generate_journal_entry(
     state: tauri::State<'_, AppState>,
     entry_date: String,
-    content: String,
+    _content: String,
     mood_summary: Option<String>,
     stats_json: Option<String>,
     milestone: Option<String>,
 ) -> Result<serde_json::Value, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
+    let pet_name = db
+        .load_setting("pet_name")
+        .map_err(|e| e.to_string())?
+        .unwrap_or_else(|| "Ditto".to_string());
+
+    // Count today's messages
+    let conv_count: usize = db
+        .count_messages_by_date(&entry_date)
+        .unwrap_or(0);
+
+    let ctx = crate::agent::generation::JournalContext {
+        entry_date: entry_date.clone(),
+        conversation_count: conv_count,
+        care_actions_count: 0,
+        mood_summary: mood_summary.clone().unwrap_or_else(|| "neutral".to_string()),
+        notable_events: vec![],
+    };
+
+    let content =
+        crate::agent::generation::rule_based_journal_entry(&pet_name, &ctx);
+
     let id = db
         .insert_journal_entry(
             &entry_date,
@@ -540,7 +561,15 @@ pub fn generate_journal_entry(
             milestone.as_deref(),
         )
         .map_err(|e| e.to_string())?;
-    Ok(serde_json::json!({ "id": id }))
+
+    // Feed to long-term memory
+    let _ = db.save_memory(
+        &format!("journal:{}", entry_date),
+        &content,
+        "journal",
+    );
+
+    Ok(serde_json::json!({ "id": id, "content": content }))
 }
 
 #[tauri::command]

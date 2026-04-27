@@ -40,6 +40,20 @@ const routes: RouteRecordRaw[] = [
       { path: 'catch', component: () => import('../views/MiniGameCatchView.vue') },
     ],
   },
+  {
+    path: '/letters',
+    component: () => import('../views/PetManagerView.vue'),
+    children: [
+      { path: '', component: () => import('../views/LettersView.vue') },
+    ],
+  },
+  {
+    path: '/journal',
+    component: () => import('../views/PetManagerView.vue'),
+    children: [
+      { path: '', component: () => import('../views/JournalView.vue') },
+    ],
+  },
   { path: '/rooms', component: () => import('../views/RoomListView.vue') },
   { path: '/room/:id', component: () => import('../views/RoomView.vue') },
   { path: '/agents', component: () => import('../views/AgentListView.vue') },

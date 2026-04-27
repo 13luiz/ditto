@@ -11,6 +11,8 @@ const tabs = [
   { path: '/chat', label: 'Chat' },
   { path: '/care', label: 'Care' },
   { path: '/play', label: 'Play' },
+  { path: '/letters', label: 'Letters' },
+  { path: '/journal', label: 'Journal' },
   { path: '/skins', label: 'Skins' },
   { path: '/settings', label: 'Settings' },
 ] as const

@@ -112,6 +112,7 @@ pub fn run() {
             commands::generate_journal_entry,
             commands::start_mini_game,
             commands::submit_mini_game_result,
+            commands::get_game_history,
             commands::generate_inner_thought
         ])
         .run(tauri::generate_context!())
@@ -262,6 +263,7 @@ mod tests {
             "generate_journal_entry",
             "start_mini_game",
             "submit_mini_game_result",
+            "get_game_history",
             "generate_inner_thought",
         ] {
             assert!(

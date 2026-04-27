@@ -620,6 +620,19 @@ pub fn submit_mini_game_result(
 }
 
 #[tauri::command]
+pub fn get_game_history(
+    state: tauri::State<'_, AppState>,
+    game_type: Option<String>,
+    limit: u32,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let results = db
+        .get_game_history(game_type.as_deref(), limit as i64)
+        .map_err(|e| e.to_string())?;
+    Ok(serde_json::json!({ "games": results }))
+}
+
+#[tauri::command]
 pub fn generate_inner_thought(
     state: tauri::State<'_, AppState>,
     mood: String,

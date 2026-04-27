@@ -52,6 +52,13 @@ const routes: RouteRecordRaw[] = [
       { path: '', component: () => import('../views/JournalView.vue') },
     ],
   },
+  {
+    path: '/chat-log',
+    component: () => import('../views/PetManagerView.vue'),
+    children: [
+      { path: '', component: () => import('../views/ChatLogView.vue') },
+    ],
+  },
   { path: '/rooms', component: () => import('../views/RoomListView.vue') },
   { path: '/room/:id', component: () => import('../views/RoomView.vue') },
   { path: '/agents', component: () => import('../views/AgentListView.vue') },

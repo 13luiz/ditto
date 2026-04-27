@@ -13,6 +13,7 @@ const tabs = [
   { path: '/play', label: 'History' },
   { path: '/letters', label: 'Letters' },
   { path: '/journal', label: 'Journal' },
+  { path: '/chat-log', label: 'Log' },
   { path: '/skins', label: 'Skins' },
   { path: '/settings', label: 'Settings' },
 ] as const

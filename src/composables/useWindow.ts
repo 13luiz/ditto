@@ -1,10 +1,12 @@
 import { getCurrentWindow } from '@tauri-apps/api/window'
 
-export function useWindow() {
-  const appWindow = getCurrentWindow()
+const isTauri = '__TAURI_INTERNALS__' in globalThis
 
+export function useWindow() {
   async function close() {
-    await appWindow.destroy()
+    if (isTauri) {
+      await getCurrentWindow().destroy()
+    }
   }
 
   return { close }

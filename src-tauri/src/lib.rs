@@ -113,7 +113,9 @@ pub fn run() {
             commands::start_mini_game,
             commands::submit_mini_game_result,
             commands::get_game_history,
-            commands::generate_inner_thought
+            commands::generate_inner_thought,
+            commands::list_memories,
+            commands::get_personality
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -265,6 +267,8 @@ mod tests {
             "submit_mini_game_result",
             "get_game_history",
             "generate_inner_thought",
+            "list_memories",
+            "get_personality",
         ] {
             assert!(
                 content.contains(cmd),

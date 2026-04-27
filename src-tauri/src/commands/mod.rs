@@ -661,3 +661,30 @@ pub fn generate_inner_thought(
         "pet_name": pet_name,
     }))
 }
+
+#[tauri::command]
+pub fn list_memories(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let entries = db
+        .load_memories_by_category("long_term")
+        .map_err(|e| e.to_string())?;
+    let items: Vec<serde_json::Value> = entries
+        .into_iter()
+        .map(|(k, v)| serde_json::json!({ "key": k, "value": v }))
+        .collect();
+    Ok(serde_json::json!({ "memories": items }))
+}
+
+#[tauri::command]
+pub fn get_personality(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let traits = PersonalityTraits::load(&db).map_err(|e| e.to_string())?;
+    let pet_name = db
+        .load_setting("pet_name")
+        .map_err(|e| e.to_string())?
+        .unwrap_or_else(|| "Ditto".to_string());
+    Ok(serde_json::json!({
+        "traits": traits,
+        "pet_name": pet_name,
+    }))
+}

@@ -12,6 +12,7 @@ import { LetterMode } from './modes/letter-mode';
 import { JournalMode } from './modes/journal-mode';
 import { CommandInputMode } from './modes/command-input-mode';
 import { ChatLogMode } from './modes/chat-log-mode';
+import { MiniGameMode } from './modes/mini-game-mode';
 
 export type InteractionProfile = 'minimal' | 'nurture' | 'rpg';
 
@@ -73,6 +74,7 @@ const MODE_FACTORIES: Record<string, () => InteractionMode> = {
   journal: () => new JournalMode(),
   command_input: () => new CommandInputMode(),
   chat_log: () => new ChatLogMode(),
+  mini_game: () => new MiniGameMode(),
 };
 
 export class InteractionProfileManager {
@@ -93,12 +95,16 @@ export class InteractionProfileManager {
     const config = PROFILES[profile];
     const resolvedModes = resolveModes(config.modes);
 
-    // Enable modes for new profile
+    // Enable modes for new profile (skip bond-gated modes if level too low)
     for (const modeType of resolvedModes) {
       const factory = MODE_FACTORIES[modeType];
       if (factory) {
-        const mode = factory();
-        this.router.enableMode(mode);
+        try {
+          const mode = factory();
+          this.router.enableMode(mode);
+        } catch {
+          // Bond gate not met — skip this mode
+        }
       }
     }
 

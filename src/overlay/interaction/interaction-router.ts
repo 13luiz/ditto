@@ -95,6 +95,11 @@ export class InteractionRouter {
     for (const handler of this.eventHandlers) {
       handler(event);
     }
+
+    // Bridge care_action:play to mini_game mode
+    if (event.kind === 'care_action' && event.action === 'play') {
+      this.handleOutput({ kind: 'care_action_play' });
+    }
   }
 
   onEvent(handler: EventHandler): void {

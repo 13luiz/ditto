@@ -35,9 +35,7 @@ const routes: RouteRecordRaw[] = [
     path: '/play',
     component: () => import('../views/PetManagerView.vue'),
     children: [
-      { path: '', redirect: '/play/rps' },
-      { path: 'rps', component: () => import('../views/MiniGameRpsView.vue') },
-      { path: 'catch', component: () => import('../views/MiniGameCatchView.vue') },
+      { path: '', component: () => import('../views/PlayHistoryView.vue') },
     ],
   },
   {

@@ -10,7 +10,7 @@ const { close } = useWindow()
 const tabs = [
   { path: '/chat', label: 'Chat' },
   { path: '/care', label: 'Care' },
-  { path: '/play', label: 'Play' },
+  { path: '/play', label: 'History' },
   { path: '/letters', label: 'Letters' },
   { path: '/journal', label: 'Journal' },
   { path: '/skins', label: 'Skins' },

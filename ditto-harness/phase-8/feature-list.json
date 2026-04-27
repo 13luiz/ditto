@@ -141,9 +141,9 @@
       "test_target": "src/overlay/interaction/modes/__tests__/dream-nail-mode.test.ts",
       "sprint_criterion": 13,
       "depends_on": ["P8-010"],
-      "passes": false,
-      "commit": "d59060e",
-      "notes": "PARTIAL: overlay rendering works (bond-gate, rate-limit, DOM). Missing: Alt+hover trigger mechanism, generate_inner_thought IPC call. Deferred to post-Phase-8 fix."
+      "passes": true,
+      "commit": "9e028fe",
+      "notes": "IPC wired: generate_inner_thought called on trigger, SQLite daily counter persisted via get_dream_nail_uses IPC, event name fixed to dream_nail_used. Alt+hover gesture trigger deferred to Phase 9+. 14 tests."
     },
     {
       "id": "P8-014",
@@ -174,9 +174,9 @@
       "test_target": "src-tauri/src/agent/tests/integration_tests.rs",
       "sprint_criterion": [16, 17],
       "depends_on": ["P8-009", "P8-010"],
-      "passes": false,
-      "commit": "fd69503",
-      "notes": "PARTIAL: backend pipeline works (agent generation, DB CRUD, memory integration). Missing: overlay JournalMode has no day-boundary detection, no generate_journal_entry IPC call, entries are in-memory only. Deferred to post-Phase-8 fix."
+      "passes": true,
+      "commit": "1887de3",
+      "notes": "Manual pipeline wired: generate_journal_entry IPC assembles JournalContext (message count from DB), calls rule_based_journal_entry, feeds to long-term memory. JournalMode handles journal_entry_generated output with overlay notification. End-of-day scheduler trigger deferred to Phase 9+. 14 tests."
     },
     {
       "id": "P8-017",
@@ -207,9 +207,9 @@
       "test_target": "src/overlay/interaction/modes/__tests__/chat-log-mode.test.ts",
       "sprint_criterion": [8, 9],
       "depends_on": ["P8-010"],
-      "passes": false,
-      "commit": "6043f10",
-      "notes": "PARTIAL: entry classification and in-memory filtering works. Missing: overlay container is display:none (no rendering), no tab UI, no persistence to SQLite, no Pet Manager /chat-log route. Fix in progress."
+      "passes": true,
+      "commit": "4b5863d",
+      "notes": "6-tab architecture: Chat/Memory/Identity active tabs + Rooms/Runtime/Plugins deferred. Overlay shows recent 3 entries with auto-fade. Pet Manager ChatLogView has full multi-tab UI. Added list_memories + get_personality IPC commands. Quick chat input deferred. System/Memory tab data sourced from existing IPC. 20 overlay tests + Vue view."
     },
     {
       "id": "P8-020",

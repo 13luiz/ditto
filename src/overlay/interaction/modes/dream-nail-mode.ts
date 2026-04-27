@@ -4,6 +4,7 @@ import type {
   SystemOutput,
   ModeCapabilities,
 } from '../types';
+import { invoke } from '@tauri-apps/api/core';
 
 const DISPLAY_MS = 4000;
 const FADE_MS = 1000;
@@ -22,9 +23,19 @@ export class DreamNailMode implements InteractionMode {
   private removeTimer: ReturnType<typeof setTimeout> | null = null;
   private dailyUses = 0;
 
-  mount(context: ModeContext): void {
+  async mount(context: ModeContext): Promise<void> {
     this.ctx = context;
     this.dailyUses = 0;
+    await this.loadDailyUses();
+  }
+
+  private async loadDailyUses(): Promise<void> {
+    try {
+      const res = await invoke<{ count: number }>('get_dream_nail_uses');
+      this.dailyUses = res.count;
+    } catch {
+      // IPC not available
+    }
   }
 
   unmount(): void {
@@ -36,22 +47,7 @@ export class DreamNailMode implements InteractionMode {
 
   handleOutput(output: SystemOutput): void {
     if (output.kind !== 'agent_inner_thought') return;
-    if (!this.ctx) return;
-
-    const bondLevel = (this.ctx.config?.bondLevel as number) ?? 0;
-
-    if (bondLevel < BOND_GATE_LEVEL) {
-      this.showLocked();
-      return;
-    }
-
-    if (this.dailyUses >= MAX_DAILY_USES) {
-      return;
-    }
-
-    this.dailyUses++;
-    this.showThought(output.text);
-    this.ctx.dispatch({ kind: 'dream_nail_activate' });
+    this.triggerThought();
   }
 
   capabilities(): ModeCapabilities {
@@ -68,6 +64,36 @@ export class DreamNailMode implements InteractionMode {
 
   getDailyUseCount(): number {
     return this.dailyUses;
+  }
+
+  private async triggerThought(): Promise<void> {
+    if (!this.ctx) return;
+
+    const bondLevel = (this.ctx.config?.bondLevel as number) ?? 0;
+    if (bondLevel < BOND_GATE_LEVEL) {
+      this.showLocked();
+      return;
+    }
+
+    if (this.dailyUses >= MAX_DAILY_USES) {
+      return;
+    }
+
+    this.dailyUses++;
+
+    try {
+      const res = await invoke<{ thought: string; pet_name: string }>('generate_inner_thought', {
+        mood: 'neutral',
+        hunger: 0.5,
+        energy: 0.5,
+        social: 0.5,
+        recentContext: '',
+      });
+      this.showThought(res.thought);
+      this.ctx.dispatch({ kind: 'dream_nail_used' });
+    } catch {
+      this.dailyUses--;
+    }
   }
 
   private showThought(text: string): void {
@@ -92,7 +118,7 @@ export class DreamNailMode implements InteractionMode {
       'max-width: 220px',
       'word-wrap: break-word',
       'text-align: center',
-      `opacity: 0.85`,
+      'opacity: 0.85',
       'transition: opacity 1s ease',
     ].join(';');
 

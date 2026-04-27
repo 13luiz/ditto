@@ -59,6 +59,7 @@ export type InteractionEvent =
   | { kind: 'touch'; zone: 'head' | 'body' | 'belly' | 'tail' | 'limbs' }
   | { kind: 'command'; raw: string; parsed?: { verb: string; noun?: string } }
   | { kind: 'dream_nail_activate' }
+  | { kind: 'dream_nail_used' }
   | { kind: 'letter_send'; content: string; attachment?: string }
   | { kind: 'mini_game_result'; game: string; score: number; won: boolean }
   | { kind: 'gesture'; type: GestureType };

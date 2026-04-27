@@ -656,10 +656,33 @@ pub fn generate_inner_thought(
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     let _ = db.save_memory(&format!("dream_nail:{}", today), &thought, "inner_thought");
 
+    // Increment daily use counter
+    let count_key = format!("dream_nail_count:{}", today);
+    let current: i64 = db
+        .load_setting(&count_key)
+        .ok()
+        .flatten()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0);
+    let _ = db.save_setting(&count_key, &(current + 1).to_string());
+
     Ok(serde_json::json!({
         "thought": thought,
         "pet_name": pet_name,
     }))
+}
+
+#[tauri::command]
+pub fn get_dream_nail_uses(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+    let count_key = format!("dream_nail_count:{}", today);
+    let count: i64 = db
+        .load_setting(&count_key)
+        .map_err(|e| e.to_string())?
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0);
+    Ok(serde_json::json!({ "count": count }))
 }
 
 #[tauri::command]

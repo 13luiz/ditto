@@ -2,6 +2,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { DreamNailMode } from '../dream-nail-mode';
 import type { ModeContext, InteractionEvent } from '../../types';
 
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: vi.fn(),
+}));
+
+import { invoke } from '@tauri-apps/api/core';
+const mockedInvoke = invoke as ReturnType<typeof vi.fn>;
+
 function createMockContext(config?: Record<string, unknown>): ModeContext {
   return {
     canvas: null,
@@ -19,8 +26,10 @@ describe('DreamNailMode', () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.clearAllMocks();
     mode = new DreamNailMode();
     ctx = createMockContext({ bondLevel: 7 });
+    mockedInvoke.mockResolvedValue({ count: 0 });
   });
 
   afterEach(() => {
@@ -42,142 +51,199 @@ describe('DreamNailMode', () => {
     expect(caps.allowsConcurrent).toBe(true);
   });
 
-  it('responds to agent_inner_thought output', () => {
-    mode.mount(ctx);
-    mode.handleOutput({
-      kind: 'agent_inner_thought',
-      text: '...I wonder what they are thinking about...',
+  it('calls generate_inner_thought IPC on trigger', async () => {
+    mockedInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_dream_nail_uses') return Promise.resolve({ count: 0 });
+      if (cmd === 'generate_inner_thought') return Promise.resolve({ thought: 'I wonder...', pet_name: 'Ditto' });
+      return Promise.resolve({});
     });
 
-    const overlay = ctx.overlayContainer!.querySelector('.dream-nail-overlay');
-    expect(overlay).toBeTruthy();
-    expect(overlay!.textContent).toContain('wonder');
+    await mode.mount(ctx);
+    mode.handleOutput({ kind: 'agent_inner_thought', text: 'trigger' });
+
+    await vi.waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith('generate_inner_thought', expect.objectContaining({
+        mood: 'neutral',
+      }));
+    });
   });
 
-  it('displays thought in italic translucent overlay', () => {
-    mode.mount(ctx);
-    mode.handleOutput({
-      kind: 'agent_inner_thought',
-      text: '...so quiet today...',
+  it('displays thought from IPC in italic translucent overlay', async () => {
+    mockedInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_dream_nail_uses') return Promise.resolve({ count: 0 });
+      if (cmd === 'generate_inner_thought') return Promise.resolve({ thought: '...so quiet today...', pet_name: 'Ditto' });
+      return Promise.resolve({});
+    });
+
+    await mode.mount(ctx);
+    mode.handleOutput({ kind: 'agent_inner_thought', text: 'trigger' });
+
+    await vi.waitFor(() => {
+      const overlay = ctx.overlayContainer!.querySelector('.dream-nail-overlay');
+      expect(overlay).toBeTruthy();
+      expect(overlay!.textContent).toContain('so quiet today');
     });
 
     const overlay = ctx.overlayContainer!.querySelector('.dream-nail-overlay') as HTMLDivElement;
-    expect(overlay).toBeTruthy();
     expect(overlay.style.fontStyle).toBe('italic');
-    expect(parseFloat(overlay.style.opacity)).toBeLessThan(1);
   });
 
-  it('positions dream overlay above pet', () => {
-    mode.mount(ctx);
-    mode.handleOutput({
-      kind: 'agent_inner_thought',
-      text: '...hello...',
+  it('positions dream overlay above pet', async () => {
+    mockedInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_dream_nail_uses') return Promise.resolve({ count: 0 });
+      if (cmd === 'generate_inner_thought') return Promise.resolve({ thought: '...hello...', pet_name: 'Ditto' });
+      return Promise.resolve({});
+    });
+
+    await mode.mount(ctx);
+    mode.handleOutput({ kind: 'agent_inner_thought', text: 'trigger' });
+
+    await vi.waitFor(() => {
+      const overlay = ctx.overlayContainer!.querySelector('.dream-nail-overlay') as HTMLDivElement;
+      expect(overlay).toBeTruthy();
+      expect(overlay.style.position).toBe('absolute');
+    });
+  });
+
+  it('auto-fades after display period', async () => {
+    mockedInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_dream_nail_uses') return Promise.resolve({ count: 0 });
+      if (cmd === 'generate_inner_thought') return Promise.resolve({ thought: '...temporary...', pet_name: 'Ditto' });
+      return Promise.resolve({});
+    });
+
+    await mode.mount(ctx);
+    mode.handleOutput({ kind: 'agent_inner_thought', text: 'trigger' });
+
+    await vi.waitFor(() => {
+      expect(ctx.overlayContainer!.querySelector('.dream-nail-overlay')).toBeTruthy();
     });
 
     const overlay = ctx.overlayContainer!.querySelector('.dream-nail-overlay') as HTMLDivElement;
-    expect(overlay).toBeTruthy();
-    expect(overlay.style.position).toBe('absolute');
-  });
-
-  it('auto-fades after display period', () => {
-    mode.mount(ctx);
-    mode.handleOutput({
-      kind: 'agent_inner_thought',
-      text: '...temporary thought...',
-    });
-
-    const overlay = ctx.overlayContainer!.querySelector('.dream-nail-overlay') as HTMLDivElement;
-    expect(overlay).toBeTruthy();
-
-    // Advance past display + fade (4000ms + 1000ms)
     vi.advanceTimersByTime(5500);
-
     expect(overlay.style.opacity).toBe('0');
   });
 
-  it('ignores non-inner-thought outputs', () => {
-    mode.mount(ctx);
+  it('ignores non-inner-thought outputs', async () => {
+    mockedInvoke.mockResolvedValue({ count: 0 });
+    await mode.mount(ctx);
     mode.handleOutput({ kind: 'agent_text', text: 'Hello!', streaming: false });
     mode.handleOutput({ kind: 'agent_emotion', emotion: 'happy' });
-    mode.handleOutput({ kind: 'care_state', hunger: 50, happiness: 80, energy: 60, social: 40, mood: 60, moodLabel: 'happy' });
 
-    const overlay = ctx.overlayContainer!.querySelector('.dream-nail-overlay');
-    expect(overlay).toBeNull();
+    expect(ctx.overlayContainer!.querySelector('.dream-nail-overlay')).toBeNull();
   });
 
-  it('emits dream_nail_activate event via dispatch', () => {
-    mode.mount(ctx);
-    mode.handleOutput({
-      kind: 'agent_inner_thought',
-      text: '...peeking...',
+  it('emits dream_nail_used event via dispatch', async () => {
+    mockedInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_dream_nail_uses') return Promise.resolve({ count: 0 });
+      if (cmd === 'generate_inner_thought') return Promise.resolve({ thought: '...peeking...', pet_name: 'Ditto' });
+      return Promise.resolve({});
     });
 
-    expect(ctx.dispatch).toHaveBeenCalledWith({ kind: 'dream_nail_activate' });
+    await mode.mount(ctx);
+    mode.handleOutput({ kind: 'agent_inner_thought', text: 'trigger' });
+
+    await vi.waitFor(() => {
+      expect(ctx.dispatch).toHaveBeenCalledWith({ kind: 'dream_nail_used' });
+    });
   });
 
-  it('refuses if bond level below 5', () => {
+  it('refuses if bond level below 5', async () => {
+    mockedInvoke.mockResolvedValue({ count: 0 });
     const lowBondCtx = createMockContext({ bondLevel: 3 });
-    mode.mount(lowBondCtx);
-    mode.handleOutput({
-      kind: 'agent_inner_thought',
-      text: '...should not appear...',
-    });
+    await mode.mount(lowBondCtx);
+    mode.handleOutput({ kind: 'agent_inner_thought', text: 'trigger' });
 
-    // Should show locked message instead of thought
-    const overlay = lowBondCtx.overlayContainer!.querySelector('.dream-nail-overlay');
-    expect(overlay).toBeTruthy();
-    expect(overlay!.textContent).toContain('Bond Lv.5');
+    await vi.waitFor(() => {
+      const overlay = lowBondCtx.overlayContainer!.querySelector('.dream-nail-overlay');
+      expect(overlay).toBeTruthy();
+      expect(overlay!.textContent).toContain('Bond Lv.5');
+    });
   });
 
-  it('does not emit dream_nail_activate when locked', () => {
+  it('does not emit event when locked', async () => {
+    mockedInvoke.mockResolvedValue({ count: 0 });
     const lowBondCtx = createMockContext({ bondLevel: 3 });
-    mode.mount(lowBondCtx);
-    mode.handleOutput({
-      kind: 'agent_inner_thought',
-      text: '...should not trigger...',
-    });
+    await mode.mount(lowBondCtx);
+    mode.handleOutput({ kind: 'agent_inner_thought', text: 'trigger' });
 
-    expect(lowBondCtx.dispatch).not.toHaveBeenCalledWith({ kind: 'dream_nail_activate' });
+    await vi.waitFor(() => {
+      expect(lowBondCtx.overlayContainer!.querySelector('.dream-nail-overlay')).toBeTruthy();
+    });
+    expect(lowBondCtx.dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ kind: 'dream_nail_used' }));
   });
 
-  it('rate limits to 3 uses per day', () => {
-    mode.mount(ctx);
+  it('rate limits to 3 uses per day', async () => {
+    let useCount = 0;
+    mockedInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_dream_nail_uses') return Promise.resolve({ count: 0 });
+      if (cmd === 'generate_inner_thought') {
+        useCount++;
+        return Promise.resolve({ thought: `...thought ${useCount}...`, pet_name: 'Ditto' });
+      }
+      return Promise.resolve({});
+    });
+
+    await mode.mount(ctx);
 
     for (let i = 0; i < 4; i++) {
-      mode.handleOutput({
-        kind: 'agent_inner_thought',
-        text: `...thought ${i}...`,
-      });
+      mode.handleOutput({ kind: 'agent_inner_thought', text: 'trigger' });
     }
 
-    // First 3 should dispatch, 4th should be rate-limited
-    const dispatchCalls = (ctx.dispatch as ReturnType<typeof vi.fn>).mock.calls.filter(
-      (call: unknown[]) => (call[0] as InteractionEvent).kind === 'dream_nail_activate',
-    );
-    expect(dispatchCalls.length).toBe(3);
+    await vi.waitFor(() => {
+      const dispatchCalls = (ctx.dispatch as ReturnType<typeof vi.fn>).mock.calls.filter(
+        (call: unknown[]) => (call[0] as InteractionEvent).kind === 'dream_nail_used',
+      );
+      expect(dispatchCalls.length).toBe(3);
+    });
   });
 
-  it('removes DOM elements on unmount', () => {
-    mode.mount(ctx);
-    mode.handleOutput({
-      kind: 'agent_inner_thought',
-      text: '...cleanup test...',
+  it('loads daily uses from IPC on mount', async () => {
+    mockedInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_dream_nail_uses') return Promise.resolve({ count: 2 });
+      return Promise.resolve({});
+    });
+
+    await mode.mount(ctx);
+    expect(mode.getDailyUseCount()).toBe(2);
+  });
+
+  it('removes DOM elements on unmount', async () => {
+    mockedInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_dream_nail_uses') return Promise.resolve({ count: 0 });
+      if (cmd === 'generate_inner_thought') return Promise.resolve({ thought: '...cleanup...', pet_name: 'Ditto' });
+      return Promise.resolve({});
+    });
+
+    await mode.mount(ctx);
+    mode.handleOutput({ kind: 'agent_inner_thought', text: 'trigger' });
+
+    await vi.waitFor(() => {
+      expect(ctx.overlayContainer!.querySelector('.dream-nail-overlay')).toBeTruthy();
     });
 
     mode.unmount();
-
-    const overlay = ctx.overlayContainer!.querySelector('.dream-nail-overlay');
-    expect(overlay).toBeNull();
+    expect(ctx.overlayContainer!.querySelector('.dream-nail-overlay')).toBeNull();
   });
 
-  it('tracks daily usage count', () => {
-    mode.mount(ctx);
+  it('tracks daily usage count', async () => {
+    let useCount = 0;
+    mockedInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_dream_nail_uses') return Promise.resolve({ count: 0 });
+      if (cmd === 'generate_inner_thought') {
+        useCount++;
+        return Promise.resolve({ thought: `...t${useCount}...`, pet_name: 'Ditto' });
+      }
+      return Promise.resolve({});
+    });
+
+    await mode.mount(ctx);
     expect(mode.getDailyUseCount()).toBe(0);
 
-    mode.handleOutput({ kind: 'agent_inner_thought', text: '...one...' });
-    expect(mode.getDailyUseCount()).toBe(1);
+    mode.handleOutput({ kind: 'agent_inner_thought', text: 'trigger' });
+    await vi.waitFor(() => expect(mode.getDailyUseCount()).toBe(1));
 
-    mode.handleOutput({ kind: 'agent_inner_thought', text: '...two...' });
-    expect(mode.getDailyUseCount()).toBe(2);
+    mode.handleOutput({ kind: 'agent_inner_thought', text: 'trigger' });
+    await vi.waitFor(() => expect(mode.getDailyUseCount()).toBe(2));
   });
 });

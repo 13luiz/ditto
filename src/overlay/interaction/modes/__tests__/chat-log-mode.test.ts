@@ -39,10 +39,11 @@ describe('ChatLogMode', () => {
     expect(caps.allowsConcurrent).toBe(false);
   });
 
-  it('creates log container on mount', () => {
+  it('creates log container on mount with visible display', () => {
     mode.mount(ctx);
     const container = ctx.overlayContainer!.querySelector('.chat-log-container');
     expect(container).toBeTruthy();
+    expect((container as HTMLElement).style.display).not.toBe('none');
   });
 
   it('removes DOM on unmount', () => {
@@ -176,5 +177,51 @@ describe('ChatLogMode', () => {
 
     mode.clearEntries();
     expect(mode.getEntries()).toHaveLength(0);
+  });
+
+  it('shows recent entries as DOM elements', () => {
+    mode.mount(ctx);
+    mode.handleOutput({ kind: 'agent_text', text: 'Msg 1', streaming: false });
+    mode.handleOutput({ kind: 'agent_text', text: 'Msg 2', streaming: false });
+
+    expect(mode.getVisibleCount()).toBe(2);
+    const container = ctx.overlayContainer!.querySelector('.chat-log-container') as HTMLElement;
+    expect(container.children.length).toBe(2);
+  });
+
+  it('caps visible elements at 3', () => {
+    mode.mount(ctx);
+    mode.handleOutput({ kind: 'agent_text', text: 'A', streaming: false });
+    mode.handleOutput({ kind: 'agent_text', text: 'B', streaming: false });
+    mode.handleOutput({ kind: 'agent_text', text: 'C', streaming: false });
+    mode.handleOutput({ kind: 'agent_text', text: 'D', streaming: false });
+
+    // Should cap at 3 visible, but all 4 are in memory
+    expect(mode.getVisibleCount()).toBe(3);
+    expect(mode.getEntries()).toHaveLength(4);
+  });
+
+  it('auto-fades visible entries after timeout', () => {
+    vi.useFakeTimers();
+    mode.mount(ctx);
+    mode.handleOutput({ kind: 'agent_text', text: 'Fading', streaming: false });
+
+    expect(mode.getVisibleCount()).toBe(1);
+
+    // After 4000ms, fade begins; after 4500ms, element removed
+    vi.advanceTimersByTime(4500);
+    expect(mode.getVisibleCount()).toBe(0);
+
+    vi.useRealTimers();
+  });
+
+  it('keeps all entries in memory regardless of visible count', () => {
+    mode.mount(ctx);
+    for (let i = 0; i < 5; i++) {
+      mode.handleOutput({ kind: 'agent_text', text: `Msg ${i}`, streaming: false });
+    }
+
+    expect(mode.getVisibleCount()).toBeLessThanOrEqual(3);
+    expect(mode.getEntries()).toHaveLength(5);
   });
 });

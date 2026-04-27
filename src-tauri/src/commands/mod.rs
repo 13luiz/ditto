@@ -537,20 +537,19 @@ pub fn generate_journal_entry(
         .unwrap_or_else(|| "Ditto".to_string());
 
     // Count today's messages
-    let conv_count: usize = db
-        .count_messages_by_date(&entry_date)
-        .unwrap_or(0);
+    let conv_count: usize = db.count_messages_by_date(&entry_date).unwrap_or(0);
 
     let ctx = crate::agent::generation::JournalContext {
         entry_date: entry_date.clone(),
         conversation_count: conv_count,
         care_actions_count: 0,
-        mood_summary: mood_summary.clone().unwrap_or_else(|| "neutral".to_string()),
+        mood_summary: mood_summary
+            .clone()
+            .unwrap_or_else(|| "neutral".to_string()),
         notable_events: vec![],
     };
 
-    let content =
-        crate::agent::generation::rule_based_journal_entry(&pet_name, &ctx);
+    let content = crate::agent::generation::rule_based_journal_entry(&pet_name, &ctx);
 
     let id = db
         .insert_journal_entry(
@@ -563,11 +562,7 @@ pub fn generate_journal_entry(
         .map_err(|e| e.to_string())?;
 
     // Feed to long-term memory
-    let _ = db.save_memory(
-        &format!("journal:{}", entry_date),
-        &content,
-        "journal",
-    );
+    let _ = db.save_memory(&format!("journal:{}", entry_date), &content, "journal");
 
     Ok(serde_json::json!({ "id": id, "content": content }))
 }

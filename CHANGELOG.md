@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-04-27
+
+### Added
+
+- **Phase 8 — Depth & Cozy Loop**: Live2D renderer, mini-games, letters, journal, dream nail, chat log, command input, 13 new IPC commands
+- `Live2DRenderer` TypeScript class with WebGL transparency, `PetRenderer` + `LipSyncable` + `Expressible` support via `pixi-live2d-display`
+- `MiniGame` Rust module — Rock-Paper-Scissors and Catch-the-Food logic with care effects (happiness/hunger/energy)
+- `generation.rs` — Agent generation extensions: inner thought, letter writing, journal entry prompts with rule-based fallbacks
+- `db/models.rs` — DB models for letters, journal entries, mini-game results
+- `DreamNailMode` — Peek into pet's inner thoughts with bond gating (Lv.3+) and daily use rate limiting
+- `LetterMode` — Send/receive letters with pet, bond gating (Lv.2+), envelope notification, reply archive
+- `JournalMode` — Pet-generated journal entries with calendar view, bond gating (Lv.4+), date-range queries
+- `ChatLogMode` — Overlay shows recent 3 chat log entries with auto-fade, multi-tab log viewer in Pet Manager
+- `CommandInputMode` — Slash command input with `/think`, `/letter`, `/journal` parsing and autocomplete
+- `MiniGameMode` — Overlay interaction mode for RPS + Catch-the-Food games with care effect dispatch
+- `LettersView`, `JournalView`, `ChatLogView` — Pet Manager tabs for letter archive, journal calendar, chat history
+- Play tab refactored to game history view with `get_game_history` IPC
+- ChatLog 6-tab architecture: Chat (built), Memory, Identity (built), Letters, Journal, Play (deferred tabs for future)
+- Live2D sample skin packaging with `skin.json` manifest and performance profiling
+- `generate_inner_thought` IPC wired to agent pipeline with SQLite daily use persistence
+- `generate_journal_entry` IPC wired to agent pipeline with memory integration
+- 13 new IPC commands: `get_pending_letters`, `mark_letter_read`, `send_letter_reply`, `get_letter_archive`, `get_journal_entries`, `generate_journal_entry`, `start_mini_game`, `submit_mini_game_result`, `get_game_history`, `generate_inner_thought`, `get_dream_nail_uses`, `list_memories`, `get_personality`
+- 315 Rust tests (62 new), ~312 TypeScript tests (159 new across Live2D, mini-game, dream-nail, letter, journal, chat-log, command-input modes)
+
+### Changed
+
+- 34 IPC commands registered (up from 21)
+- Bond-level gating enforced across dream nail, letter, and journal modes
+- InteractionRouter now supports 14 modes (up from 8)
+- `db/migrations.rs` adds `letters`, `letter_replies`, `journal_entries`, `mini_game_results` tables
+
 ## [0.1.2] - 2026-04-26
 
 ### Added

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ditto is an agent-driven desktop pet built with **Rust + Tauri v2**. An animated creature lives on a transparent overlay window, with behavior governed by an AI agent (rig-core) rather than scripts. Seven phases are complete: skeleton rendering, physics/interaction, AI agent/chat/memory, care system/mood, system tray/settings/packaging, skin foundation (multi-renderer architecture, skin distribution, unified Pet Manager UI), and interaction foundation (InteractionRouter, 7 interaction modes, bond engine, interaction profiles).
+Ditto is an agent-driven desktop pet built with **Rust + Tauri v2**. An animated creature lives on a transparent overlay window, with behavior governed by an AI agent (rig-core) rather than scripts. Eight phases are complete: skeleton rendering, physics/interaction, AI agent/chat/memory, care system/mood, system tray/settings/packaging, skin foundation (multi-renderer architecture, skin distribution, unified Pet Manager UI), interaction foundation (InteractionRouter, 7 interaction modes, bond engine, interaction profiles), and depth & cozy loop (Live2D renderer, mini-games, letters, journal, dream nail, chat log, command input).
 
 ## Build & Development Commands
 
@@ -56,8 +56,9 @@ Tauri v2 app with Rust backend and web frontend communicating via Tauri IPC comm
 
 - `main.rs` — Entry point, delegates to `ditto_lib::run()`
 - `lib.rs` — Tauri builder with command registration, env loading, and DB initialization
-- `commands/mod.rs` — 21 IPC commands (see below)
+- `commands/mod.rs` — 34 IPC commands (see below)
 - `agent/core.rs` — LLM provider config (OpenAI, Anthropic, Ollama), agent construction, rate limiting, rule-based fallback. 19 tests.
+- `agent/generation.rs` — Agent generation extensions: inner thought, letter, journal prompts with rule-based fallbacks
 - `agent/memory.rs` — Short-term (sliding window) and long-term (key-value) memory with DB persistence. 6 tests.
 - `agent/personality.rs` — Personality traits (cheerfulness, curiosity, mischievousness, clinginess) with shift mechanics and persistence. 12 tests.
 - `agent/prompt.rs` — System prompt builder with personality, mood, needs, memories, time context. 9 tests.
@@ -68,8 +69,10 @@ Tauri v2 app with Rust backend and web frontend communicating via Tauri IPC comm
 - `behavior/scheduler.rs` — Activity detection, scheduled triggers (morning greeting, break reminder, idle comments). 15 tests.
 - `care/needs.rs` — Pet needs (hunger, happiness, energy, social) with decay rates, mood scoring, care actions. 21 tests.
 - `care/bond.rs` — 10-level bond engine with threshold table, daily caps per action type, SQLite persistence. 13 tests.
-- `db/mod.rs` — SQLite operations for conversations, messages, memory, settings. 10 tests.
-- `db/migrations.rs` — Schema migrations. 2 tests.
+- `care/minigame.rs` — Mini-game backend (RPS + CatchTheFood) with care effects
+- `db/mod.rs` — SQLite operations for conversations, messages, memory, settings, letters, journal, game results. 17 tests.
+- `db/models.rs` — DB models for letters, journal entries, mini-game results
+- `db/migrations.rs` — Schema migrations (conversations, messages, memory, settings, letters, journal_entries, mini_game_results). 2 tests.
 - `system/tray.rs` — System tray icon with show/hide, Pet Manager, quit menu
 - `system/autolaunch.rs` — Auto-launch registration
 - `system/skins.rs` — Skin discovery, import (zip/url), deletion, catalog. 11 tests.
@@ -77,7 +80,7 @@ Tauri v2 app with Rust backend and web frontend communicating via Tauri IPC comm
 
 The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime dependencies (WebView2) crash the test harness. Tests verify command registration by reading source files as strings.
 
-### IPC Commands (21 total)
+### IPC Commands (34 total)
 
 | Command | Purpose |
 |---------|---------|
@@ -100,6 +103,19 @@ The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime de
 | `get_active_skin` / `set_active_skin` | Load/save active skin selection |
 | `get_bond_state` | Get current bond level and total points |
 | `award_bond_points` | Award bond points for an action, emit level-up event |
+| `get_pending_letters` | Get unread letters from pet |
+| `mark_letter_read` | Mark a letter as read |
+| `send_letter_reply` | Reply to a letter from pet |
+| `get_letter_archive` | Get paginated letter archive |
+| `get_journal_entries` | Get journal entries by date range |
+| `generate_journal_entry` | Generate journal entry via agent pipeline |
+| `start_mini_game` | Start a mini-game session (RPS or Catch) |
+| `submit_mini_game_result` | Submit game result, apply care effects |
+| `get_game_history` | Get paginated mini-game history |
+| `generate_inner_thought` | Generate pet's inner thought via agent |
+| `get_dream_nail_uses` | Get today's dream nail usage count |
+| `list_memories` | List all memories with optional category filter |
+| `get_personality` | Get current personality traits |
 
 ### Frontend (TypeScript, `src/`)
 
@@ -113,7 +129,8 @@ The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime de
 - `renderer/pet-renderer.ts` — `PetRenderer` interface, `SkinManifest` type, capability type guards
 - `renderer/sprite-renderer.ts` — `SpriteRenderer` implementing `PetRenderer`
 - `renderer/spine-renderer.ts` — `SpineRenderer` implementing `PetRenderer` (via `@esotericsoftware/spine-canvas`)
-- `renderer/renderer-factory.ts` — Creates correct renderer from skin manifest type
+- `renderer/live2d-renderer.ts` — `Live2DRenderer` implementing `PetRenderer` + `LipSyncable` + `Expressible` (via `pixi-live2d-display`)
+- `renderer/renderer-factory.ts` — Creates correct renderer from skin manifest type (sprite, spine, live2d)
 - `renderer/skin-manifest.ts` — `validateSkinManifest()` for required field checks
 - `input/click-through.ts` — Pixel-alpha click-through detection, cursor distance for FSM context
 - `input/drag-handler.ts` — Per-pixel mousedown, mousemove drag, gravity release
@@ -131,6 +148,12 @@ The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime de
 - `modes/touch-zone-mode.ts` — Zone-based touch detection from skin.json rects
 - `modes/dialog-panel-mode.ts` — Delegates to Pet Manager /chat route
 - `modes/bond-indicator-mode.ts` — Lv.N + heart progress bar, level-up ceremony overlay
+- `modes/dream-nail-mode.ts` — Peek into pet's inner thoughts with bond gating (Lv.3+) and daily use limit
+- `modes/letter-mode.ts` — Send/receive letters with pet, bond gating (Lv.2+), envelope notification
+- `modes/journal-mode.ts` — Pet journal entries with calendar view, bond gating (Lv.4+), date-range queries
+- `modes/chat-log-mode.ts` — Overlay recent 3 chat log entries with auto-fade
+- `modes/command-input-mode.ts` — Slash command input with `/think`, `/letter`, `/journal` parsing and autocomplete
+- `modes/mini-game-mode.ts` — Overlay interaction for RPS + Catch-the-Food games
 
 #### UI Windows (`src/`, Vue 3, entry: `ui.html`)
 
@@ -138,6 +161,9 @@ The `commands` module is gated with `#[cfg(not(test))]` because Tauri runtime de
 - `composables/useChat.ts` — Chat with streaming token display
 - `composables/useCare.ts` — Care panel with need bars, mood display, action buttons
 - `composables/useTauriEvents.ts` — Tauri event listener composable
+- `composables/useLetters.ts` — Letter composable with pending/archive/reply
+- `composables/useJournal.ts` — Journal composable with date-range queries
+- `composables/useChatLog.ts` — ChatLog composable with multi-tab architecture
 - `windows/pet-manager.ts` — Unified Pet Manager window launcher
 - `windows/chat-bubble.ts` — Delegates to Pet Manager (/chat route)
 - `windows/care-panel.ts` — Delegates to Pet Manager (/care route)
@@ -174,28 +200,32 @@ The Rust FSM is wired to the frontend via `transition_pet_state` IPC. The fronte
 - `xcap 0.6` (screen capture), `auto-launch 0.6` (startup registration), `chrono 0.4` (time)
 - `zip 2` (skin archive extraction), `reqwest 0.12` (skin download, blocking feature)
 - `@esotericsoftware/spine-canvas 4.2` (Spine skeletal animation runtime)
+- `pixi.js 6.5` + `pixi-live2d-display 0.4` (Live2D WebGL renderer)
 - Dev: `rstest 0.18` (parameterized tests), `tempfile 3` (integration test dirs), `vitest` + `jsdom` (TS unit tests)
 
 ## Test Suite
 
-253 Rust tests + 153 TypeScript tests, all must pass:
+315 Rust tests + ~312 TypeScript tests, all must pass:
 - 16 config/tray/animation/db tests in `lib.rs`
 - 28 FSM transition tests in `behavior/state_machine.rs`
 - 15 scheduler tests in `behavior/scheduler.rs`
 - 9 physics tests in `behavior/movement.rs`
 - 7 cursor proximity tests in `behavior/cursor.rs`
 - 19 agent core tests + 18 agent integration/error/tool tests
+- Agent generation tests (inner thought, letter, journal prompts)
 - 6 memory + 12 personality + 9 prompt + 12 tools tests
 - 21 care needs tests in `care/needs.rs`
 - 13 bond engine tests in `care/bond.rs`
-- 12 database tests (db/mod.rs + migrations.rs)
+- Mini-game logic tests in `care/minigame.rs`
+- 17 database tests (db/mod.rs — conversations, memory, settings, letters, journal, game results)
+- 2 migration tests in `db/migrations.rs`
 - 11 system tests (screen + skins, including import/export/catalog/deletion)
-- 5 renderer TypeScript test suites (pet-renderer, sprite-renderer, spine-renderer, renderer-factory, skin-manifest)
-- 8 interaction TypeScript test suites (interaction-router, profile-manager, bark-mode, thought-bubble, speech-bubble, radial-menu, emote-wheel, bond-indicator)
+- 6 renderer TypeScript test suites (pet-renderer, sprite-renderer, spine-renderer, live2d-renderer, renderer-factory, skin-manifest)
+- 14 interaction TypeScript test suites (interaction-router, profile-manager, bark-mode, thought-bubble, speech-bubble, radial-menu, emote-wheel, bond-indicator, dream-nail, letter, journal, chat-log, command-input, mini-game)
 
 ## Implementation Harness
 
-The project uses a long-running TDD harness driven by the `/ditto-implement` Claude Code skill. The harness manages phased implementation (7 phases complete) with state persisted in `ditto-harness/`.
+The project uses a long-running TDD harness driven by the `/ditto-implement` Claude Code skill. The harness manages phased implementation (8 phases complete) with state persisted in `ditto-harness/`.
 
 **Phases:**
 1. **Skeleton** ✅ — Transparent window, sprite rendering, pet on screen
@@ -205,6 +235,7 @@ The project uses a long-running TDD harness driven by the `/ditto-implement` Cla
 5. **Polish** ✅ — System tray, settings, packaging, performance
 6. **Skin Foundation** ✅ — Multi-renderer architecture, skin distribution, unified Pet Manager
 7. **Interaction Foundation** ✅ — InteractionRouter, 7 interaction modes, bond engine, interaction profiles
+8. **Depth & Cozy Loop** ✅ — Live2D renderer, mini-games, letters, journal, dream nail, chat log, command input
 
 **Harness invariants:**
 - All tests must pass before starting new work

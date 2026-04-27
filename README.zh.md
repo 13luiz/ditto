@@ -21,14 +21,20 @@ Ditto 是一个基于 [Rust](https://www.rust-lang.org/) 和 [Tauri v2](https://
 - **多渲染器架构** — 可插拔的 `PetRenderer` 接口，支持精灵图、Spine 骨骼动画及未来渲染器
 - **皮肤系统** — 从内置或用户安装的目录安装、管理和切换宠物皮肤
 - **宠物管理器** — 统一窗口，标签页布局集成了对话、照料、皮肤和设置
-- **交互模式** — Bark、ThoughtBubble、SpeechBubble、RadialMenu、EmoteWheel、TouchZone、DialogPanel
+- **交互模式** — Bark、ThoughtBubble、SpeechBubble、RadialMenu、EmoteWheel、TouchZone、DialogPanel、DreamNail、Letter、Journal、ChatLog、CommandInput、MiniGame、BondIndicator
 - **羁绊引擎** — 10级羁绊系统，每日上限，SQLite 持久化，升级仪式
 - **交互配置** — Minimal/Nurture/RPG 预设配置文件，手势映射，模式兼容性
+- **小游戏** — 石头剪刀布和接食物，影响照料需求
+- **信件系统** — 与宠物互通信件，羁绊等级解锁，信件存档
+- **日记** — 宠物自动生成日记，日历视图，羁绊等级解锁
+- **梦之钉** — 窥视宠物内心想法，羁绊等级解锁，每日使用限制
+- **聊天记录** — 多标签页日志查看器，覆盖层显示最近条目
+- **Live2D 渲染器** — 通过 pixi-live2d-display 支持 Live2D 模型
 - **引导向导** — 首次运行设置宠物名称和 LLM 提供商
 
 ## 当前状态
 
-Ditto 处于**活跃开发中**。七个阶段已完成——宠物可以在透明窗口上渲染、自主行走、响应光标、通过 LLM 对话、拥有需求和情绪系统、通过皮肤系统支持多种渲染器，拥有 7 种交互模式和羁绊引擎，并已打包可分发。详见 [CHANGELOG.md](CHANGELOG.md)。
+Ditto 处于**活跃开发中**。八个阶段已完成——宠物可以在透明窗口上渲染、自主行走、响应光标、通过 LLM 对话、拥有需求和情绪系统、通过皮肤系统支持多种渲染器（精灵图、Spine、Live2D），拥有 14 种交互模式和小游戏/信件/日记等深度功能，并已打包可分发。详见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 技术栈
 
@@ -36,7 +42,7 @@ Ditto 处于**活跃开发中**。七个阶段已完成——宠物可以在透�
 |------|------|
 | 应用框架 | Tauri v2 |
 | 后端 | Rust |
-| 前端 | Canvas 2D + TypeScript + Vue 3 |
+| 前端 | Canvas 2D + WebGL + TypeScript + Vue 3 |
 | AI Agent | rig-core（OpenAI、Anthropic、Ollama） |
 | 数据库 | SQLite via rusqlite |
 
@@ -56,8 +62,8 @@ ditto/
 ├── src/
 │   ├── overlay/           # 透明覆盖窗口（原生 TypeScript）
 │   │   ├── behavior/      # PetController（状态、运动）
-│   │   ├── interaction/   # InteractionRouter、模式、配置、类型
-│   │   ├── renderer/      # SpriteEngine、AnimationPlayer、PetRenderer、SpineRenderer
+│   │   ├── interaction/   # InteractionRouter、模式（14种）、配置、类型
+│   │   ├── renderer/      # SpriteEngine、AnimationPlayer、PetRenderer、SpineRenderer、Live2DRenderer
 │   │   ├── input/         # 点击穿透、拖拽处理
 │   │   └── windows/       # 宠物管理器统一窗口
 │   ├── composables/       # Vue 组合式函数（UI 窗口）
@@ -66,7 +72,7 @@ ditto/
 │   ├── ipc/               # Tauri 命令封装
 │   └── types/             # 共享类型定义
 ├── public/pets/default/   # 默认精灵图 + 动画定义
-├── public/skins/          # 内置皮肤（默认精灵图、示例 Spine）
+├── public/skins/          # 内置皮肤（默认精灵图、示例 Spine、示例 Live2D）
 ├── docs/                  # PRD、规格文档
 └── ditto-harness/         # TDD 实现脚手架状态
 ```
@@ -108,6 +114,7 @@ cargo fmt --manifest-path src-tauri/Cargo.toml
 | 5 — 打磨 | 系统托盘、设置、打包 | 已完成 |
 | 6 — 皮肤基础 | 多渲染器架构、皮肤分发 | 已完成 |
 | 7 — 交互基础 | InteractionRouter、7种模式、羁绊引擎、配置文件 | 已完成 |
+| 8 — 深度与舒适循环 | Live2D、小游戏、信件、日记、梦之钉、聊天记录、命令输入 | 已完成 |
 
 ## 实现脚手架
 

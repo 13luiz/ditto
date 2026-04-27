@@ -21,14 +21,20 @@ Ditto is an agent-driven desktop pet built with [Rust](https://www.rust-lang.org
 - **Multi-Renderer Architecture** — Pluggable `PetRenderer` interface supporting sprite, spine, and future renderers
 - **Skin System** — Install, manage, and switch pet skins from bundled or user-installed catalogs
 - **Pet Manager** — Unified window with tabbed layout for chat, care, skins, and settings
-- **Interaction Modes** — Bark, ThoughtBubble, SpeechBubble, RadialMenu, EmoteWheel, TouchZone, DialogPanel
+- **Interaction Modes** — Bark, ThoughtBubble, SpeechBubble, RadialMenu, EmoteWheel, TouchZone, DialogPanel, DreamNail, Letter, Journal, ChatLog, CommandInput, MiniGame, BondIndicator
 - **Bond Engine** — 10-level bond system with daily caps, SQLite persistence, and level-up ceremonies
 - **Interaction Profiles** — Minimal/Nurture/RPG presets with gesture mapping and mode compatibility
+- **Mini-Games** — Rock-Paper-Scissors and Catch-the-Food with care effects
+- **Letter System** — Send/receive letters with your pet, bond-level unlocking, letter archive
+- **Journal** — Pet-generated journal entries with calendar view, bond-level unlocking
+- **Dream Nail** — Peek into your pet's inner thoughts, bond-level unlocking, daily use limit
+- **Chat Log** — Multi-tab log viewer with overlay display of recent entries
+- **Live2D Renderer** — Live2D model support via pixi-live2d-display
 - **Onboarding Wizard** — First-run setup for pet name and LLM provider
 
 ## Status
 
-Ditto is in **active development**. Seven phases are complete — the pet renders on a transparent window, walks autonomously, reacts to your cursor, chats via LLM, has needs and moods, supports multiple renderers via a skin system, features 7 interaction modes with a bond engine, and is packaged for distribution. See [CHANGELOG.md](CHANGELOG.md) for details.
+Ditto is in **active development**. Eight phases are complete — the pet renders on a transparent window, walks autonomously, reacts to your cursor, chats via LLM, has needs and moods, supports multiple renderers (sprite, Spine, Live2D) via a skin system, features 14 interaction modes with mini-games, letters, journal, and bond engine, and is packaged for distribution. See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ## Tech Stack
 
@@ -36,7 +42,7 @@ Ditto is in **active development**. Seven phases are complete — the pet render
 |-------|-----------|
 | App framework | Tauri v2 |
 | Backend | Rust |
-| Frontend | Canvas 2D + TypeScript + Vue 3 |
+| Frontend | Canvas 2D + WebGL + TypeScript + Vue 3 |
 | AI Agent | rig-core (OpenAI, Anthropic, Ollama) |
 | Database | SQLite via rusqlite |
 
@@ -56,8 +62,8 @@ ditto/
 ├── src/
 │   ├── overlay/           # Transparent overlay window (vanilla TS)
 │   │   ├── behavior/      # PetController (state, movement)
-│   │   ├── interaction/   # InteractionRouter, modes, profiles, types
-│   │   ├── renderer/      # SpriteEngine, AnimationPlayer, PetRenderer, SpineRenderer
+│   │   ├── interaction/   # InteractionRouter, modes (14), profiles, types
+│   │   ├── renderer/      # SpriteEngine, AnimationPlayer, PetRenderer, SpineRenderer, Live2DRenderer
 │   │   ├── input/         # Click-through, drag handler
 │   │   └── windows/       # Pet Manager unified window
 │   ├── composables/       # Vue composables (UI windows)
@@ -66,7 +72,7 @@ ditto/
 │   ├── ipc/               # Tauri command wrappers
 │   └── types/             # Shared type definitions
 ├── public/pets/default/   # Default spritesheet + animation definitions
-├── public/skins/          # Bundled skins (default sprite, sample spine)
+├── public/skins/          # Bundled skins (default sprite, sample spine, sample Live2D)
 ├── docs/                  # PRD, specs
 └── ditto-harness/         # TDD implementation harness state
 ```
@@ -108,6 +114,7 @@ cargo fmt --manifest-path src-tauri/Cargo.toml
 | 5 — Polish | System tray, settings, packaging | Done |
 | 6 — Skin Foundation | Multi-renderer architecture, skin distribution | Done |
 | 7 — Interaction Foundation | InteractionRouter, 7 modes, bond engine, profiles | Done |
+| 8 — Depth & Cozy Loop | Live2D, mini-games, letters, journal, dream nail, chat log, command input | Done |
 
 ## Implementation Harness
 

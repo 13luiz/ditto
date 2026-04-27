@@ -141,9 +141,9 @@
       "test_target": "src/overlay/interaction/modes/__tests__/dream-nail-mode.test.ts",
       "sprint_criterion": 13,
       "depends_on": ["P8-010"],
-      "passes": true,
+      "passes": false,
       "commit": "d59060e",
-      "notes": "DreamNailMode: translucent italic overlay, bond-gated Lv.5+, rate-limited 3/day, auto-fade 4s, emits dream_nail_activate. 13 TS tests."
+      "notes": "PARTIAL: overlay rendering works (bond-gate, rate-limit, DOM). Missing: Alt+hover trigger mechanism, generate_inner_thought IPC call. Deferred to post-Phase-8 fix."
     },
     {
       "id": "P8-014",
@@ -174,9 +174,9 @@
       "test_target": "src-tauri/src/agent/tests/integration_tests.rs",
       "sprint_criterion": [16, 17],
       "depends_on": ["P8-009", "P8-010"],
-      "passes": true,
+      "passes": false,
       "commit": "fd69503",
-      "notes": "JournalMode: bond-gated Lv.7+, entry storage with date-range queries, milestone support. 12 TS tests."
+      "notes": "PARTIAL: backend pipeline works (agent generation, DB CRUD, memory integration). Missing: overlay JournalMode has no day-boundary detection, no generate_journal_entry IPC call, entries are in-memory only. Deferred to post-Phase-8 fix."
     },
     {
       "id": "P8-017",
@@ -207,9 +207,9 @@
       "test_target": "src/overlay/interaction/modes/__tests__/chat-log-mode.test.ts",
       "sprint_criterion": [8, 9],
       "depends_on": ["P8-010"],
-      "passes": true,
+      "passes": false,
       "commit": "6043f10",
-      "notes": "ChatLogMode: multi-tab log (chat/system/memory/all), 200-entry cap, timestamps, entry filtering. 16 TS tests."
+      "notes": "PARTIAL: entry classification and in-memory filtering works. Missing: overlay container is display:none (no rendering), no tab UI, no persistence to SQLite, no Pet Manager /chat-log route. Fix in progress."
     },
     {
       "id": "P8-020",
